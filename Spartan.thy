@@ -282,6 +282,8 @@ lemma inv_comp [reds]:
     "inv A x x (refl x) \<equiv> refl x"
   unfolding inv_def by reduce (routine facts: assms)
 
+(*** Work in progress: identity induction method ****************************************)
+
 ML \<open>
 fun idind fref tm ctxt =
   Subgoal.FOCUS_PREMS (fn {context = goal_ctxt, params, prems, concl, ...} =>
@@ -303,6 +305,8 @@ method_setup idind = \<open>
   Scan.option (Scan.lift (Args.$$$ "pred" -- Args.colon) |-- Args.term)
   >> (fn ((fref, _), tm) => fn ctxt => SIMPLE_METHOD (HEADGOAL (idind fref tm ctxt)))
 \<close>
+
+(****************************************************************************************)
 
 schematic_goal Id_transitive_derivation:
   assumes
