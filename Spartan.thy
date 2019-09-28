@@ -3,10 +3,14 @@ imports
   Pure
   "HOL-Eisbach.Eisbach"
   "HOL-Eisbach.Eisbach_Tools"
+keywords
+  "schematic_subgoal" :: prf_script_goal % "proof"
 
 begin
 
 declare [[names_short, eta_contract=false]]
+
+ML_file \<open>schematic_subgoal.ML\<close>
 
 named_theorems forms and intros and elims and reds and congs
 
@@ -215,73 +219,15 @@ schematic_goal IdE2:
   shows
     "(IdInd A (\<lambda>x y p. \<Prod>z: A. \<Prod>q: y =\<^bsub>A\<^esub> z. C x y z p q) ?f a b p) `c `q :
       C a b c p q"
-  apply (routine facts: assms; assumption?)
+apply (routine facts: assms; assumption?)
   apply intros+
     apply fact
     apply (forms; easy)
     apply known
-  done
-
-lemma swap_imp:
-  "(PROP P \<Longrightarrow> PROP Q \<Longrightarrow> PROP R) \<equiv> (PROP Q \<Longrightarrow> PROP P \<Longrightarrow> PROP R)"
-proof
-  assume 1: "PROP Q" and 2: "PROP P"
-  { assume *: "PROP P \<Longrightarrow> PROP Q \<Longrightarrow> PROP R"
-    show "PROP R" by (fact *[OF 2 1]) }
-  { assume *: "PROP Q \<Longrightarrow> PROP P \<Longrightarrow> PROP R"
-    show "PROP R" by (fact *[OF 1 2]) }
-qed
-
-definition IMP (infixr "IMP" 1)
-  where "(P IMP Q) \<equiv> (PROP P \<Longrightarrow> PROP Q)"
-
-lemma elim_imp_to_IMP:
-  "PROP P \<Longrightarrow> (PROP P IMP PROP Q) \<Longrightarrow> PROP Q"
-  by (simp add: IMP_def)
-
-lemma simp_IMP_to_imp:
-  "(PROP P IMP PROP Q IMP PROP R) \<equiv> (PROP Q \<Longrightarrow> PROP P IMP PROP R)"
-unfolding IMP_def proof
-  assume 1: "PROP P" and 2: "PROP Q"
-  { assume *: "PROP P \<Longrightarrow> PROP Q \<Longrightarrow> PROP R"
-    show "PROP R" by (fact *[OF 1 2]) }
-  { assume *: "PROP Q \<Longrightarrow> PROP P \<Longrightarrow> PROP R"
-    show "PROP R" by (fact *[OF 2 1]) }
-qed
-
-lemma conjunction_IMP:
-  "(PROP A &&& PROP B IMP PROP C) \<equiv> (PROP B IMP PROP A IMP PROP C)"
-  by (simp add: IMP_def conjunction_imp swap_imp)
+done
 
 ML \<open>
-fun imp_len tm =
-  let
-    val tm' = case tm of
-        Const (\<^const_name>\<open>Pure.all\<close>, _) $ Abs (_, _, body) => body
-      | _ => tm
-  in
-    case tm' of
-      Const (\<^const_name>\<open>Pure.imp\<close>, _) $ _ $ consequent => imp_len consequent + 1
-    | _ => 0
-  end
-
-fun unconj_tac ctxt = SUBGOAL (fn (goal, i) =>
-  (@{print} goal; @{print} (imp_len goal);
-  compose_tac ctxt (false, @{thm conjunction_IMP}, 1) i))
-
-fun subgoal_tac ctxt =
-  Subgoal.FOCUS_PREMS (fn {context = goal_ctxt, params, prems, concl, ...} =>
-    let
-      
-    in
-      @{print} params;
-      @{print} prems;
-      @{print} concl;
-      all_tac
-    end
-  ) ctxt
-
-fun idind_tac fref tm ctxt =
+fun id_induction_tac fref tm ctxt =
   Subgoal.FOCUS_PREMS (fn {context = goal_ctxt, params, prems, concl, ...} =>
     let
       val IdE = @{thm IdE}
@@ -296,16 +242,11 @@ fun idind_tac fref tm ctxt =
   ) ctxt
 \<close>
 
-method_setup unconj = \<open>
-  Scan.succeed (fn ctxt => SIMPLE_METHOD (HEADGOAL (unconj_tac ctxt)))\<close>
-
-method_setup "subgoal" = \<open>
-  Scan.succeed (fn ctxt => SIMPLE_METHOD (HEADGOAL (subgoal_tac ctxt)))\<close>
-
 method_setup idind = \<open>
   Scan.lift Parse.thm --
   Scan.option (Scan.lift (Args.$$$ "pred" -- Args.colon) |-- Args.term)
-  >> (fn ((fref, _), tm) => fn ctxt => SIMPLE_METHOD (HEADGOAL (idind_tac fref tm ctxt)))
+  >> (fn ((fref, _), tm) => fn ctxt =>
+    SIMPLE_METHOD (HEADGOAL (id_induction_tac fref tm ctxt)))
 \<close>
 
 
@@ -387,10 +328,10 @@ schematic_goal Id_symmetric_derivation:
     "p: x =\<^bsub>A\<^esub> y" "x: A" "y: A" "A: U"
   shows
     "?prf: y =\<^bsub>A\<^esub> x"
-  apply (rule IdE[of _ _ x y]; known?)
+apply (rule IdE[of _ _ x y]; known?)
   apply (forms; (easy facts: assms))
   apply (intros; easy)
-  done
+done
 
 definition "inv A x y p \<equiv> IdInd A (\<lambda>x y _. (y =\<^bsub>A\<^esub> x)) (\<lambda>x. refl x) x y p"
 
@@ -415,20 +356,20 @@ schematic_goal Id_transitive_derivation:
   shows
     "?prf: x =\<^bsub>A\<^esub> z"
 
-  (* Idea: change x to y in all statements. then change y to z. *)
-  apply (rule IdE2[of p A x y]; known?)
+text \<open>First induct on \<open>p: x = y\<close>.\<close>
+apply (rule IdE2[of p A x y]; known?)
   apply (forms; easy?)
-  (*
-    Here we want to be able to do a nested induction.
-    Need a custom subgoal tactic here that keeps the schematic variable!
-  *)
-  apply easy
-  done
 
-\<comment>\<open>
-  The above derivation is great! But what we really want to be able to derive is the
-  following:
-\<close>
+  text \<open>
+    We could immediately conclude here, but for symmetry of the resulting term we instead
+    induct on \<open>q: x = z\<close>.
+  \<close>
+  schematic_subgoal for x z q
+    apply (rule IdE[of q _ x z]; easy?)
+      apply (forms; easy)
+      apply (intros; easy)
+  done
+done
 
 definition "pathcomp A x y z p q \<equiv>
   (IdInd A
