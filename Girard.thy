@@ -1,5 +1,5 @@
 theory Girard
-imports Lambda
+imports Spartan
 
 begin
 
@@ -33,12 +33,6 @@ text \<open>This definition fails: type clash for \<open>p\<close>.\<close>
 
 definition
   "\<Omega> \<equiv> \<tau> (\<lambda>p: \<P> \<U>. \<Prod>x: \<U>. (\<sigma> x `p \<rightarrow> p `x))"
-
-end
-
-experiment begin
-
-
 
 end
 
