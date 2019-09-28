@@ -56,8 +56,8 @@ axiomatization
   app  :: \<open>[('a, 'b) Pi, 'a] \<Rightarrow> 'b\<close> ("(1_/ `_)" [120, 121] 120)
 
 syntax
-  "_Pi"  :: \<open>[idt, 'a Type, 'b Type] \<Rightarrow> ('a, 'b) Pi Type\<close> ("(2\<Prod>_: _./ _)" 30)
-  "_lam" :: \<open>[idt, 'a Type, 'b] \<Rightarrow> 'b\<close> ("(2\<lambda>_: _./ _)" 30)
+  "_Pi"  :: \<open>[pttrn, 'a Type, 'b Type] \<Rightarrow> ('a, 'b) Pi Type\<close> ("(2\<Prod>_: _./ _)" 30)
+  "_lam" :: \<open>[pttrn, 'a Type, 'b] \<Rightarrow> 'b\<close> ("(2\<lambda>_: _./ _)" 30)
 translations
   "\<Prod>x: A. B" \<rightleftharpoons> "(CONST Pi) A (\<lambda>x. B)"
   "\<lambda>x: A. b" \<rightleftharpoons> "(CONST lam) A (\<lambda>x. b)"
@@ -152,9 +152,8 @@ axiomatization where
     p: a =\<^bsub>A\<^esub> b;
     a: A;
     b: A;
-    PROP P a b p;
-    \<And>x y p. \<lbrakk>p: x =\<^bsub>A\<^esub> y; x: A; y: A; PROP P x y p\<rbrakk> \<Longrightarrow> C x y p: U;
-    \<And>x. \<lbrakk>x: A; PROP P x x (refl x)\<rbrakk> \<Longrightarrow> f x: C x x (refl x)
+    \<And>x y p. \<lbrakk>p: x =\<^bsub>A\<^esub> y; x: A; y: A\<rbrakk> \<Longrightarrow> C x y p: U;
+    \<And>x. x: A \<Longrightarrow> f x: C x x (refl x)
     \<rbrakk> \<Longrightarrow> IdInd A C f a b p: C a b p" and
 
   Id_comp [reds]: "\<lbrakk>
@@ -178,21 +177,50 @@ method intros = rule intros
 method elims = rule elims
 method congs = rule congs
 
-method easy uses facts = (rule facts | fact | assumption | simp)
+ML \<open>
+fun known_raw_tac ctxt = SUBGOAL (fn (_, i) =>
+  let
+    val ths = map fst (Facts.props (Proof_Context.facts_of ctxt))
+  in
+    resolve_tac ctxt ths i
+  end)
+\<close>
+
+method_setup known_raw =
+  \<open>Scan.succeed (fn ctxt => SIMPLE_METHOD (HEADGOAL (known_raw_tac ctxt)))\<close>
+
+method known uses facts = (rule facts | solves \<open>known_raw\<close>)
+method easy uses facts = (known facts: facts | assumption | simp)
 
 method routine uses facts =
-  ( elims; ((easy facts: facts)+)?
-  | intros; ((easy facts: facts)+)?
-  | forms; ((easy facts: facts)+)?
-  | easy facts: facts )+
+  ( elims; ((known facts: facts)+)?
+  | intros; ((known facts: facts)+)?
+  | forms; ((known facts: facts)+)?
+  | known facts: facts )+
 
 method reduce uses facts =
   subst reds; (
-    ( elims; ((easy facts: facts)+)?
-    | easy facts: facts )+
+    ( elims; ((known facts: facts)+)?
+    | known facts: facts )+
   )?
 
 subsection \<open>Work in progress: identity induction method\<close>
+
+schematic_goal IdE2:
+  assumes
+    "p: a =\<^bsub>A\<^esub> b" "a: A" "b: A"
+    "q: b =\<^bsub>A\<^esub> c" "c: A" "A: U"
+    "\<And>x y z p q. \<lbrakk>p: x =\<^bsub>A\<^esub> y; q: y =\<^bsub>A\<^esub> z; x: A; y: A; z: A\<rbrakk> \<Longrightarrow> C x y z p q: U"
+    "\<And>x z q. \<lbrakk>x: A; z: A; q: x =\<^bsub>A\<^esub> z\<rbrakk> \<Longrightarrow> f x z q: C x x z (refl x) q"
+  shows
+    "(IdInd A (\<lambda>x y p. \<Prod>z: A. \<Prod>q: y =\<^bsub>A\<^esub> z. C x y z p q) ?f a b p) `c `q :
+      C a b c p q"
+  apply (routine facts: assms; assumption?)
+  apply intros+
+    apply fact
+    apply (forms; easy)
+    apply known
+  done
 
 lemma swap_imp:
   "(PROP P \<Longrightarrow> PROP Q \<Longrightarrow> PROP R) \<equiv> (PROP Q \<Longrightarrow> PROP P \<Longrightarrow> PROP R)"
@@ -313,7 +341,7 @@ lemma funcomp_assoc:
   shows
     "(h \<circ>\<^bsub>B\<^esub> g) \<circ>\<^bsub>A\<^esub> f \<equiv> h \<circ>\<^bsub>A\<^esub> g \<circ>\<^bsub>A\<^esub> f"
   unfolding funcomp_def
-  by (congs; easy?) (reduce facts: assms)+
+  by (congs; known?) (reduce; easy?)+
 
 lemma funcomp_comp [reds]:
   assumes
@@ -323,7 +351,7 @@ lemma funcomp_comp [reds]:
   shows
     "(\<lambda>x: B. c x) \<circ>\<^bsub>A\<^esub> (\<lambda>x: A. b x) \<equiv> \<lambda>x: A. c (b x)"
   unfolding funcomp_def
-  by (congs; easy?) (reduce facts: assms | routine facts: assms)+
+  by (congs; known?) ((reduce facts: assms | routine facts: assms); easy?)+
 
 subsection \<open>Identity function\<close>
 
@@ -359,7 +387,7 @@ schematic_goal Id_symmetric_derivation:
     "p: x =\<^bsub>A\<^esub> y" "x: A" "y: A" "A: U"
   shows
     "?prf: y =\<^bsub>A\<^esub> x"
-  apply (rule IdE[of _ _ x y]; (fact+)?)
+  apply (rule IdE[of _ _ x y]; known?)
   apply (forms; (easy facts: assms))
   apply (intros; easy)
   done
@@ -371,14 +399,14 @@ lemma Id_symmetric [elims, intros]:
     "p: x =\<^bsub>A\<^esub> y" "x: A" "y: A" "A: U"
   shows
     "inv A x y p: y =\<^bsub>A\<^esub> x"
-  unfolding inv_def by (routine facts: assms)
+  unfolding inv_def by (routine; easy?)+
 
 lemma inv_comp [reds]:
   assumes
     "x: A" "A: U"
   shows
     "inv A x x (refl x) \<equiv> refl x"
-  unfolding inv_def by reduce (routine facts: assms)
+  unfolding inv_def by reduce (routine; easy)+
 
 schematic_goal Id_transitive_derivation:
   assumes
@@ -386,29 +414,27 @@ schematic_goal Id_transitive_derivation:
     "A: U" "x: A" "y: A" "z: A"
   shows
     "?prf: x =\<^bsub>A\<^esub> z"
+
   (* Idea: change x to y in all statements. then change y to z. *)
-  apply (rule IdE[of p A x y "\<lambda>x y p. (z: A &&& q: y =\<^bsub>A\<^esub> z)"];
-        (elim elim_imp_to_IMP,
-        (simp add: conjunction_IMP)?,
-        simp add: IMP_def,
-        elim elim_imp_to_IMP,
-        simp add: IMP_def)?)
-  apply (routine, (easy facts: assms)+)
-  apply (elim elim_imp_to_IMP)
-  apply (simp add: conjunction_IMP)
+  apply (rule IdE2[of p A x y]; known?)
+  apply (forms; easy?)
   (*
     Here we want to be able to do a nested induction.
     Need a custom subgoal tactic here that keeps the schematic variable!
   *)
-  apply (simp only: IMP_def)
+  apply easy
   done
+
+\<comment>\<open>
+  The above derivation is great! But what we really want to be able to derive is the
+  following:
+\<close>
 
 definition "pathcomp A x y z p q \<equiv>
   (IdInd A
     (\<lambda>x y _. \<Prod>z: A. y =\<^bsub>A\<^esub> z \<rightarrow> x =\<^bsub>A\<^esub> z)
-    (\<lambda>x. \<lambda>z: A. \<lambda>q: x =\<^bsub>A\<^esub> z. q)
+    (\<lambda>x. \<lambda>z: A. \<lambda>q: x =\<^bsub>A\<^esub> z. IdInd A (\<lambda>x z _. (x =\<^bsub>A\<^esub> z)) (\<lambda>x. refl x) x z q)
     x y p) `z `q"
-  (* IdInd A (\<lambda>x z _. (x =\<^bsub>A\<^esub> z)) (\<lambda>x. refl x) x z q *)
 
 lemma Id_transitive [elims, intros]:
   assumes
@@ -416,7 +442,7 @@ lemma Id_transitive [elims, intros]:
     "A: U" "x: A" "y: A" "z: A"
   shows
     "pathcomp A x y z p q: x =\<^bsub>A\<^esub> z"
-  unfolding pathcomp_def by (routine facts: assms)
+  unfolding pathcomp_def by (routine; easy?)+
 
 
 section \<open>Pairs\<close>
@@ -434,12 +460,12 @@ lemma fst_of_pair [reds]:
 lemma snd [elims]:
   assumes "p: \<Sum>x: A. B x" "A: U" "\<And>x. x: A \<Longrightarrow> B x: U"
   shows "snd A B p: B (fst A B p)"
-  unfolding snd_def by (routine facts: assms | reduce)+
+  unfolding snd_def by ((routine facts: assms | reduce); easy?)+
 
 lemma snd_of_pair [reds]:
   assumes "A: U" "\<And>x. x: A \<Longrightarrow> B x: U" "a: A" "b: B a"
   shows "snd A B <a, b> \<equiv> b"
-  unfolding snd_def by (routine facts: assms | reduce)+
+  unfolding snd_def by ((routine facts: assms | reduce); easy?)+
 
 
 end
