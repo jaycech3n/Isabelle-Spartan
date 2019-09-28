@@ -17,15 +17,23 @@ section \<open>Logical framework types\<close>
 class Mt
 default_sort Mt
 
+\<comment>\<open>
+  We might consider also having a class MT for meta-types, but then we'd need to mess
+  around with the sorts of the arguments of the meta-types and the typing judgment
+  constant, and it's not clear this would work.
+\<close>
+
 typedecl ('a, 'b) Pi
 typedecl ('a, 'b) Sig
 typedecl 'a Id
 typedecl 'a Type
+typedecl Nat
 
 instance Pi   :: (\<open>Mt\<close>, \<open>Mt\<close>) \<open>Mt\<close> ..
 instance Sig  :: (\<open>Mt\<close>, \<open>Mt\<close>) \<open>Mt\<close> ..
 instance Id   :: (\<open>Mt\<close>) \<open>Mt\<close> ..
 instance Type :: (\<open>Mt\<close>) \<open>Mt\<close> ..
+
 
 section \<open>Types & typing\<close>
 
@@ -57,7 +65,6 @@ translations
 abbreviation Fn (infixr "\<rightarrow>" 40) where "A \<rightarrow> B \<equiv> \<Prod>_: A. B"
 
 axiomatization where
-
   PiF [forms]: "\<lbrakk>A: U; \<And>x. x: A \<Longrightarrow> B x: U\<rbrakk> \<Longrightarrow> \<Prod>x: A. B x: U" and
 
   PiI [intros]: "\<lbrakk>\<And>x. x: A \<Longrightarrow> b x: B x; A: U\<rbrakk> \<Longrightarrow> \<lambda>x: A. b x: \<Prod>x: A. B x" and
@@ -140,13 +147,15 @@ axiomatization where
 
   IdI [intros]: "a: A \<Longrightarrow> refl a: a =\<^bsub>A\<^esub> a" and
 
+  \<comment>\<open>Unusual formulation of the elimination rule to allow induction in structured Isar proofs.\<close>
   IdE [elims]: "\<lbrakk>
     p: a =\<^bsub>A\<^esub> b;
     a: A;
     b: A;
-    \<And>x y p. \<lbrakk>x: A; y: A; p: x =\<^bsub>A\<^esub> y; PROP P x y p\<rbrakk> \<Longrightarrow> C x y p: U;
+    PROP P a b p;
+    \<And>x y p. \<lbrakk>p: x =\<^bsub>A\<^esub> y; x: A; y: A; PROP P x y p\<rbrakk> \<Longrightarrow> C x y p: U;
     \<And>x. \<lbrakk>x: A; PROP P x x (refl x)\<rbrakk> \<Longrightarrow> f x: C x x (refl x)
-    \<rbrakk> \<Longrightarrow> PROP P a b p \<Longrightarrow> IdInd A C f a b p: C a b p" and
+    \<rbrakk> \<Longrightarrow> IdInd A C f a b p: C a b p" and
 
   Id_comp [reds]: "\<lbrakk>
     a: A;
@@ -182,6 +191,94 @@ method reduce uses facts =
     ( elims; ((easy facts: facts)+)?
     | easy facts: facts )+
   )?
+
+subsection \<open>Work in progress: identity induction method\<close>
+
+lemma swap_imp:
+  "(PROP P \<Longrightarrow> PROP Q \<Longrightarrow> PROP R) \<equiv> (PROP Q \<Longrightarrow> PROP P \<Longrightarrow> PROP R)"
+proof
+  assume 1: "PROP Q" and 2: "PROP P"
+  { assume *: "PROP P \<Longrightarrow> PROP Q \<Longrightarrow> PROP R"
+    show "PROP R" by (fact *[OF 2 1]) }
+  { assume *: "PROP Q \<Longrightarrow> PROP P \<Longrightarrow> PROP R"
+    show "PROP R" by (fact *[OF 1 2]) }
+qed
+
+definition IMP (infixr "IMP" 1)
+  where "(P IMP Q) \<equiv> (PROP P \<Longrightarrow> PROP Q)"
+
+lemma elim_imp_to_IMP:
+  "PROP P \<Longrightarrow> (PROP P IMP PROP Q) \<Longrightarrow> PROP Q"
+  by (simp add: IMP_def)
+
+lemma simp_IMP_to_imp:
+  "(PROP P IMP PROP Q IMP PROP R) \<equiv> (PROP Q \<Longrightarrow> PROP P IMP PROP R)"
+unfolding IMP_def proof
+  assume 1: "PROP P" and 2: "PROP Q"
+  { assume *: "PROP P \<Longrightarrow> PROP Q \<Longrightarrow> PROP R"
+    show "PROP R" by (fact *[OF 1 2]) }
+  { assume *: "PROP Q \<Longrightarrow> PROP P \<Longrightarrow> PROP R"
+    show "PROP R" by (fact *[OF 2 1]) }
+qed
+
+lemma conjunction_IMP:
+  "(PROP A &&& PROP B IMP PROP C) \<equiv> (PROP B IMP PROP A IMP PROP C)"
+  by (simp add: IMP_def conjunction_imp swap_imp)
+
+ML \<open>
+fun imp_len tm =
+  let
+    val tm' = case tm of
+        Const (\<^const_name>\<open>Pure.all\<close>, _) $ Abs (_, _, body) => body
+      | _ => tm
+  in
+    case tm' of
+      Const (\<^const_name>\<open>Pure.imp\<close>, _) $ _ $ consequent => imp_len consequent + 1
+    | _ => 0
+  end
+
+fun unconj_tac ctxt = SUBGOAL (fn (goal, i) =>
+  (@{print} goal; @{print} (imp_len goal);
+  compose_tac ctxt (false, @{thm conjunction_IMP}, 1) i))
+
+fun subgoal_tac ctxt =
+  Subgoal.FOCUS_PREMS (fn {context = goal_ctxt, params, prems, concl, ...} =>
+    let
+      
+    in
+      @{print} params;
+      @{print} prems;
+      @{print} concl;
+      all_tac
+    end
+  ) ctxt
+
+fun idind_tac fref tm ctxt =
+  Subgoal.FOCUS_PREMS (fn {context = goal_ctxt, params, prems, concl, ...} =>
+    let
+      val IdE = @{thm IdE}
+    in
+      @{print} params;
+      @{print} prems;
+      @{print} concl;
+      @{print} tm;
+      @{print} (Proof_Context.get_fact_single goal_ctxt fref);
+      all_tac
+    end
+  ) ctxt
+\<close>
+
+method_setup unconj = \<open>
+  Scan.succeed (fn ctxt => SIMPLE_METHOD (HEADGOAL (unconj_tac ctxt)))\<close>
+
+method_setup "subgoal" = \<open>
+  Scan.succeed (fn ctxt => SIMPLE_METHOD (HEADGOAL (subgoal_tac ctxt)))\<close>
+
+method_setup idind = \<open>
+  Scan.lift Parse.thm --
+  Scan.option (Scan.lift (Args.$$$ "pred" -- Args.colon) |-- Args.term)
+  >> (fn ((fref, _), tm) => fn ctxt => SIMPLE_METHOD (HEADGOAL (idind_tac fref tm ctxt)))
+\<close>
 
 
 section \<open>Functions\<close>
@@ -262,8 +359,9 @@ schematic_goal Id_symmetric_derivation:
     "p: x =\<^bsub>A\<^esub> y" "x: A" "y: A" "A: U"
   shows
     "?prf: y =\<^bsub>A\<^esub> x"
-  apply (rule IdE[of p _ x y]; (easy facts: assms)?)
-  apply (routine; easy facts: assms)
+  apply (rule IdE[of _ _ x y]; (fact+)?)
+  apply (forms; (easy facts: assms))
+  apply (intros; easy)
   done
 
 definition "inv A x y p \<equiv> IdInd A (\<lambda>x y _. (y =\<^bsub>A\<^esub> x)) (\<lambda>x. refl x) x y p"
@@ -282,51 +380,35 @@ lemma inv_comp [reds]:
     "inv A x x (refl x) \<equiv> refl x"
   unfolding inv_def by reduce (routine facts: assms)
 
-(*** Work in progress: identity induction method ****************************************)
-
-ML \<open>
-fun idind fref tm ctxt =
-  Subgoal.FOCUS_PREMS (fn {context = goal_ctxt, params, prems, concl, ...} =>
-    let
-      val IdE = @{thm IdE}
-    in
-      @{print} params;
-      @{print} prems;
-      @{print} concl;
-      @{print} tm;
-      @{print} (Proof_Context.get_fact_single goal_ctxt fref);
-      all_tac
-    end
-  ) ctxt
-\<close>
-
-method_setup idind = \<open>
-  Scan.lift Parse.thm --
-  Scan.option (Scan.lift (Args.$$$ "pred" -- Args.colon) |-- Args.term)
-  >> (fn ((fref, _), tm) => fn ctxt => SIMPLE_METHOD (HEADGOAL (idind fref tm ctxt)))
-\<close>
-
-(****************************************************************************************)
-
 schematic_goal Id_transitive_derivation:
   assumes
     "p: x =\<^bsub>A\<^esub> y" "q: y =\<^bsub>A\<^esub> z"
     "A: U" "x: A" "y: A" "z: A"
   shows
     "?prf: x =\<^bsub>A\<^esub> z"
-  (* idea: change x to y in all statements. then change y to z. *)
-  thm IdE[of p A x y "\<lambda>x y p. (z: A &&& q: y =\<^bsub>A\<^esub> z)"]
-  apply (rule IdE[of p A x y "\<lambda>x y p. (z: A &&& q: y =\<^bsub>A\<^esub> z)"])
+  (* Idea: change x to y in all statements. then change y to z. *)
+  apply (rule IdE[of p A x y "\<lambda>x y p. (z: A &&& q: y =\<^bsub>A\<^esub> z)"];
+        (elim elim_imp_to_IMP,
+        (simp add: conjunction_IMP)?,
+        simp add: IMP_def,
+        elim elim_imp_to_IMP,
+        simp add: IMP_def)?)
   apply (routine, (easy facts: assms)+)
-  apply (simp only: conjunction_imp, easy+)
+  apply (elim elim_imp_to_IMP)
+  apply (simp add: conjunction_IMP)
+  (*
+    Here we want to be able to do a nested induction.
+    Need a custom subgoal tactic here that keeps the schematic variable!
+  *)
+  apply (simp only: IMP_def)
   done
-  (* need a custom subgoal tactic here that keeps the schematic variable! *)
 
 definition "pathcomp A x y z p q \<equiv>
   (IdInd A
     (\<lambda>x y _. \<Prod>z: A. y =\<^bsub>A\<^esub> z \<rightarrow> x =\<^bsub>A\<^esub> z)
-    (\<lambda>x. \<lambda>z: A. \<lambda>q: x =\<^bsub>A\<^esub> z. IdInd A (\<lambda>x z _. (x =\<^bsub>A\<^esub> z)) (\<lambda>x. refl x) x z q)
+    (\<lambda>x. \<lambda>z: A. \<lambda>q: x =\<^bsub>A\<^esub> z. q)
     x y p) `z `q"
+  (* IdInd A (\<lambda>x z _. (x =\<^bsub>A\<^esub> z)) (\<lambda>x. refl x) x z q *)
 
 lemma Id_transitive [elims, intros]:
   assumes
