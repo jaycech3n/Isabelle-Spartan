@@ -41,7 +41,7 @@ instance Type :: (\<open>Mt\<close>) \<open>Mt\<close> ..
 
 section \<open>Types & typing\<close>
 
-subsection \<open>Judgment\<close>
+subsection \<open>Judgments\<close>
 
 consts has_type :: \<open>['a, 'a Type] \<Rightarrow> prop\<close> ("(2_:/ _)")
 
@@ -57,7 +57,7 @@ subsection \<open>\<Prod>-type\<close>
 axiomatization
   Pi :: \<open>['a Type, 'a \<Rightarrow> 'b Type] \<Rightarrow> ('a, 'b) Pi Type\<close> and
   lam  :: \<open>['a Type, 'a \<Rightarrow> 'b] \<Rightarrow> ('a, 'b) Pi\<close> and
-  app  :: \<open>[('a, 'b) Pi, 'a] \<Rightarrow> 'b\<close> ("(1_/ `_)" [120, 121] 120)
+  app  :: \<open>[('a, 'b) Pi, 'a] \<Rightarrow> 'b\<close> ("(1_ `_)" [120, 121] 120)
 
 syntax
   "_Pi"  :: \<open>[pttrn, 'a Type, 'b Type] \<Rightarrow> ('a, 'b) Pi Type\<close> ("(2\<Prod>_: _./ _)" 30)
@@ -134,7 +134,7 @@ axiomatization where
     \<rbrakk> \<Longrightarrow> \<Sum>x: A. B x \<equiv> \<Sum>x: A. B' x"
 
 
-subsection \<open>Identity\<close>
+subsection \<open>Identity type\<close>
 
 axiomatization
   Id    :: \<open>['a Type, 'a, 'a] \<Rightarrow> 'a Id Type\<close> and
@@ -202,13 +202,11 @@ method routine uses facts =
   | forms; ((known facts: facts)+)?
   | known facts: facts )+
 
-method reduce uses facts =
-  subst reds; (
-    ( elims; ((known facts: facts)+)?
-    | known facts: facts )+
-  )?
+method reduce uses facts = subst reds; ((known facts: facts)+)?
 
-subsection \<open>Work in progress: identity induction method\<close>
+subsection \<open>Identity induction\<close>
+
+(* I think we'd want to generate these automatically *)
 
 schematic_goal IdE2:
   assumes
@@ -219,35 +217,26 @@ schematic_goal IdE2:
   shows
     "(IdInd A (\<lambda>x y p. \<Prod>z: A. \<Prod>q: y =\<^bsub>A\<^esub> z. C x y z p q) ?f a b p) `c `q :
       C a b c p q"
-apply (routine facts: assms; assumption?)
-  apply intros+
-    apply fact
-    apply (forms; easy)
-    apply known
-done
+  by (routine facts: assms; easy?) ((forms | intros); ((easy facts: assms)+)?)+
 
-ML \<open>
-fun id_induction_tac fref tm ctxt =
-  Subgoal.FOCUS_PREMS (fn {context = goal_ctxt, params, prems, concl, ...} =>
-    let
-      val IdE = @{thm IdE}
-    in
-      @{print} params;
-      @{print} prems;
-      @{print} concl;
-      @{print} tm;
-      @{print} (Proof_Context.get_fact_single goal_ctxt fref);
-      all_tac
-    end
-  ) ctxt
-\<close>
-
-method_setup idind = \<open>
-  Scan.lift Parse.thm --
-  Scan.option (Scan.lift (Args.$$$ "pred" -- Args.colon) |-- Args.term)
-  >> (fn ((fref, _), tm) => fn ctxt =>
-    SIMPLE_METHOD (HEADGOAL (id_induction_tac fref tm ctxt)))
-\<close>
+schematic_goal IdE3:
+  assumes
+    "p: a =\<^bsub>A\<^esub> b" "a: A" "b: A"
+    "q: b =\<^bsub>A\<^esub> c" "c: A"
+    "r: c =\<^bsub>A\<^esub> d" "d: A" "A: U"
+    "\<And>x y z w p q r. \<lbrakk>
+      p: x =\<^bsub>A\<^esub> y; q: y =\<^bsub>A\<^esub> z; r: z =\<^bsub>A\<^esub> w;
+      x: A; y: A; z: A; w: A
+      \<rbrakk> \<Longrightarrow> C x y z w p q r: U"
+    "\<And>x z w q r. \<lbrakk>
+      x: A; z: A; w: A;
+      q: x =\<^bsub>A\<^esub> z; r: z =\<^bsub>A\<^esub> w
+      \<rbrakk> \<Longrightarrow> f x z w q r: C x x z w (refl x) q r"
+  shows
+    "(IdInd A
+      (\<lambda>x y p. \<Prod>z: A. \<Prod>w: A. \<Prod>q: y =\<^bsub>A\<^esub> z. \<Prod>r: z =\<^bsub>A\<^esub> w. C x y z w p q r) ?f a b p)
+      `c `d `q `r : C a b c d p q r"
+  by (routine facts: assms; easy?) ((forms | intros); ((easy facts: assms)+)?)+
 
 
 section \<open>Functions\<close>
@@ -282,7 +271,7 @@ lemma funcomp_assoc:
   shows
     "(h \<circ>\<^bsub>B\<^esub> g) \<circ>\<^bsub>A\<^esub> f \<equiv> h \<circ>\<^bsub>A\<^esub> g \<circ>\<^bsub>A\<^esub> f"
   unfolding funcomp_def
-  by (congs; known?) (reduce; easy?)+
+  by (congs; known?) (reduce; ((routine | easy)+)?)+
 
 lemma funcomp_comp [reds]:
   assumes
@@ -308,7 +297,7 @@ lemma id_left [reds]:
   shows
     "(id B) \<circ>\<^bsub>A\<^esub> f \<equiv> f"
   unfolding id_def
-  by (subst eta[symmetric, of f]; easy?) (reduce facts: eta assms)
+  by (subst eta[symmetric, of f]; easy?) (reduce; (routine facts: eta)?)
 
 lemma id_right [reds]:
   assumes
@@ -316,12 +305,10 @@ lemma id_right [reds]:
   shows
     "f \<circ>\<^bsub>A\<^esub> (id A) \<equiv> f"
   unfolding id_def
-  by (subst eta[symmetric, of f]; easy?) (reduce facts: eta assms)
+  by (subst eta[symmetric, of f]; easy?) (reduce; (routine facts: eta)?)
 
 
-section \<open>Properties of identity\<close>
-
-text \<open>Example derivation of proof term of symmetry of equality.\<close>
+section \<open>Identity\<close>
 
 schematic_goal Id_symmetric_derivation:
   assumes
@@ -333,21 +320,23 @@ apply (rule IdE[of _ _ x y]; known?)
   apply (intros; easy)
 done
 
-definition "inv A x y p \<equiv> IdInd A (\<lambda>x y _. (y =\<^bsub>A\<^esub> x)) (\<lambda>x. refl x) x y p"
+(* TODO: automatically generate definitions for the terms derived in the above manner. *)
+
+definition "pathinv A x y p \<equiv> IdInd A (\<lambda>x y _. (y =\<^bsub>A\<^esub> x)) (\<lambda>x. refl x) x y p"
 
 lemma Id_symmetric [elims, intros]:
   assumes
     "p: x =\<^bsub>A\<^esub> y" "x: A" "y: A" "A: U"
   shows
-    "inv A x y p: y =\<^bsub>A\<^esub> x"
-  unfolding inv_def by (routine; easy?)+
+    "pathinv A x y p: y =\<^bsub>A\<^esub> x"
+  unfolding pathinv_def by (rule Id_symmetric_derivation assms)+
 
 lemma inv_comp [reds]:
   assumes
     "x: A" "A: U"
   shows
-    "inv A x x (refl x) \<equiv> refl x"
-  unfolding inv_def by reduce (routine; easy)+
+    "pathinv A x x (refl x) \<equiv> refl x"
+  unfolding pathinv_def by reduce (routine; easy)+
 
 schematic_goal Id_transitive_derivation:
   assumes
@@ -383,7 +372,11 @@ lemma Id_transitive [elims, intros]:
     "A: U" "x: A" "y: A" "z: A"
   shows
     "pathcomp A x y z p q: x =\<^bsub>A\<^esub> z"
-  unfolding pathcomp_def by (routine; easy?)+
+  unfolding pathcomp_def by (rule Id_transitive_derivation assms)+
+
+lemma pathcomp_comp [reds]:
+  "\<lbrakk>A: U; a: A\<rbrakk> \<Longrightarrow> pathcomp A a a a (refl a) (refl a) \<equiv> refl a"
+  unfolding pathcomp_def by ((reduce | routine); easy?)+
 
 
 section \<open>Pairs\<close>
