@@ -1,3 +1,5 @@
+chapter \<open>Spartan type theory\<close>
+
 theory Spartan
 imports
   Pure
@@ -12,7 +14,7 @@ declare [[names_short, eta_contract=false]]
 
 ML_file \<open>schematic_subgoal.ML\<close>
 
-named_theorems forms and intros and elims and reds and congs
+named_theorems forms and intros and elims and decs and reds and congs
 
 
 section \<open>Logical framework types\<close>
@@ -49,7 +51,7 @@ consts has_type :: \<open>['a, 'a Type] \<Rightarrow> prop\<close> ("(2_:/ _)")
 subsection \<open>Universes\<close>
 
 axiomatization U :: \<open>'a Type\<close>
-axiomatization where hierarchy [forms, intros]: "U: U"
+axiomatization where hierarchy [forms]: "U: U"
 
 
 subsection \<open>\<Prod>-type\<close>
@@ -176,11 +178,6 @@ ML_file "~~/src/Tools/IsaPlanner/rw_inst.ML"
 ML_file "~~/src/Tools/IsaPlanner/zipper.ML"
 ML_file "~~/src/Tools/eqsubst.ML"
 
-method forms = rule forms
-method intros = rule intros
-method elims = rule elims
-method congs = rule congs
-
 ML \<open>
 fun known_raw_tac ctxt = SUBGOAL (fn (_, i) =>
   let
@@ -193,13 +190,21 @@ fun known_raw_tac ctxt = SUBGOAL (fn (_, i) =>
 method_setup known_raw =
   \<open>Scan.succeed (fn ctxt => SIMPLE_METHOD (HEADGOAL (known_raw_tac ctxt)))\<close>
 
-method known uses facts = (rule facts | solves \<open>known_raw\<close>)
+method known uses facts = (rule facts | known_raw)
 method easy uses facts = (known facts: facts | assumption | simp)
 
+method forms = rule forms
+
+method intros = rule intros
+  \<comment>\<open>Introduce a canonical constructor\<close>
+
+method elims = (rule elims, (known | assumption)); (known | assumption+)?
+  \<comment>\<open>Prove a statement subject to immediate discharge of the first condition\<close>
+
+method congs = rule congs
+
 method routine uses facts =
-  ( elims; ((known facts: facts)+)?
-  | intros; ((known facts: facts)+)?
-  | forms; ((known facts: facts)+)?
+  ( (forms | intros | elims); ((known facts: facts)+)?
   | known facts: facts )+
 
 method reduce uses facts = subst reds; ((known facts: facts)+)?
@@ -217,7 +222,7 @@ schematic_goal IdE1:
     "\<And>x d. \<lbrakk>x: A; d: D x x (refl x)\<rbrakk> \<Longrightarrow> f x d: C x x (refl x) d"
   shows
     "(IdInd A (\<lambda>x y p. \<Prod>d: D x y p. C x y p d) ?f a b p) `d : C a b p d"
-  by (routine facts: assms; easy?) (forms | intros | (easy facts: assms)+)+
+  by (rule PiE) (routine | easy)+
 
 schematic_goal IdE2:
   assumes
@@ -233,7 +238,7 @@ schematic_goal IdE2:
     "(IdInd A
       (\<lambda>x y p. \<Prod>d1: D1 x y p. \<Prod>d2: D2 x y p d1. C x y p d1 d2)
       ?f a b p) `d1 `d2 : C a b p d1 d2"
-  by (routine facts: assms; easy?) (forms | intros | (easy facts: assms)+)+
+  by (rule PiE)+ (routine | easy)+
 
 schematic_goal IdE4:
   assumes
@@ -258,7 +263,7 @@ schematic_goal IdE4:
       (\<lambda>x y p. \<Prod>d1: D1 x y p. \<Prod>d2: D2 x y p d1.
         \<Prod>d3: D3 x y p d1 d2. \<Prod>d4: D4 x y p d1 d2 d3. C x y p d1 d2 d3 d4)
       ?f a b p) `d1 `d2 `d3 `d4: C a b p d1 d2 d3 d4"
-  by (routine facts: assms; easy?) (forms | intros | (easy facts: assms)+)+
+  by (rule PiE)+ (routine | easy)+
 
 
 section \<open>Functions\<close>
@@ -282,7 +287,7 @@ lemma funcompI:
     "\<And>x. x : B \<Longrightarrow> C x: U"
   shows
     "g \<circ>\<^bsub>A\<^esub> f: \<Prod>x: A. C (f`x)"
-  unfolding funcomp_def by (routine facts: assms)
+  unfolding funcomp_def by routine
 
 lemma funcomp_assoc:
   assumes
@@ -293,7 +298,7 @@ lemma funcomp_assoc:
   shows
     "(h \<circ>\<^bsub>B\<^esub> g) \<circ>\<^bsub>A\<^esub> f \<equiv> h \<circ>\<^bsub>A\<^esub> g \<circ>\<^bsub>A\<^esub> f"
   unfolding funcomp_def
-  by (congs; known?) (reduce; ((routine | easy)+)?)+
+  by (congs; known?) (reduce | routine | easy)+
 
 lemma funcomp_comp [reds]:
   assumes
@@ -303,13 +308,13 @@ lemma funcomp_comp [reds]:
   shows
     "(\<lambda>x: B. c x) \<circ>\<^bsub>A\<^esub> (\<lambda>x: A. b x) \<equiv> \<lambda>x: A. c (b x)"
   unfolding funcomp_def
-  by (congs; known?) ((reduce facts: assms | routine facts: assms); easy?)+
+  by (congs; known?) (reduce | easy)+
 
 subsection \<open>Identity function\<close>
 
 definition id where "id A \<equiv> \<lambda>x: A. x"
 
-lemma idI [intros]: "A: U \<Longrightarrow> id A: A \<rightarrow> A"
+lemma idI: "A: U \<Longrightarrow> id A: A \<rightarrow> A"
   and id_comp [reds]: "x: A \<Longrightarrow> (id A) `x \<equiv> x"
   unfolding id_def by (intros; easy?) reduce
 
@@ -338,7 +343,7 @@ schematic_goal Id_symmetric_derivation:
   shows
     "?prf: y =\<^bsub>A\<^esub> x"
 apply (rule IdE[of _ _ x y]; known?)
-  apply (forms; (easy facts: assms))
+  apply (forms; easy)
   apply (intros; easy)
 done
 
@@ -346,14 +351,14 @@ done
 
 definition "pathinv A x y p \<equiv> IdInd A (\<lambda>x y _. (y =\<^bsub>A\<^esub> x)) (\<lambda>x. refl x) x y p"
 
-lemma Id_symmetric [elims, intros]:
+lemma Id_symmetric:
   assumes
     "p: x =\<^bsub>A\<^esub> y" "x: A" "y: A" "A: U"
   shows
     "pathinv A x y p: y =\<^bsub>A\<^esub> x"
   unfolding pathinv_def by (rule Id_symmetric_derivation assms)+
 
-lemma inv_comp [reds]:
+lemma pathinv_comp [reds]:
   assumes
     "x: A" "A: U"
   shows
@@ -388,7 +393,7 @@ definition "pathcomp A x y z p q \<equiv>
     (\<lambda>x. \<lambda>z: A. \<lambda>q: x =\<^bsub>A\<^esub> z. IdInd A (\<lambda>x z _. (x =\<^bsub>A\<^esub> z)) (\<lambda>x. refl x) x z q)
     x y p) `z `q"
 
-lemma Id_transitive [elims, intros]:
+lemma Id_transitive:
   assumes
     "p: x =\<^bsub>A\<^esub> y" "q: y =\<^bsub>A\<^esub> z"
     "A: U" "x: A" "y: A" "z: A"
@@ -398,7 +403,7 @@ lemma Id_transitive [elims, intros]:
 
 lemma pathcomp_comp [reds]:
   "\<lbrakk>A: U; a: A\<rbrakk> \<Longrightarrow> pathcomp A a a a (refl a) (refl a) \<equiv> refl a"
-  unfolding pathcomp_def by ((reduce | routine); easy?)+
+  unfolding pathcomp_def by (reduce | routine | easy)+
 
 
 section \<open>Pairs\<close>
@@ -416,12 +421,12 @@ lemma fst_of_pair [reds]:
 lemma snd [elims]:
   assumes "p: \<Sum>x: A. B x" "A: U" "\<And>x. x: A \<Longrightarrow> B x: U"
   shows "snd A B p: B (fst A B p)"
-  unfolding snd_def by ((routine facts: assms | reduce); easy?)+
+  unfolding snd_def by (reduce | routine | easy)+
 
 lemma snd_of_pair [reds]:
   assumes "A: U" "\<And>x. x: A \<Longrightarrow> B x: U" "a: A" "b: B a"
   shows "snd A B <a, b> \<equiv> b"
-  unfolding snd_def by ((routine facts: assms | reduce); easy?)+
+  unfolding snd_def by (reduce | routine | easy)+
 
 
 end
