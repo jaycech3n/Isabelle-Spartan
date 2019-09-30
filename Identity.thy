@@ -69,16 +69,19 @@ schematic_goal pathcomp_assoc:
   shows "?prf:
     pathcomp A x y w p (pathcomp A y z w q r) =\<^bsub>x =\<^bsub>A\<^esub> w\<^esub>
       pathcomp A x z w (pathcomp A x y z p q) r"
-apply (rule IdE3[of p A x y q z r w]; known?)
-  apply ((routine; easy?); ((intros; easy?); (intros; easy?))+)
+apply (rule IdE4[of p A x y z _ q _ w _ r]; known?)
+  apply (forms; easy?)+
+    apply (intros; easy?; intros; easy?)+
 
-  schematic_subgoal premises for x z w q r
-    apply (rule IdE2[of q A x z r w]; known?)
-      apply ((routine; easy?); ((intros; easy?); (intros; easy?))+)
+  schematic_subgoal premises for x z q w r
+    apply (rule IdE2[of q A x z w _ r]; easy?)
+      apply (forms; easy?)+
+        apply (intros; easy?; intros; easy?)+
 
     schematic_subgoal premises for x z q
       apply (rule IdE[of q A x z]; known?)
-        apply ((routine; easy?); ((intros; easy?); (intros; easy?))+)
+        apply (forms; easy?)+
+          apply (intros; easy?; intros; easy?)+
         apply ((reduce | intros); easy?)+
     done
   done

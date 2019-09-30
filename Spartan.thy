@@ -206,37 +206,59 @@ method reduce uses facts = subst reds; ((known facts: facts)+)?
 
 subsection \<open>Identity induction\<close>
 
-(* I think we'd want to generate these automatically *)
+(* We'd want to generate these automatically *)
+
+schematic_goal IdE1:
+  assumes
+    "p: a =\<^bsub>A\<^esub> b" "a: A" "b: A" "A: U"
+    "d: D a b p"
+    "\<And>x y p. \<lbrakk>p: x =\<^bsub>A\<^esub> y; x: A; y: A\<rbrakk> \<Longrightarrow> D x y p: U"
+    "\<And>x y p d. \<lbrakk>p: x =\<^bsub>A\<^esub> y; x: A; y: A; d: D x y p\<rbrakk> \<Longrightarrow> C x y p d: U"
+    "\<And>x d. \<lbrakk>x: A; d: D x x (refl x)\<rbrakk> \<Longrightarrow> f x d: C x x (refl x) d"
+  shows
+    "(IdInd A (\<lambda>x y p. \<Prod>d: D x y p. C x y p d) ?f a b p) `d : C a b p d"
+  by (routine facts: assms; easy?) (forms | intros | (easy facts: assms)+)+
 
 schematic_goal IdE2:
   assumes
-    "p: a =\<^bsub>A\<^esub> b" "a: A" "b: A"
-    "q: b =\<^bsub>A\<^esub> c" "c: A" "A: U"
-    "\<And>x y z p q. \<lbrakk>p: x =\<^bsub>A\<^esub> y; q: y =\<^bsub>A\<^esub> z; x: A; y: A; z: A\<rbrakk> \<Longrightarrow> C x y z p q: U"
-    "\<And>x z q. \<lbrakk>x: A; z: A; q: x =\<^bsub>A\<^esub> z\<rbrakk> \<Longrightarrow> f x z q: C x x z (refl x) q"
-  shows
-    "(IdInd A (\<lambda>x y p. \<Prod>z: A. \<Prod>q: y =\<^bsub>A\<^esub> z. C x y z p q) ?f a b p) `c `q :
-      C a b c p q"
-  by (routine facts: assms; easy?) ((forms | intros); ((easy facts: assms)+)?)+
-
-schematic_goal IdE3:
-  assumes
-    "p: a =\<^bsub>A\<^esub> b" "a: A" "b: A"
-    "q: b =\<^bsub>A\<^esub> c" "c: A"
-    "r: c =\<^bsub>A\<^esub> d" "d: A" "A: U"
-    "\<And>x y z w p q r. \<lbrakk>
-      p: x =\<^bsub>A\<^esub> y; q: y =\<^bsub>A\<^esub> z; r: z =\<^bsub>A\<^esub> w;
-      x: A; y: A; z: A; w: A
-      \<rbrakk> \<Longrightarrow> C x y z w p q r: U"
-    "\<And>x z w q r. \<lbrakk>
-      x: A; z: A; w: A;
-      q: x =\<^bsub>A\<^esub> z; r: z =\<^bsub>A\<^esub> w
-      \<rbrakk> \<Longrightarrow> f x z w q r: C x x z w (refl x) q r"
+    "p: a =\<^bsub>A\<^esub> b" "a: A" "b: A" "A: U"
+    "d1: D1 a b p" "d2: D2 a b p d1"
+    "\<And>x y p. \<lbrakk>p: x =\<^bsub>A\<^esub> y; x: A; y: A\<rbrakk> \<Longrightarrow> D1 x y p: U"
+    "\<And>x y p d1. \<lbrakk>p: x =\<^bsub>A\<^esub> y; x: A; y: A; d1: D1 x y p\<rbrakk> \<Longrightarrow> D2 x y p d1: U"
+    "\<And>x y p d1 d2. \<lbrakk>
+      p: x =\<^bsub>A\<^esub> y; x: A; y: A; d1: D1 x y p; d2: D2 x y p d1\<rbrakk> \<Longrightarrow> C x y p d1 d2: U"
+    "\<And>x d1 d2. \<lbrakk>
+      x: A; d1: D1 x x (refl x); d2: D2 x x (refl x) d1\<rbrakk> \<Longrightarrow> f x d1 d2: C x x (refl x) d1 d2"
   shows
     "(IdInd A
-      (\<lambda>x y p. \<Prod>z: A. \<Prod>w: A. \<Prod>q: y =\<^bsub>A\<^esub> z. \<Prod>r: z =\<^bsub>A\<^esub> w. C x y z w p q r) ?f a b p)
-      `c `d `q `r : C a b c d p q r"
-  by (routine facts: assms; easy?) ((forms | intros); ((easy facts: assms)+)?)+
+      (\<lambda>x y p. \<Prod>d1: D1 x y p. \<Prod>d2: D2 x y p d1. C x y p d1 d2)
+      ?f a b p) `d1 `d2 : C a b p d1 d2"
+  by (routine facts: assms; easy?) (forms | intros | (easy facts: assms)+)+
+
+schematic_goal IdE4:
+  assumes
+    "p: a =\<^bsub>A\<^esub> b" "a: A" "b: A" "A: U"
+    "d1: D1 a b p" "d2: D2 a b p d1" "d3: D3 a b p d1 d2" "d4: D4 a b p d1 d2 d3"
+    "\<And>x y p. \<lbrakk>p: x =\<^bsub>A\<^esub> y; x: A; y: A\<rbrakk> \<Longrightarrow> D1 x y p: U"
+    "\<And>x y p d1. \<lbrakk>p: x =\<^bsub>A\<^esub> y; x: A; y: A; d1: D1 x y p\<rbrakk> \<Longrightarrow> D2 x y p d1: U"
+    "\<And>x y p d1 d2. \<lbrakk>
+      p: x =\<^bsub>A\<^esub> y; x: A; y: A; d1: D1 x y p; d2: D2 x y p d1\<rbrakk> \<Longrightarrow> D3 x y p d1 d2: U"
+    "\<And>x y p d1 d2 d3. \<lbrakk>
+      p: x =\<^bsub>A\<^esub> y; x: A; y: A; d1: D1 x y p; d2: D2 x y p d1;
+      d3: D3 x y p d1 d2\<rbrakk> \<Longrightarrow> D4 x y p d1 d2 d3: U"
+    "\<And>x y p d1 d2 d3 d4. \<lbrakk>
+      p: x =\<^bsub>A\<^esub> y; x: A; y: A; d1: D1 x y p; d2: D2 x y p d1;
+      d3: D3 x y p d1 d2; d4: D4 x y p d1 d2 d3\<rbrakk> \<Longrightarrow> C x y p d1 d2 d3 d4: U"
+    "\<And>x d1 d2 d3 d4. \<lbrakk>
+      x: A; d1: D1 x x (refl x); d2: D2 x x (refl x) d1;
+      d3: D3 x x (refl x) d1 d2; d4: D4 x x (refl x) d1 d2 d3
+      \<rbrakk> \<Longrightarrow> f x d1 d2 d3 d4: C x x (refl x) d1 d2 d3 d4"
+  shows
+    "(IdInd A
+      (\<lambda>x y p. \<Prod>d1: D1 x y p. \<Prod>d2: D2 x y p d1.
+        \<Prod>d3: D3 x y p d1 d2. \<Prod>d4: D4 x y p d1 d2 d3. C x y p d1 d2 d3 d4)
+      ?f a b p) `d1 `d2 `d3 `d4: C a b p d1 d2 d3 d4"
+  by (routine facts: assms; easy?) (forms | intros | (easy facts: assms)+)+
 
 
 section \<open>Functions\<close>
@@ -346,8 +368,8 @@ schematic_goal Id_transitive_derivation:
     "?prf: x =\<^bsub>A\<^esub> z"
 
 text \<open>First induct on \<open>p: x = y\<close>.\<close>
-apply (rule IdE2[of p A x y]; known?)
-  apply (forms; easy?)
+apply (rule IdE2[of p A x y z _ q]; known?)
+  apply (forms; easy?)+
 
   text \<open>
     We could immediately conclude here, but for symmetry of the resulting term we instead
