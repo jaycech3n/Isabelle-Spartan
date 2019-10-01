@@ -153,7 +153,6 @@ axiomatization where
 
   IdI [intros]: "a: A \<Longrightarrow> refl a: a =\<^bsub>A\<^esub> a" and
 
-  \<comment>\<open>Unusual formulation of the elimination rule to allow induction in structured Isar proofs.\<close>
   IdE [elims]: "\<lbrakk>
     p: a =\<^bsub>A\<^esub> b;
     a: A;
@@ -211,59 +210,54 @@ method reduce uses facts = subst reds; ((known facts: facts)+)?
 
 subsection \<open>Identity induction\<close>
 
-(* We'd want to generate these automatically *)
+ML_file \<open>util.ML\<close>
 
-schematic_goal IdE1:
-  assumes
-    "p: a =\<^bsub>A\<^esub> b" "a: A" "b: A" "A: U"
-    "d: D a b p"
-    "\<And>x y p. \<lbrakk>p: x =\<^bsub>A\<^esub> y; x: A; y: A\<rbrakk> \<Longrightarrow> D x y p: U"
-    "\<And>x y p d. \<lbrakk>p: x =\<^bsub>A\<^esub> y; x: A; y: A; d: D x y p\<rbrakk> \<Longrightarrow> C x y p d: U"
-    "\<And>x d. \<lbrakk>x: A; d: D x x (refl x)\<rbrakk> \<Longrightarrow> f x d: C x x (refl x) d"
-  shows
-    "(IdInd A (\<lambda>x y p. \<Prod>d: D x y p. C x y p d) ?f a b p) `d : C a b p d"
-  by (rule PiE) (routine | easy)+
+ML \<open>
+local
 
-schematic_goal IdE2:
-  assumes
-    "p: a =\<^bsub>A\<^esub> b" "a: A" "b: A" "A: U"
-    "d1: D1 a b p" "d2: D2 a b p d1"
-    "\<And>x y p. \<lbrakk>p: x =\<^bsub>A\<^esub> y; x: A; y: A\<rbrakk> \<Longrightarrow> D1 x y p: U"
-    "\<And>x y p d1. \<lbrakk>p: x =\<^bsub>A\<^esub> y; x: A; y: A; d1: D1 x y p\<rbrakk> \<Longrightarrow> D2 x y p d1: U"
-    "\<And>x y p d1 d2. \<lbrakk>
-      p: x =\<^bsub>A\<^esub> y; x: A; y: A; d1: D1 x y p; d2: D2 x y p d1\<rbrakk> \<Longrightarrow> C x y p d1 d2: U"
-    "\<And>x d1 d2. \<lbrakk>
-      x: A; d1: D1 x x (refl x); d2: D2 x x (refl x) d1\<rbrakk> \<Longrightarrow> f x d1 d2: C x x (refl x) d1 d2"
-  shows
-    "(IdInd A
-      (\<lambda>x y p. \<Prod>d1: D1 x y p. \<Prod>d2: D2 x y p d1. C x y p d1 d2)
-      ?f a b p) `d1 `d2 : C a b p d1 d2"
-  by (rule PiE)+ (routine | easy)+
+(* Number of distinct subterms in `tms` that appear in `tm` *)
+fun subterm_count tms tm = length (filter I (map (fn t => Util.has_subterm [t] tm) tms))
 
-schematic_goal IdE4:
-  assumes
-    "p: a =\<^bsub>A\<^esub> b" "a: A" "b: A" "A: U"
-    "d1: D1 a b p" "d2: D2 a b p d1" "d3: D3 a b p d1 d2" "d4: D4 a b p d1 d2 d3"
-    "\<And>x y p. \<lbrakk>p: x =\<^bsub>A\<^esub> y; x: A; y: A\<rbrakk> \<Longrightarrow> D1 x y p: U"
-    "\<And>x y p d1. \<lbrakk>p: x =\<^bsub>A\<^esub> y; x: A; y: A; d1: D1 x y p\<rbrakk> \<Longrightarrow> D2 x y p d1: U"
-    "\<And>x y p d1 d2. \<lbrakk>
-      p: x =\<^bsub>A\<^esub> y; x: A; y: A; d1: D1 x y p; d2: D2 x y p d1\<rbrakk> \<Longrightarrow> D3 x y p d1 d2: U"
-    "\<And>x y p d1 d2 d3. \<lbrakk>
-      p: x =\<^bsub>A\<^esub> y; x: A; y: A; d1: D1 x y p; d2: D2 x y p d1;
-      d3: D3 x y p d1 d2\<rbrakk> \<Longrightarrow> D4 x y p d1 d2 d3: U"
-    "\<And>x y p d1 d2 d3 d4. \<lbrakk>
-      p: x =\<^bsub>A\<^esub> y; x: A; y: A; d1: D1 x y p; d2: D2 x y p d1;
-      d3: D3 x y p d1 d2; d4: D4 x y p d1 d2 d3\<rbrakk> \<Longrightarrow> C x y p d1 d2 d3 d4: U"
-    "\<And>x d1 d2 d3 d4. \<lbrakk>
-      x: A; d1: D1 x x (refl x); d2: D2 x x (refl x) d1;
-      d3: D3 x x (refl x) d1 d2; d4: D4 x x (refl x) d1 d2 d3
-      \<rbrakk> \<Longrightarrow> f x d1 d2 d3 d4: C x x (refl x) d1 d2 d3 d4"
-  shows
-    "(IdInd A
-      (\<lambda>x y p. \<Prod>d1: D1 x y p. \<Prod>d2: D2 x y p d1.
-        \<Prod>d3: D3 x y p d1 d2. \<Prod>d4: D4 x y p d1 d2 d3. C x y p d1 d2 d3 d4)
-      ?f a b p) `d1 `d2 `d3 `d4: C a b p d1 d2 d3 d4"
-  by (rule PiE)+ (routine | easy)+
+in
+
+(* Context assumptions that have already been pushed into the type family *)
+structure Equality_Inserts = Proof_Data (
+  type T = term Item_Net.T
+  val init = K (Item_Net.init Term.aconv_untyped single)
+)
+
+(* Needs to be a context_tactic because we update the proof data above *)
+fun equality_context_tac factref (ctxt, st) =
+  let
+    val eq_th = Proof_Context.get_fact_single ctxt factref
+    val (p, (A, x, y)) = (Util.dest_typing ##> Util.dest_Id) (Thm.prop_of eq_th)
+
+    val hyps =
+      Facts.props (Proof_Context.facts_of ctxt)
+      |> map (Util.dest_typing o Thm.prop_of o fst)
+      |> filter_out (fn (t, _) => Item_Net.member (Equality_Inserts.get ctxt) t)
+      |> map (fn (t, T) => ((t, T), subterm_count [p, x, y] T))
+      |> filter (fn (_, i) => i > 0)
+      |> sort (fn ((_, i), (_, j)) => int_ord (j, i))
+      |> map #1
+
+    val ctxt' = ctxt
+      |> Equality_Inserts.map (fold (fn (t, _) => fn net => Item_Net.update t net) hyps)
+
+    val equality_tac = Subgoal.FOCUS_PREMS (fn {concl, ...} =>
+      no_tac
+      ) ctxt
+  in
+    Seq.make_results (
+      Seq.lift (fn st => fn ctxt => (ctxt, st)) (HEADGOAL equality_tac st) ctxt')
+  end
+
+end
+\<close>
+
+method_setup equality =
+  \<open>Scan.lift Parse.thm >> (fn (factref, _) => fn ctxt =>
+    CONTEXT_METHOD (K (equality_context_tac factref)))\<close>
 
 
 section \<open>Functions\<close>
@@ -349,7 +343,7 @@ done
 
 (* TODO: automatically generate definitions for the terms derived in the above manner. *)
 
-definition "pathinv A x y p \<equiv> IdInd A (\<lambda>x y _. (y =\<^bsub>A\<^esub> x)) (\<lambda>x. refl x) x y p"
+definition "pathinv A x y p \<equiv> IdInd A (\<lambda>x y _. y =\<^bsub>A\<^esub> x) (\<lambda>x. refl x) x y p"
 
 lemma Id_symmetric:
   assumes
@@ -371,8 +365,28 @@ schematic_goal Id_transitive_derivation:
     "A: U" "x: A" "y: A" "z: A"
   shows
     "?prf: x =\<^bsub>A\<^esub> z"
+(*
+  Induct on "p: x = y", so introduce an application for any term in the assumptions whose
+  type depends on p, x, or y, then induct.
+  In this case: only q.
+*)
+apply (equality \<open>p: _\<close>)
+apply (rule PiE[where ?B="\<lambda>q. x =\<^bsub>A\<^esub> z" and ?a=q]; known?)
+apply (rule IdE[of p A x y]; known?)
+  apply (forms; easy?)+
 
-text \<open>First induct on \<open>p: x = y\<close>.\<close>
+  (* Inner induction *)
+  apply (intros; (forms; easy)?)+ \<comment>\<open>Pull out the identity and solve the side condition\<close>
+  apply (equality \<open>p: _\<close>)
+  schematic_subgoal premises for x q
+    apply (equality \<open>q: _\<close>)
+    apply (rule IdE[of q _ x z])
+      apply (routine | easy)+
+  done
+done
+    
+
+(* text \<open>First induct on \<open>p: x = y\<close>.\<close>
 apply (rule IdE2[of p A x y z _ q]; known?)
   apply (forms; easy?)+
 
@@ -385,13 +399,13 @@ apply (rule IdE2[of p A x y z _ q]; known?)
       apply (forms; easy)
       apply (intros; easy)
   done
-done
+done *)
 
 definition "pathcomp A x y z p q \<equiv>
   (IdInd A
-    (\<lambda>x y _. \<Prod>z: A. y =\<^bsub>A\<^esub> z \<rightarrow> x =\<^bsub>A\<^esub> z)
-    (\<lambda>x. \<lambda>z: A. \<lambda>q: x =\<^bsub>A\<^esub> z. IdInd A (\<lambda>x z _. (x =\<^bsub>A\<^esub> z)) (\<lambda>x. refl x) x z q)
-    x y p) `z `q"
+    (\<lambda>x y _. y =\<^bsub>A\<^esub> z \<rightarrow> x =\<^bsub>A\<^esub> z)
+    (\<lambda>x. \<lambda>q: x =\<^bsub>A\<^esub> z. IdInd A (\<lambda>x z _. (x =\<^bsub>A\<^esub> z)) (\<lambda>x. refl x) x z q)
+    x y p) `q"
 
 lemma Id_transitive:
   assumes

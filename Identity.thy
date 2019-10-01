@@ -72,9 +72,6 @@ apply (rule IdE4[of p A x y z _ q _ w _ r]; known?)
   done
 done
 
-thm intros
-thm elims
-
 schematic_goal Id_transfer_derivation:
   assumes
     "x: A" "y: A" "p: x =\<^bsub>A\<^esub> y"
