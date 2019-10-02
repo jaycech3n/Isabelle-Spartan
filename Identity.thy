@@ -16,27 +16,31 @@ method eqs = rule eqs
 schematic_goal pathcomp_left_refl [eqs]:
   assumes "A: U" "x: A" "y: A" "p: x =\<^bsub>A\<^esub> y"
   shows "?prf: pathcomp A x x y (refl x) p =\<^bsub>x=\<^bsub>A\<^esub> y\<^esub> p"
-  by (rule IdE[of p A x y]) (reduce | routine facts: Id_transitive | easy)+
+  by (equality \<open>p: _\<close>) ((rule Id_transitive; routine), (reduce; routine))
 
 schematic_goal pathcomp_right_refl [eqs]:
   assumes "A: U" "x: A" "y: A" "p: x =\<^bsub>A\<^esub> y"
   shows "?prf: pathcomp A x y y p (refl y) =\<^bsub>x=\<^bsub>A\<^esub> y\<^esub> p"
-  by (rule IdE[of p A x y]) (reduce | routine facts: Id_transitive | easy)+
+  by (equality \<open>p: _\<close>) ((rule Id_transitive; routine), (reduce; routine))
 
 schematic_goal pathcomp_left_inv [eqs]:
   assumes "A: U" "x: A" "y: A" "p: y =\<^bsub>A\<^esub> x"
   shows "?prf: pathcomp A x y x (pathinv A y x p) p =\<^bsub>x =\<^bsub>A\<^esub> x\<^esub> (refl x)"
-  by (rule IdE[of p A y x]) (reduce | routine facts: Id_transitive Id_symmetric | easy)+
+  by (equality \<open>p: _\<close>) (((rule Id_transitive Id_symmetric)+; routine?), (reduce+; routine))
 
 schematic_goal pathcomp_right_inv [eqs]:
   assumes "A: U" "x: A" "y: A" "p: x =\<^bsub>A\<^esub> y"
   shows "?prf: pathcomp A x y x p (pathinv A x y p) =\<^bsub>x =\<^bsub>A\<^esub> x\<^esub> (refl x)"
-  by (rule IdE[of p A x y]) (reduce | routine facts: Id_transitive Id_symmetric | easy)+
+apply (equality \<open>p: _\<close>)
+  apply (rule Id_transitive; routine?)
+    apply (rule Id_symmetric; routine?)
+  apply (reduce+; routine)
+done
 
 schematic_goal pathinv_pathinv [eqs]:
   assumes "A: U" "x: A" "y: A" "p: x =\<^bsub>A\<^esub> y"
   shows "?prf: pathinv A y x (pathinv A x y p) =\<^bsub>x =\<^bsub>A\<^esub> y\<^esub> p"
-  by (rule IdE[of p A x y]) (reduce | routine facts: Id_symmetric | easy)+
+  by (equality \<open>p: _\<close>) (((rule Id_symmetric)+; routine), (reduce+; routine))
 
 text \<open>
   Associativity of path composition can be proved by a triply-nested path induction, which
@@ -53,31 +57,19 @@ schematic_goal pathcomp_assoc:
   shows "?prf:
     pathcomp A x y w p (pathcomp A y z w q r) =\<^bsub>x =\<^bsub>A\<^esub> w\<^esub>
       pathcomp A x z w (pathcomp A x y z p q) r"
-apply (rule IdE4[of p A x y z _ q _ w _ r]; known?)
-  apply (forms; easy?)+
-  apply ((rule Id_transitive; easy?)+) [2]
+apply (equality \<open>p: _\<close>)
+  apply ((rule Id_transitive; routine?)+) [2]
 
-  schematic_subgoal premises for x z q w r
-    apply (rule IdE2[of q A x z w _ r]; easy?)
-      apply (forms; easy?)
-      apply (forms; easy?)+
-        apply ((rule Id_transitive; ((intros | easy)+)?)+) [2]
-
-      schematic_subgoal premises for x z q
-        apply (rule IdE[of q A x z]; known?)
-          apply (forms; easy?)+
-            apply ((rule Id_transitive; ((intros | easy)+)?)+) [2]
-          apply ((reduce | intros); easy?)+
-      done
-  done
-done
+  schematic_subgoal premises prems for x q
+    apply (equality \<open>q: _\<close>)
+oops
 
 schematic_goal Id_transfer_derivation:
   assumes
     "x: A" "y: A" "p: x =\<^bsub>A\<^esub> y"
     "f: A \<rightarrow> B" "A: U" "B: U"
   shows "?prf: f `x =\<^bsub>B\<^esub> f `y"
-  by (rule IdE[of p]; (routine | easy)+)
+  by (equality \<open>p: _\<close>) routine
 
 definition "ap f A B x y p \<equiv> IdInd A (\<lambda>x y _. f `x =\<^bsub>B\<^esub> f `y) (\<lambda>x. refl (f `x)) x y p"
 
@@ -91,7 +83,7 @@ lemma Id_transfer:
 lemma ap_comp [reds]:
   assumes "f: A \<rightarrow> B" "A: U" "B: U" "x: A"
   shows "ap f A B x x (refl x) \<equiv> refl (f `x)"
-  unfolding ap_def by (reduce | routine | easy)+
+  unfolding ap_def by (reduce | routine)+
 
 
 end

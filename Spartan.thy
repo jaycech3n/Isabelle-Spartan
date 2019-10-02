@@ -178,11 +178,15 @@ ML_file "~~/src/Tools/IsaPlanner/zipper.ML"
 ML_file "~~/src/Tools/eqsubst.ML"
 
 ML \<open>
+(* An assumption tactic that doesn't instantiate schematic variables *)
+val assm'_tac = Subgoal.FOCUS (fn {context, prems, ...} =>
+  HEADGOAL (resolve_tac context prems))
+
 fun known_raw_tac ctxt = SUBGOAL (fn (_, i) =>
   let
     val ths = map fst (Facts.props (Proof_Context.facts_of ctxt))
   in
-    resolve_tac ctxt ths i
+    resolve_tac ctxt ths i ORELSE assm'_tac ctxt i
   end)
 \<close>
 
@@ -190,7 +194,6 @@ method_setup known_raw =
   \<open>Scan.succeed (fn ctxt => SIMPLE_METHOD (HEADGOAL (known_raw_tac ctxt)))\<close>
 
 method known uses facts = (rule facts | known_raw)
-method easy uses facts = (known facts: facts | assumption | simp)
 
 method forms = rule forms
 
@@ -211,6 +214,8 @@ method reduce uses facts = subst reds; ((known facts: facts)+)?
 subsection \<open>Identity induction\<close>
 
 ML_file \<open>util.ML\<close>
+
+ML \<open>Util.subterm_order @{term "T y"} @{term x}\<close>
 
 ML \<open>
 local
@@ -235,21 +240,77 @@ fun equality_context_tac factref (ctxt, st) =
     val hyps =
       Facts.props (Proof_Context.facts_of ctxt)
       |> map (Util.dest_typing o Thm.prop_of o fst)
-      |> filter_out (fn (t, _) => Item_Net.member (Equality_Inserts.get ctxt) t)
+      |> filter_out (fn (t, _) =>
+          Term.aconv (t, p) orelse Item_Net.member (Equality_Inserts.get ctxt) t)
       |> map (fn (t, T) => ((t, T), subterm_count [p, x, y] T))
       |> filter (fn (_, i) => i > 0)
-      |> sort (fn ((_, i), (_, j)) => int_ord (j, i))
+      |> sort (fn (((t1, _), i), ((_, T2), j)) =>
+          Util.cond_order (Util.subterm_order T2 t1) (int_ord (j, i)))
+        (*
+          ^ `t1: T1` comes before `t2: T2` if T1 contains t2 as subterm.
+          If they are incomparable, then order by decreasing `subterm_count [p, x, y] T`.
+        *)
       |> map #1
 
     val ctxt' = ctxt
       |> Equality_Inserts.map (fold (fn (t, _) => fn net => Item_Net.update t net) hyps)
 
-    val equality_tac = Subgoal.FOCUS_PREMS (fn {concl, ...} =>
-      no_tac
-      ) ctxt
+    fun hyp_tac t ctxt = Subgoal.FOCUS_PARAMS (fn {context, concl, ...} =>
+      let
+        val (_, C) = Util.dest_typing (Thm.term_of concl)
+        val B = Thm.cterm_of context (lambda t C)
+        val a = Thm.cterm_of context t
+        (* The resolvent is PiE[where ?B=B and ?a=a] *)
+        val resolvent = Drule.infer_instantiate' context [NONE, NONE, SOME B, SOME a] @{thm PiE}
+      in
+        HEADGOAL (resolve_tac context [resolvent])
+        THEN ALLGOALS (TRY o (known_raw_tac context))
+      end) ctxt
+
+    fun equality_tac ctxt = Subgoal.FOCUS_PREMS (fn {context, ...} =>
+      let
+        val push_hyps_tac =
+          fold (fn (t, _) => fn tac => tac THEN HEADGOAL (hyp_tac t context)) hyps all_tac
+
+        val pathind_tac =
+          let
+            val [p, A, x, y] = map (Thm.cterm_of context) [p, A, x, y]
+          in
+            HEADGOAL (resolve_tac context
+              [Drule.infer_instantiate' context [SOME p, SOME A, SOME x, SOME y] @{thm IdE}])
+          end
+
+        val pull_hyps_tac = SUBGOAL (fn (_, i) =>
+          REPEAT_DETERM_N (length hyps) (resolve_tac context @{thms PiI} i))
+
+        fun side_conds_tac ths =
+          known_raw_tac context
+          ORELSE' (
+            resolve_tac context ths
+            THEN' (TRY o known_raw_tac context)
+          )
+
+        val forms = Named_Theorems.get context \<^named_theorems>\<open>forms\<close>
+        val intros = Named_Theorems.get context \<^named_theorems>\<open>intros\<close>
+      in
+        (* Push the necessary Isar hypotheses into the type family *)
+        push_hyps_tac
+
+        (* Identity induction *)
+        THEN (
+          pathind_tac
+          THEN ALLGOALS (TRY o REPEAT o (side_conds_tac forms))
+        )
+
+        (* Pull hypotheses back out into the Isar context *)
+        THEN (
+          SOMEGOAL pull_hyps_tac
+          THEN ALLGOALS (TRY o REPEAT o (side_conds_tac (forms @ intros)))
+        )
+      end) ctxt
   in
     Seq.make_results (
-      Seq.lift (fn st => fn ctxt => (ctxt, st)) (HEADGOAL equality_tac st) ctxt')
+      Seq.lift (fn st => fn ctxt => (ctxt, st)) (HEADGOAL (equality_tac ctxt) st) ctxt')
   end
 
 end
@@ -292,7 +353,7 @@ lemma funcomp_assoc:
   shows
     "(h \<circ>\<^bsub>B\<^esub> g) \<circ>\<^bsub>A\<^esub> f \<equiv> h \<circ>\<^bsub>A\<^esub> g \<circ>\<^bsub>A\<^esub> f"
   unfolding funcomp_def
-  by (congs; known?) (reduce | routine | easy)+
+  by (congs; known?) (reduce | routine)+
 
 lemma funcomp_comp [reds]:
   assumes
@@ -302,7 +363,7 @@ lemma funcomp_comp [reds]:
   shows
     "(\<lambda>x: B. c x) \<circ>\<^bsub>A\<^esub> (\<lambda>x: A. b x) \<equiv> \<lambda>x: A. c (b x)"
   unfolding funcomp_def
-  by (congs; known?) (reduce | easy)+
+  by (congs; known?) reduce+
 
 subsection \<open>Identity function\<close>
 
@@ -310,7 +371,7 @@ definition id where "id A \<equiv> \<lambda>x: A. x"
 
 lemma idI: "A: U \<Longrightarrow> id A: A \<rightarrow> A"
   and id_comp [reds]: "x: A \<Longrightarrow> (id A) `x \<equiv> x"
-  unfolding id_def by (intros; easy?) reduce
+  unfolding id_def by (intros; known) reduce
 
 lemma id_left [reds]:
   assumes
@@ -318,7 +379,7 @@ lemma id_left [reds]:
   shows
     "(id B) \<circ>\<^bsub>A\<^esub> f \<equiv> f"
   unfolding id_def
-  by (subst eta[symmetric, of f]; easy?) (reduce; (routine facts: eta)?)
+  by (subst eta[symmetric, of f]; known?) (reduce; (routine facts: eta)?)
 
 lemma id_right [reds]:
   assumes
@@ -326,7 +387,7 @@ lemma id_right [reds]:
   shows
     "f \<circ>\<^bsub>A\<^esub> (id A) \<equiv> f"
   unfolding id_def
-  by (subst eta[symmetric, of f]; easy?) (reduce; (routine facts: eta)?)
+  by (subst eta[symmetric, of f]; known?) (reduce; (routine facts: eta)?)
 
 
 section \<open>Identity\<close>
@@ -336,10 +397,7 @@ schematic_goal Id_symmetric_derivation:
     "p: x =\<^bsub>A\<^esub> y" "x: A" "y: A" "A: U"
   shows
     "?prf: y =\<^bsub>A\<^esub> x"
-apply (rule IdE[of _ _ x y]; known?)
-  apply (forms; easy)
-  apply (intros; easy)
-done
+  by (equality \<open>p: _\<close>)
 
 (* TODO: automatically generate definitions for the terms derived in the above manner. *)
 
@@ -357,7 +415,7 @@ lemma pathinv_comp [reds]:
     "x: A" "A: U"
   shows
     "pathinv A x x (refl x) \<equiv> refl x"
-  unfolding pathinv_def by reduce (routine; easy)+
+  unfolding pathinv_def by reduce routine
 
 schematic_goal Id_transitive_derivation:
   assumes
@@ -365,41 +423,11 @@ schematic_goal Id_transitive_derivation:
     "A: U" "x: A" "y: A" "z: A"
   shows
     "?prf: x =\<^bsub>A\<^esub> z"
-(*
-  Induct on "p: x = y", so introduce an application for any term in the assumptions whose
-  type depends on p, x, or y, then induct.
-  In this case: only q.
-*)
 apply (equality \<open>p: _\<close>)
-apply (rule PiE[where ?B="\<lambda>q. x =\<^bsub>A\<^esub> z" and ?a=q]; known?)
-apply (rule IdE[of p A x y]; known?)
-  apply (forms; easy?)+
-
-  (* Inner induction *)
-  apply (intros; (forms; easy)?)+ \<comment>\<open>Pull out the identity and solve the side condition\<close>
-  apply (equality \<open>p: _\<close>)
   schematic_subgoal premises for x q
     apply (equality \<open>q: _\<close>)
-    apply (rule IdE[of q _ x z])
-      apply (routine | easy)+
   done
 done
-    
-
-(* text \<open>First induct on \<open>p: x = y\<close>.\<close>
-apply (rule IdE2[of p A x y z _ q]; known?)
-  apply (forms; easy?)+
-
-  text \<open>
-    We could immediately conclude here, but for symmetry of the resulting term we instead
-    induct on \<open>q: x = z\<close>.
-  \<close>
-  schematic_subgoal for x z q
-    apply (rule IdE[of q _ x z]; easy?)
-      apply (forms; easy)
-      apply (intros; easy)
-  done
-done *)
 
 definition "pathcomp A x y z p q \<equiv>
   (IdInd A
@@ -417,7 +445,7 @@ lemma Id_transitive:
 
 lemma pathcomp_comp [reds]:
   "\<lbrakk>A: U; a: A\<rbrakk> \<Longrightarrow> pathcomp A a a a (refl a) (refl a) \<equiv> refl a"
-  unfolding pathcomp_def by (reduce | routine | easy)+
+  unfolding pathcomp_def by (reduce | routine)+
 
 
 section \<open>Pairs\<close>
@@ -435,12 +463,12 @@ lemma fst_of_pair [reds]:
 lemma snd [elims]:
   assumes "p: \<Sum>x: A. B x" "A: U" "\<And>x. x: A \<Longrightarrow> B x: U"
   shows "snd A B p: B (fst A B p)"
-  unfolding snd_def by (reduce | routine | easy)+
+  unfolding snd_def by (reduce | routine)+
 
 lemma snd_of_pair [reds]:
   assumes "A: U" "\<And>x. x: A \<Longrightarrow> B x: U" "a: A" "b: B a"
   shows "snd A B <a, b> \<equiv> b"
-  unfolding snd_def by (reduce | routine | easy)+
+  unfolding snd_def by (reduce | routine)+
 
 
 end
