@@ -1,7 +1,7 @@
 session Spartan = Pure +
-  description {* Spartan type theory *}
+  description \<open>Spartan type theory\<close>
   sessions
     "HOL-Eisbach"
   theories
     Spartan
-
+    Identity

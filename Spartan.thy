@@ -114,18 +114,18 @@ axiomatization where
 
   SigE [elims]: "\<lbrakk>
     p: \<Sum>x: A. B x;
-    \<And>x y. \<lbrakk>x: A; y: B x\<rbrakk> \<Longrightarrow> f x y: C <x,y>;
-    \<And>p. p: \<Sum>x: A. B x \<Longrightarrow> C p: U;
     A: U;
-    \<And>x. x : A \<Longrightarrow> B x: U
+    \<And>x. x : A \<Longrightarrow> B x: U;
+    \<And>p. p: \<Sum>x: A. B x \<Longrightarrow> C p: U;
+    \<And>x y. \<lbrakk>x: A; y: B x\<rbrakk> \<Longrightarrow> f x y: C <x,y>
     \<rbrakk> \<Longrightarrow> SigInd A B C f p: C p" and
 
   Sig_comp [reds]: "\<lbrakk>
     a: A;
     b: B a;
-    \<And>x y. \<lbrakk>x: A; y: B x\<rbrakk> \<Longrightarrow> f x y: C <x,y>;
+    \<And>x. x : A \<Longrightarrow> B x: U;
     \<And>p. p: \<Sum>x: A. B x \<Longrightarrow> C p: U;
-    \<And>x. x : A \<Longrightarrow> B x: U
+    \<And>x y. \<lbrakk>x: A; y: B x\<rbrakk> \<Longrightarrow> f x y: C <x,y>
     \<rbrakk> \<Longrightarrow> SigInd A B C f <a, b> \<equiv> f a b" and
 
   Sig_cong [congs]: "\<lbrakk>
