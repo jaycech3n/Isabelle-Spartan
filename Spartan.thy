@@ -215,26 +215,51 @@ subsection \<open>Identity induction\<close>
 
 ML_file \<open>util.ML\<close>
 
-ML \<open>Util.subterm_order @{term "T y"} @{term x}\<close>
-
 ML \<open>
-local
-
-(* Number of distinct subterms in `tms` that appear in `tm` *)
-fun subterm_count tms tm = length (filter I (map (fn t => Util.has_subterm [t] tm) tms))
-
-in
-
 (* Context assumptions that have already been pushed into the type family *)
 structure Equality_Inserts = Proof_Data (
   type T = term Item_Net.T
   val init = K (Item_Net.init Term.aconv_untyped single)
 )
 
-(* Needs to be a context_tactic because we update the proof data above *)
-fun equality_context_tac factref (ctxt, st) =
+local
+
+(* Number of distinct subterms in `tms` that appear in `tm` *)
+fun subterm_count tms tm = length (filter I (map (fn t => Util.has_subterm [t] tm) tms))
+
+fun push_hyp_tac t = Subgoal.FOCUS_PARAMS (fn {context = ctxt, concl, ...} =>
   let
-    val eq_th = Proof_Context.get_fact_single ctxt factref
+    val (_, C) = Util.dest_typing (Thm.term_of concl)
+    val B = Thm.cterm_of ctxt (lambda t C)
+    val a = Thm.cterm_of ctxt t
+    (* The resolvent is PiE[where ?B=B and ?a=a] *)
+    val resolvent = Drule.infer_instantiate' ctxt [NONE, NONE, SOME B, SOME a] @{thm PiE}
+  in
+    HEADGOAL (resolve_tac ctxt [resolvent])
+    THEN SOMEGOAL (known_raw_tac ctxt)
+  end)
+
+fun induction_tac p A x y ctxt =
+  let
+    val [p, A, x, y] = map (Thm.cterm_of ctxt) [p, A, x, y]
+  in
+    HEADGOAL (resolve_tac ctxt
+      [Drule.infer_instantiate' ctxt [SOME p, SOME A, SOME x, SOME y] @{thm IdE}])
+  end
+
+fun side_conds_tac ctxt =
+  let
+    val intros = Named_Theorems.get ctxt \<^named_theorems>\<open>intros\<close>
+    val forms = Named_Theorems.get ctxt \<^named_theorems>\<open>forms\<close>
+  in
+    REPEAT o CHANGED o (known_raw_tac ctxt ORELSE' resolve_tac ctxt (intros @ forms))
+  end
+
+in
+
+fun equality_context_tac fact ctxt =
+  let
+    val eq_th = Proof_Context.get_fact_single ctxt fact
     val (p, (A, x, y)) = (Util.dest_typing ##> Util.dest_Id) (Thm.prop_of eq_th)
 
     val hyps =
@@ -244,81 +269,37 @@ fun equality_context_tac factref (ctxt, st) =
           Term.aconv (t, p) orelse Item_Net.member (Equality_Inserts.get ctxt) t)
       |> map (fn (t, T) => ((t, T), subterm_count [p, x, y] T))
       |> filter (fn (_, i) => i > 0)
+      (*
+        `t1: T1` comes before `t2: T2` if T1 contains t2 as subterm.
+        If they are incomparable, then order by decreasing `subterm_count [p, x, y] T`.
+      *)
       |> sort (fn (((t1, _), i), ((_, T2), j)) =>
           Util.cond_order (Util.subterm_order T2 t1) (int_ord (j, i)))
-        (*
-          ^ `t1: T1` comes before `t2: T2` if T1 contains t2 as subterm.
-          If they are incomparable, then order by decreasing `subterm_count [p, x, y] T`.
-        *)
       |> map #1
 
-    val ctxt' = ctxt
-      |> Equality_Inserts.map (fold (fn (t, _) => fn net => Item_Net.update t net) hyps)
+    val record_inserts =
+      Equality_Inserts.map (fold (fn (t, _) => fn net => Item_Net.update t net) hyps)
 
-    fun hyp_tac t ctxt = Subgoal.FOCUS_PARAMS (fn {context, concl, ...} =>
-      let
-        val (_, C) = Util.dest_typing (Thm.term_of concl)
-        val B = Thm.cterm_of context (lambda t C)
-        val a = Thm.cterm_of context t
-        (* The resolvent is PiE[where ?B=B and ?a=a] *)
-        val resolvent = Drule.infer_instantiate' context [NONE, NONE, SOME B, SOME a] @{thm PiE}
-      in
-        HEADGOAL (resolve_tac context [resolvent])
-        THEN ALLGOALS (TRY o (known_raw_tac context))
-      end) ctxt
-
-    fun equality_tac ctxt = Subgoal.FOCUS_PREMS (fn {context, ...} =>
-      let
-        val push_hyps_tac =
-          fold (fn (t, _) => fn tac => tac THEN HEADGOAL (hyp_tac t context)) hyps all_tac
-
-        val pathind_tac =
-          let
-            val [p, A, x, y] = map (Thm.cterm_of context) [p, A, x, y]
-          in
-            HEADGOAL (resolve_tac context
-              [Drule.infer_instantiate' context [SOME p, SOME A, SOME x, SOME y] @{thm IdE}])
-          end
-
-        val pull_hyps_tac = SUBGOAL (fn (_, i) =>
-          REPEAT_DETERM_N (length hyps) (resolve_tac context @{thms PiI} i))
-
-        fun side_conds_tac ths =
-          known_raw_tac context
-          ORELSE' (
-            resolve_tac context ths
-            THEN' (TRY o known_raw_tac context)
-          )
-
-        val forms = Named_Theorems.get context \<^named_theorems>\<open>forms\<close>
-        val intros = Named_Theorems.get context \<^named_theorems>\<open>intros\<close>
-      in
-        (* Push the necessary Isar hypotheses into the type family *)
-        push_hyps_tac
-
-        (* Identity induction *)
-        THEN (
-          pathind_tac
-          THEN ALLGOALS (TRY o REPEAT o (side_conds_tac forms))
-        )
-
-        (* Pull hypotheses back out into the Isar context *)
-        THEN (
-          SOMEGOAL pull_hyps_tac
-          THEN ALLGOALS (TRY o REPEAT o (side_conds_tac (forms @ intros)))
-        )
-      end) ctxt
+    val tac =
+      fold (fn (t, _) => fn tac => tac THEN HEADGOAL (push_hyp_tac t ctxt)) hyps all_tac
+      THEN (
+        induction_tac p A x y ctxt
+        THEN RANGE (replicate 3 (known_raw_tac ctxt) @ [side_conds_tac ctxt]) 1
+      )
+      THEN (
+        REPEAT_DETERM_N (length hyps) (SOMEGOAL (resolve_tac ctxt @{thms PiI}))
+        THEN ALLGOALS (side_conds_tac ctxt)
+      )
   in
-    Seq.make_results (
-      Seq.lift (fn st => fn ctxt => (ctxt, st)) (HEADGOAL (equality_tac ctxt) st) ctxt')
+    fn (ctxt, st) => Method.CONTEXT (record_inserts ctxt) (tac st)
   end
 
 end
 \<close>
 
 method_setup equality =
-  \<open>Scan.lift Parse.thm >> (fn (factref, _) => fn ctxt =>
-    CONTEXT_METHOD (K (equality_context_tac factref)))\<close>
+  \<open>Scan.lift Parse.thm >> (fn (fact, _) => fn ctxt =>
+    CONTEXT_METHOD (K (equality_context_tac fact ctxt)))\<close>
 
 
 section \<open>Functions\<close>

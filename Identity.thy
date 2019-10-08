@@ -59,10 +59,16 @@ schematic_goal pathcomp_assoc:
       pathcomp A x z w (pathcomp A x y z p q) r"
 apply (equality \<open>p: _\<close>)
   apply ((rule Id_transitive; routine?)+) [2]
-
-  schematic_subgoal premises prems for x q
+  schematic_subgoal premises for x q
     apply (equality \<open>q: _\<close>)
-oops
+      apply ((rule Id_transitive; routine?)+) [2]
+      schematic_subgoal premises for x r
+        apply (equality \<open>r: _\<close>)
+          apply ((rule Id_transitive; routine?)+) [2]
+          apply (reduce+; routine)
+      done
+  done
+done
 
 schematic_goal Id_transfer_derivation:
   assumes
