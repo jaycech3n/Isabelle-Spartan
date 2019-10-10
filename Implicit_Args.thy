@@ -43,11 +43,11 @@ fun probe (n: int) _ ts =
     ts
   end
 
-val _ = Context.>>
-  (Syntax_Phases.term_check ~5 "" (probe ~5)
+val _ = Context.>> (
+  Syntax_Phases.term_check ~5 "" (probe ~5)
   #> Syntax_Phases.term_check 0 "" (probe 0)
   (* #> Syntax_Phases.term_check 0 "" (fn _ => map (#1 o (Implicit_Args.prepped))) *)
-  #> Syntax_Phases.term_check 1 "" (probe 1))
+  )
 \<close>
 
 
@@ -62,6 +62,14 @@ abbreviation Id_i (infix "=" 100)
   where "x = y \<equiv> (x :> {A}) =\<^bsub>{A}\<^esub> (y :> {A})"
 
 term "x = y"
+
+(*
+  These need to be handled properly too...
+  the implicit arg should be different between instances!
+*)
+term "(f \<circ> g) \<circ> h"
+term "(x = y) = (x' = y')"
+term "(p :> x = y) = q"
 
 abbreviation "pathinv_i p \<equiv> pathinv {A} {x} {y} (p :> {x} =\<^bsub>{A}\<^esub> {y})"
 
