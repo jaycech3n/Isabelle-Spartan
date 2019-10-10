@@ -6,28 +6,38 @@ begin
 consts
   imp_arg   :: \<open>('a \<Rightarrow> 'a) \<Rightarrow> 'a\<close>
   imp_dummy :: \<open>'a\<close> ("?")
+  imp_annotation :: \<open>'a \<Rightarrow> 'a Type \<Rightarrow> 'a\<close> (infix ":>" 5)
 
 syntax
   "_imp_arg" :: \<open>id_position \<Rightarrow> logic\<close> ("{_}")
 translations
   "{x}" \<rightleftharpoons> "CONST imp_arg (\<lambda>x. ?)"
 
-definition imp_annotation :: \<open>'a \<Rightarrow> 'a Type \<Rightarrow> 'a\<close> (infix ":>" 5)
-  where "x :> _ \<equiv> x"
 
 ML_file \<open>implicit_args.ML\<close>
 
 ML \<open>
+fun elaborate ctxt tm =
+  let
+    val idx = Term.maxidx_of_term tm
+  in
+    tm
+  end
+\<close>
+
+ML \<open>
 fun probe (n: int) _ ts =
   let
-    fun pretty_list xs =
-      space_implode "\n" (map (fn x => "\<^item> " ^  @{make_string} x) xs)
-
     val _ = tracing (
-      "Syntax phase level " ^ @{make_string} n ^ "\n\nTerms\n-----\n" ^
+      "======== Syntax phase level " ^ @{make_string} n ^ " ========\nTerms\n-----\n" ^
       (space_implode "\n" (map (fn t => "\<^item> " ^  @{make_string} t) ts)) ^
+      "\n\nImplicit args\n-------------\n" ^
+      (space_implode "\n" (map (fn x => "\<^item> " ^  @{make_string} x) (map Implicit_Args.iargs_of ts))) ^
       "\n\nAnnotations\n-----------\n" ^
-      pretty_list (map Implicit_Args.annotations_of ts)
+      (space_implode "\n" (map (fn x => "\<^item> " ^  @{make_string} x) (map Implicit_Args.raw_annotations_of ts))) ^
+      "\n\nPrepped\n-------\n" ^
+      (space_implode "\n" (map (fn x => "\<^item> " ^  @{make_string} x) (map Implicit_Args.prepped ts))) ^
+      "\n\n^^^^^^^^ Syntax phase level " ^ @{make_string} n ^ " ^^^^^^^^"
     )
   in
     ts
@@ -36,6 +46,7 @@ fun probe (n: int) _ ts =
 val _ = Context.>>
   (Syntax_Phases.term_check ~5 "" (probe ~5)
   #> Syntax_Phases.term_check 0 "" (probe 0)
+  (* #> Syntax_Phases.term_check 0 "" (fn _ => map (#1 o (Implicit_Args.prepped))) *)
   #> Syntax_Phases.term_check 1 "" (probe 1))
 \<close>
 
@@ -49,6 +60,8 @@ abbreviation funcomp_i (infixr "\<circ>" 100)
 
 abbreviation Id_i (infix "=" 100)
   where "x = y \<equiv> (x :> {A}) =\<^bsub>{A}\<^esub> (y :> {A})"
+
+term "x = y"
 
 abbreviation "pathinv_i p \<equiv> pathinv {A} {x} {y} (p :> {x} =\<^bsub>{A}\<^esub> {y})"
 
