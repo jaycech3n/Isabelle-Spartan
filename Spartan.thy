@@ -57,16 +57,16 @@ axiomatization where hierarchy [forms]: "U: U"
 subsection \<open>\<Prod>-type\<close>
 
 axiomatization
-  Pi :: \<open>['a Type, 'a \<Rightarrow> 'b Type] \<Rightarrow> ('a, 'b) Pi Type\<close> and
-  lam  :: \<open>['a Type, 'a \<Rightarrow> 'b] \<Rightarrow> ('a, 'b) Pi\<close> and
-  app  :: \<open>[('a, 'b) Pi, 'a] \<Rightarrow> 'b\<close> ("(1_ `_)" [120, 121] 120)
+  Pi  :: \<open>['a Type, 'a \<Rightarrow> 'b Type] \<Rightarrow> ('a, 'b) Pi Type\<close> and
+  lam :: \<open>['a Type, 'a \<Rightarrow> 'b] \<Rightarrow> ('a, 'b) Pi\<close> and
+  app :: \<open>[('a, 'b) Pi, 'a] \<Rightarrow> 'b\<close> ("(1_ `_)" [120, 121] 120)
 
 syntax
   "_Pi"  :: \<open>[pttrn, 'a Type, 'b Type] \<Rightarrow> ('a, 'b) Pi Type\<close> ("(2\<Prod>_: _./ _)" 30)
   "_lam" :: \<open>[pttrn, 'a Type, 'b] \<Rightarrow> 'b\<close> ("(2\<lambda>_: _./ _)" 30)
 translations
-  "\<Prod>x: A. B" \<rightleftharpoons> "(CONST Pi) A (\<lambda>x. B)"
-  "\<lambda>x: A. b" \<rightleftharpoons> "(CONST lam) A (\<lambda>x. b)"
+  "\<Prod>x: A. B" \<rightleftharpoons> "CONST Pi A (\<lambda>x. B)"
+  "\<lambda>x: A. b" \<rightleftharpoons> "CONST lam A (\<lambda>x. b)"
 
 abbreviation Fn (infixr "\<rightarrow>" 40) where "A \<rightarrow> B \<equiv> \<Prod>_: A. B"
 
@@ -102,7 +102,7 @@ axiomatization
 syntax
   "_Sum" :: \<open>[idt, 'a Type, 'b Type] \<Rightarrow> ('a, 'b) Sig Type\<close> ("(2\<Sum>_: _./ _)" 20)
 translations
-  "\<Sum>x: A. B" \<rightleftharpoons> "(CONST Sig) A (\<lambda>x. B)"
+  "\<Sum>x: A. B" \<rightleftharpoons> "CONST Sig A (\<lambda>x. B)"
 
 abbreviation Cart (infixr "\<times>" 50)
   where "A \<times> B \<equiv> \<Sum>_: A. B"
@@ -146,7 +146,7 @@ axiomatization
 syntax
   "_Id" :: \<open>['a, 'a Type, 'a] \<Rightarrow> 'a Id Type\<close> ("(2_ =\<^bsub>_\<^esub>/ _)" [101, 0, 101] 100)
 translations
-  "a =\<^bsub>A\<^esub> b" \<rightleftharpoons> "(CONST Id) A a b"
+  "a =\<^bsub>A\<^esub> b" \<rightleftharpoons> "CONST Id A a b"
 
 axiomatization where
   IdF [forms]: "\<lbrakk>A: U; a: A; b: A\<rbrakk> \<Longrightarrow> a =\<^bsub>A\<^esub> b: U" and
@@ -310,9 +310,9 @@ definition funcomp :: \<open>['a Type, ('b, 'c) Pi, ('a, 'b) Pi] \<Rightarrow> (
   where "funcomp A g f \<equiv> \<lambda>x: A. g `(f `x)"
 
 syntax
-  "_funcomp" :: "[('b, 'c) Pi, 'a Type, ('a, 'b) Pi] \<Rightarrow> ('a, 'c) Pi" ("(2_ \<circ>\<^bsub>_\<^esub>/ _)" [111, 0, 110] 110)
+  "_funcomp" :: \<open>[('b, 'c) Pi, 'a Type, ('a, 'b) Pi] \<Rightarrow> ('a, 'c) Pi\<close> ("(2_ \<circ>\<^bsub>_\<^esub>/ _)" [111, 0, 110] 110)
 translations
-  "g \<circ>\<^bsub>A\<^esub> f" \<rightleftharpoons> "(CONST funcomp) A g f"
+  "g \<circ>\<^bsub>A\<^esub> f" \<rightleftharpoons> "CONST funcomp A g f"
 
 lemma funcompI:
   assumes

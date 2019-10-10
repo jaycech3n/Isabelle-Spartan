@@ -1,6 +1,8 @@
 structure Util :
 sig
 
+val mk_Var: string -> int -> typ -> term
+
 val dest_typing: term -> term * term
 val has_subterm: term list -> term -> bool
 val subterm_order: term -> term -> order
@@ -10,6 +12,8 @@ val dest_Id: term -> term * term * term
 val mk_Pi: term -> term -> term -> term
 
 end = struct
+
+fun mk_Var name idx T = Var ((name, idx), T)
 
 fun dest_typing tm = case tm of
     Const (\<^const_name>\<open>has_type\<close>, _) $ t $ T => (t, T)
