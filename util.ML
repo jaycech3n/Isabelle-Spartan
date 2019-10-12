@@ -3,6 +3,7 @@ sig
 
 val mk_Var: string -> int -> typ -> term
 
+val dest_eq: term -> term * term
 val dest_typing: term -> term * term
 val has_subterm: term list -> term -> bool
 val subterm_order: term -> term -> order
@@ -15,9 +16,11 @@ end = struct
 
 fun mk_Var name idx T = Var ((name, idx), T)
 
-fun dest_typing tm = case tm of
-    Const (\<^const_name>\<open>has_type\<close>, _) $ t $ T => (t, T)
-  | _ => error "dest_typing"
+fun dest_eq (Const (\<^const_name>\<open>Pure.eq\<close>, _) $ t $ def) = (t, def)
+  | dest_eq _ = error "dest_def"
+
+fun dest_typing (Const (\<^const_name>\<open>has_type\<close>, _) $ t $ T) = (t, T)
+  | dest_typing _ = error "dest_typing"
 
 fun has_subterm tms =
   Term.exists_subterm (foldl1 (op orf) (map (fn t => fn s => Term.aconv_untyped (s, t)) tms))

@@ -1,29 +1,28 @@
-theory Implicit_Args
+text \<open>Preliminary functionality for implicits and elaboration.\<close>
+
+theory Elaboration
 imports Spartan
 
 begin
 
+section \<open>Implicit notation\<close>
+
 consts
-  imp_arg   :: \<open>('a \<Rightarrow> 'a) \<Rightarrow> 'a\<close>
-  imp_dummy :: \<open>'a\<close> ("?")
-  imp_annotation :: \<open>'a \<Rightarrow> 'a Type \<Rightarrow> 'a\<close> (infix ":>" 5)
+  iarg   :: \<open>('a \<Rightarrow> 'a) \<Rightarrow> 'a\<close>
+  idummy :: \<open>'a\<close> ("?")
+  iinfo :: \<open>'a \<Rightarrow> 'a Type \<Rightarrow> 'a\<close> (infix ":>" 5)
 
 syntax
-  "_imp_arg" :: \<open>id_position \<Rightarrow> logic\<close> ("{_}")
+  "_iarg" :: \<open>id_position \<Rightarrow> logic\<close> ("{_}")
 translations
-  "{x}" \<rightleftharpoons> "CONST imp_arg (\<lambda>x. ?)"
+  "{x}" \<rightleftharpoons> "CONST iarg (\<lambda>x. ?)"
 
 
-ML_file \<open>implicit_args.ML\<close>
+section \<open>Elaboration\<close>
 
-ML \<open>
-fun elaborate ctxt tm =
-  let
-    val idx = Term.maxidx_of_term tm
-  in
-    tm
-  end
-\<close>
+ML_file \<open>elaboration.ML\<close>
+
+attribute_setup implicit = \<open>Scan.succeed Elaboration.implicit_defs_attr\<close>
 
 ML \<open>
 fun probe (n: int) _ ts =
@@ -32,11 +31,11 @@ fun probe (n: int) _ ts =
       "======== Syntax phase level " ^ @{make_string} n ^ " ========\nTerms\n-----\n" ^
       (space_implode "\n" (map (fn t => "\<^item> " ^  @{make_string} t) ts)) ^
       "\n\nImplicit args\n-------------\n" ^
-      (space_implode "\n" (map (fn x => "\<^item> " ^  @{make_string} x) (map Implicit_Args.iargs_of ts))) ^
+      (space_implode "\n" (map (fn x => "\<^item> " ^  @{make_string} x) (map Elaboration.iargs_of ts))) ^
       "\n\nAnnotations\n-----------\n" ^
-      (space_implode "\n" (map (fn x => "\<^item> " ^  @{make_string} x) (map Implicit_Args.raw_annotations_of ts))) ^
+      (space_implode "\n" (map (fn x => "\<^item> " ^  @{make_string} x) (map Elaboration.raw_iinfo_of ts))) ^
       "\n\nPrepped\n-------\n" ^
-      (space_implode "\n" (map (fn x => "\<^item> " ^  @{make_string} x) (map Implicit_Args.prepped ts))) ^
+      (space_implode "\n" (map (fn x => "\<^item> " ^  @{make_string} x) (map Elaboration.prepped ts))) ^
       "\n\n^^^^^^^^ Syntax phase level " ^ @{make_string} n ^ " ^^^^^^^^"
     )
   in
@@ -44,9 +43,9 @@ fun probe (n: int) _ ts =
   end
 
 val _ = Context.>> (
-  Syntax_Phases.term_check ~5 "" (probe ~5)
+  Syntax_Phases.term_check ~1 "" (probe ~5)
   #> Syntax_Phases.term_check 0 "" (probe 0)
-  (* #> Syntax_Phases.term_check 0 "" (fn _ => map (#1 o (Implicit_Args.prepped))) *)
+  (* #> Syntax_Phases.term_check 0 "" (fn _ => map (#1 o (Elaboration.prepped))) *)
   )
 \<close>
 
@@ -55,19 +54,24 @@ section \<open>Examples\<close>
 
 text \<open>Want to be able to write, for example:\<close>
 
-abbreviation funcomp_i (infixr "\<circ>" 100)
-  where "g \<circ> f \<equiv> funcomp {A} g (f :> {A} \<rightarrow> ?)"
+definition funcomp_i (infixr "\<circ>" 100)
+  where [implicit]: "g \<circ> f \<equiv> funcomp {A} g (f :> {A} \<rightarrow> ?)"
 
-abbreviation Id_i (infix "=" 100)
-  where "x = y \<equiv> (x :> {A}) =\<^bsub>{A}\<^esub> (y :> {A})"
+definition Id_i (infix "=" 100)
+  where [implicit]: "x = y \<equiv> (x :> {A}) =\<^bsub>{A}\<^esub> (y :> {A})"
 
-term "x = y"
+ML_val \<open>
+Elaboration.implicit_defs @{context}
+\<close>
+
+term "(x = y) = (x' = y')"
 
 (*
   These need to be handled properly too...
   the implicit arg should be different between instances!
 *)
 term "(f \<circ> g) \<circ> h"
+term "f \<circ> g \<circ> h"
 term "(x = y) = (x' = y')"
 term "(p :> x = y) = q"
 
