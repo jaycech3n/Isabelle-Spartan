@@ -170,6 +170,8 @@ axiomatization where
 
 section \<open>Basic methods\<close>
 
+ML_file \<open>lib.ML\<close>
+
 \<comment>\<open>\<open>subst\<close> method\<close>
 ML_file "~~/src/Tools/misc_legacy.ML"
 ML_file "~~/src/Tools/IsaPlanner/isand.ML"
@@ -213,8 +215,6 @@ method reduce uses facts = subst reds; ((known facts: facts)+)?
 
 subsection \<open>Identity induction\<close>
 
-ML_file \<open>util.ML\<close>
-
 ML \<open>
 (* Context assumptions that have already been pushed into the type family *)
 structure Equality_Inserts = Proof_Data (
@@ -225,11 +225,11 @@ structure Equality_Inserts = Proof_Data (
 local
 
 (* Number of distinct subterms in `tms` that appear in `tm` *)
-fun subterm_count tms tm = length (filter I (map (fn t => Util.has_subterm [t] tm) tms))
+fun subterm_count tms tm = length (filter I (map (fn t => Lib.has_subterm [t] tm) tms))
 
 fun push_hyp_tac t = Subgoal.FOCUS_PARAMS (fn {context = ctxt, concl, ...} =>
   let
-    val (_, C) = Util.dest_typing (Thm.term_of concl)
+    val (_, C) = Lib.dest_typing (Thm.term_of concl)
     val B = Thm.cterm_of ctxt (lambda t C)
     val a = Thm.cterm_of ctxt t
     (* The resolvent is PiE[where ?B=B and ?a=a] *)
@@ -260,11 +260,11 @@ in
 fun equality_context_tac fact ctxt =
   let
     val eq_th = Proof_Context.get_fact_single ctxt fact
-    val (p, (A, x, y)) = (Util.dest_typing ##> Util.dest_Id) (Thm.prop_of eq_th)
+    val (p, (A, x, y)) = (Lib.dest_typing ##> Lib.dest_Id) (Thm.prop_of eq_th)
 
     val hyps =
       Facts.props (Proof_Context.facts_of ctxt)
-      |> map (Util.dest_typing o Thm.prop_of o fst)
+      |> map (Lib.dest_typing o Thm.prop_of o fst)
       |> filter_out (fn (t, _) =>
           Term.aconv (t, p) orelse Item_Net.member (Equality_Inserts.get ctxt) t)
       |> map (fn (t, T) => ((t, T), subterm_count [p, x, y] T))
@@ -274,7 +274,7 @@ fun equality_context_tac fact ctxt =
         If they are incomparable, then order by decreasing `subterm_count [p, x, y] T`.
       *)
       |> sort (fn (((t1, _), i), ((_, T2), j)) =>
-          Util.cond_order (Util.subterm_order T2 t1) (int_ord (j, i)))
+          Lib.cond_order (Lib.subterm_order T2 t1) (int_ord (j, i)))
       |> map #1
 
     val record_inserts =
