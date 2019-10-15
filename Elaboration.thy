@@ -59,30 +59,30 @@ ML_val \<open>
 Implicits.implicit_defs @{context}
 \<close>
 
-schematic_goal "g \<circ> f : A" oops
+schematic_goal
+  assumes "f: A \<rightarrow> B" "g: B \<rightarrow> C" "h: C \<rightarrow> D" "A: U" "B: U" "C: U" "D: U"
+  shows "h \<circ> g \<circ> f: A \<rightarrow> D"
+  apply (rule funcompI)
+oops
 
-(*
-  These need to be handled properly too...
-  the implicit arg should be different between instances!
-*)
 term "(f \<circ> g) \<circ> h"
 term "f \<circ> g \<circ> h"
 term "(x = y) = (x' = y')"
 term "(p :> x = y) = q"
 
-abbreviation "pathinv_i p \<equiv> pathinv {A} {x} {y} (p :> {x} =\<^bsub>{A}\<^esub> {y})"
+definition [implicit]: "pathinv_i p \<equiv> pathinv {A} {x} {y} (p :> {x} =\<^bsub>{A}\<^esub> {y})"
 
-abbreviation (input) "pathcomp_i p q \<equiv>
+definition [implicit]: "pathcomp_i p q \<equiv>
   pathcomp {A} {x} {y} {z} (p :> {x} =\<^bsub>{A}\<^esub> {y}) (q :> {y} =\<^bsub>{A}\<^esub> {z})"
 
 bundle pathinv_syntax
 begin
-  notation pathinv_i ("_\<inverse>")
+  notation pathinv_i ("_\<inverse>" [899] 900)
 end
 
 bundle no_pathinv_syntax
 begin
-  no_notation pathinv_i ("_\<inverse>")
+  no_notation pathinv_i ("_\<inverse>" [899] 900)
 end
 
 bundle pathcomp_syntax
@@ -97,6 +97,7 @@ end
 
 unbundle pathinv_syntax pathcomp_syntax
 
-term "p \<bullet> q"
+term "p\<inverse>\<inverse>"
+term "p \<bullet> q\<inverse>"
 
 end
