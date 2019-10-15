@@ -1,6 +1,6 @@
 # Spartan type theory
 
-Experiments in improved dependent type theory in Isabelle.
+Experiments in dependent type theory support in Isabelle.
 
 Current work is focused on:
 
