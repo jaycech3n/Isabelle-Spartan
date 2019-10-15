@@ -5,3 +5,5 @@ session Spartan = Pure +
   theories
     Spartan
     Identity
+    Elaboration
+

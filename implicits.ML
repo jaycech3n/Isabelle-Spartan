@@ -1,7 +1,7 @@
 structure Implicits :
 sig
 
-val implicit_defs: Proof.context -> term Termtab.table
+val implicit_defs: Proof.context -> (term * term) Symtab.table
 val implicit_defs_attr: attribute
 val iargs_of: term -> term list
 val raw_iinfo_of: term -> (term * term) list
@@ -9,10 +9,10 @@ val raw_iinfo_of: term -> (term * term) list
 end = struct
 
 structure Defs = Generic_Data (
-  type T = term Termtab.table
-  val empty = Termtab.empty
+  type T = (term * term) Symtab.table
+  val empty = Symtab.empty
   val extend = I
-  val merge = Termtab.merge Term.aconv
+  val merge = Symtab.merge (Term.aconv o #1)
 )
 
 val implicit_defs = Defs.get o Context.Proof
@@ -23,7 +23,7 @@ val implicit_defs_attr = Thm.declaration_attribute (fn th =>
     val (head, args) = Term.strip_comb t
     val def' = fold_rev lambda args def
   in
-    Defs.map (Termtab.update (head, def'))
+    Defs.map (Symtab.update (Term.term_name head, (head, def')))
   end)
 
 fun aux_iargs_of tm =

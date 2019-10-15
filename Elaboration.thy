@@ -25,21 +25,13 @@ ML_file \<open>elaboration.ML\<close>
 
 attribute_setup implicit = \<open>Scan.succeed Implicits.implicit_defs_attr\<close>
 
-ML \<open>Syntax.pretty_term\<close>
-
 ML \<open>
 fun probe (n: int) ctxt ts =
   let
     val _ = tracing (
-      "======== Syntax phase level " ^ @{make_string} n ^ " ========\nTerms\n-----\n" ^
-      (space_implode "\n" (map (fn t => "\<^item> " ^  @{make_string} t) ts)) ^
-      "\n\nImplicit args\n-------------\n" ^
-      (space_implode "\n" (map (fn x => "\<^item> " ^  @{make_string} x) (map Implicits.iargs_of ts))) ^
-      "\n\nAnnotations\n-----------\n" ^
-      (space_implode "\n" (map (fn x => "\<^item> " ^  @{make_string} x) (map Implicits.raw_iinfo_of ts))) ^
-      "\n\nPrepped\n-------\n" ^
-      (space_implode "\n" (map (fn x => "\<^item> " ^  @{make_string} x) (map Elaboration.prepped ts))) ^
-      "\n\n^^^^^^^^ Syntax phase level " ^ @{make_string} n ^ " ^^^^^^^^"
+      "======== Syntax phase level " ^ @{make_string} n ^ " ========" ^
+      "\nTerms\n-----\n" ^
+      (space_implode "\n" (map (fn t => "\<^item> " ^  @{make_string} t) ts))
     )
   in
     ts
@@ -48,9 +40,10 @@ fun probe (n: int) ctxt ts =
 val _ = Context.>> (
   Syntax_Phases.term_check ~1 "" (probe ~1)
   #> Syntax_Phases.term_check 0 "" (probe 0)
-  (* #> Syntax_Phases.term_check 0 "" (fn _ => map (#1 o (Elaboration.prepped))) *)
+  #> Syntax_Phases.term_check 1 "" (fn ctxt => map (Elaboration.prep ctxt))
   )
 \<close>
+
 
 section \<open>Examples\<close>
 
@@ -60,23 +53,13 @@ definition funcomp_i (infixr "\<circ>" 100)
   where [implicit]: "funcomp_i g f \<equiv> funcomp {A} g (f :> {A} \<rightarrow> ?)"
 
 definition Id_i (infix "=" 100)
-  where [implicit]: "x = y \<equiv> (x :> ?) =\<^bsub>{A}\<^esub> (y :> ?)"
+  where [implicit]: "x = y \<equiv> (x :> {A}) =\<^bsub>{A}\<^esub> (y :> {A})"
 
 ML_val \<open>
 Implicits.implicit_defs @{context}
 \<close>
 
-ML_val \<open>
-Lib.map_aterms_distinct_index (fn i => K (Var (("i", i), dummyT))) (Var (("x", 23), dummyT) $ Var (("y", 2), dummyT) $ @{term "f g h"})
-\<close>
-
-ML \<open>
-Elaboration.iargs_to_vars 100 @{term "funcomp {A} g (f :> {A} \<rightarrow> ?)"}
-\<close>
-
-lemma "g \<circ> f : A" oops
-
-term "(x = y) = (x' = y')"
+schematic_goal "g \<circ> f : A" oops
 
 (*
   These need to be handled properly too...

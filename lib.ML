@@ -3,6 +3,7 @@ sig
 
 (*Lists*)
 val max: ('a * 'a -> bool) -> 'a list -> 'a
+val maxint: int list -> int
 
 (*Term constructors and destructors*)
 val mk_Var: string -> int -> typ -> term
@@ -13,7 +14,7 @@ val dest_typing: term -> term * term
 
 (*Subterms*)
 val has_subterm: term list -> term -> bool
-val map_aterms_distinct_index: (int -> term -> term) -> term -> term
+val fold_aterms: (int -> term -> 'a list -> 'a) -> term -> 'a
 
 (*Orderings*)
 val subterm_order: term -> term -> order
@@ -24,6 +25,8 @@ end = struct
 (** Lists **)
 fun max gt (x::xs) = fold (fn a => fn b => if gt (a, b) then a else b) xs x
   | max _ [] = error "max of empty list"
+
+val maxint = max (op >)
 
 
 (** Constructors and destructors **)
@@ -49,23 +52,22 @@ fun has_subterm tms =
   Term.exists_subterm (foldl1 (op orf) (map (fn t => fn s => Term.aconv_untyped (s, t)) tms))
 
 (*
-  Extends Term.map_aterms by passing f an extra index value that is guaranteed to be
-  distinct for distinct nodes in the AST.
+  Souped-up version of Term.fold_aterms. The mapped function f is additionally passed an
+  index i and a list of the results of f at all children of the current node n in the AST.
+  i is guaranteed to be distinct for each node n in the AST.
 *)
-fun map_aterms_distinct_index f t =
+fun fold_aterms f t =
   let
-    fun map_aux n t =
+    fun map_aux t i =
       let
         val (head, args) = Term.strip_comb t
-        val args' = map_index (fn (i, t) => map_aux (n + 1 + i) t) args
-        val idx =
-          if null args' then n
-          else max (op >) (map Term.maxidx_of_term (head :: args')) + 1
+        val (args', i') = fold_map map_aux args i
+        val i'' = maxint [i, i', maxidx_of_term head] + 1
       in
-        Term.list_comb (f idx head, args')
+        (f i'' head args', i'')
       end
   in
-    map_aux 0 t
+    #1 (map_aux t 0)
   end
 
 
