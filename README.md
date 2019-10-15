@@ -1,4 +1,4 @@
-# Spartan type theory
+# Dependent types for Isabelle
 
 Experiments in dependent type theory support in Isabelle.
 
