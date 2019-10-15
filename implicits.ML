@@ -3,8 +3,6 @@ sig
 
 val implicit_defs: Proof.context -> (term * term) Symtab.table
 val implicit_defs_attr: attribute
-val iargs_of: term -> term list
-val raw_iinfo_of: term -> (term * term) list
 
 end = struct
 
@@ -25,34 +23,6 @@ val implicit_defs_attr = Thm.declaration_attribute (fn th =>
   in
     Defs.map (Symtab.update (Term.term_name head, (head, def')))
   end)
-
-fun aux_iargs_of tm =
-  let
-    fun iarg (t as Const (\<^const_name>\<open>iarg\<close>, _) $ _) = [t]
-      | iarg _ = []
-  in
-    iarg tm
-    @ (case tm of
-        Const (\<^const_name>\<open>iinfo\<close>, _) $ _ $ _ => []
-      | t $ u => aux_iargs_of t @ aux_iargs_of u
-      | Abs (_, _, t) => aux_iargs_of t
-      | _ => [])
-  end
-
-fun iargs_of tm = distinct (op =) (aux_iargs_of tm)
-
-fun raw_iinfo_of tm =
-  let
-    fun split_annotation (Const (\<^const_name>\<open>iinfo\<close>, _) $ t $ T) = [(t,T)]
-      | split_annotation _ = []
-  in
-    split_annotation tm
-    @ (case tm of
-        t $ u => raw_iinfo_of t @ raw_iinfo_of u
-      | Abs (_, _, t) => raw_iinfo_of t
-      | _ => [])
-  end
-
 
 
 end

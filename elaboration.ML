@@ -20,11 +20,11 @@ val idummies_to_vars =
       | conv i (Abs (x, T, t)) _ = Abs (x, T, conv i t [])
       | conv _ t _ = t
   in
-    (*Every substitution instance must be new!*)
+    (*Every substituted instance must have a new index!*)
     Lib.fold_aterms conv
   end
 
-fun prep ctxt =
+fun prep_holes ctxt =
   let
     fun expand i head args =
       let
@@ -47,16 +47,6 @@ fun strip_iinfo (Const (\<^const_name>\<open>iinfo\<close>, _) $ t $ _) = t
   | strip_iinfo (t $ u) = strip_iinfo t $ strip_iinfo u
   | strip_iinfo (Abs (x, T, t)) = Abs (x, T, strip_iinfo t)
   | strip_iinfo t = t
-
-fun prepped tm =
-  let
-    val new_idx = maxidx_of_term tm + 1
-    val prepped_tm = tm |> strip_iinfo |> iargs_to_vars new_idx
-    val prepped_iinfo = Implicits.raw_iinfo_of tm
-      |> map (apsnd (idummies_to_vars o iargs_to_vars new_idx))
-  in
-    (prepped_tm, prepped_iinfo)
-  end
 
 
 end

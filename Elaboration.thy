@@ -5,7 +5,7 @@ imports Spartan
 
 begin
 
-section \<open>Implicit notation\<close>
+section \<open>Implicit argument notation\<close>
 
 consts
   iarg   :: \<open>('a \<Rightarrow> 'a) \<Rightarrow> 'a\<close>
@@ -17,15 +17,18 @@ syntax
 translations
   "{x}" \<rightleftharpoons> "CONST iarg (\<lambda>x. ?)"
 
-
-section \<open>Elaboration\<close>
-
 ML_file \<open>implicits.ML\<close>
-ML_file \<open>elaboration.ML\<close>
 
 attribute_setup implicit = \<open>Scan.succeed Implicits.implicit_defs_attr\<close>
 
+
+section \<open>Elaboration\<close>
+
+ML_file \<open>elaboration.ML\<close>
+
 ML \<open>
+(** Tracing **)
+
 fun probe (n: int) ctxt ts =
   let
     val _ = tracing (
@@ -37,11 +40,8 @@ fun probe (n: int) ctxt ts =
     ts
   end
 
-val _ = Context.>> (
-  Syntax_Phases.term_check ~1 "" (probe ~1)
-  #> Syntax_Phases.term_check 0 "" (probe 0)
-  #> Syntax_Phases.term_check 1 "" (fn ctxt => map (Elaboration.prep ctxt))
-  )
+val _ = Context.>>
+  (Syntax_Phases.term_check 1 "" (fn ctxt => map (Elaboration.prep_holes ctxt)))
 \<close>
 
 
@@ -55,10 +55,6 @@ definition funcomp_i (infixr "\<circ>" 100)
 definition Id_i (infix "=" 100)
   where [implicit]: "x = y \<equiv> (x :> {A}) =\<^bsub>{A}\<^esub> (y :> {A})"
 
-ML_val \<open>
-Implicits.implicit_defs @{context}
-\<close>
-
 schematic_goal
   assumes "f: A \<rightarrow> B" "g: B \<rightarrow> C" "h: C \<rightarrow> D" "A: U" "B: U" "C: U" "D: U"
   shows "h \<circ> g \<circ> f: A \<rightarrow> D"
@@ -69,6 +65,8 @@ term "(f \<circ> g) \<circ> h"
 term "f \<circ> g \<circ> h"
 term "(x = y) = (x' = y')"
 term "(p :> x = y) = q"
+
+text \<open>And also things like:\<close>
 
 definition [implicit]: "pathinv_i p \<equiv> pathinv {A} {x} {y} (p :> {x} =\<^bsub>{A}\<^esub> {y})"
 
@@ -99,5 +97,6 @@ unbundle pathinv_syntax pathcomp_syntax
 
 term "p\<inverse>\<inverse>"
 term "p \<bullet> q\<inverse>"
+
 
 end
