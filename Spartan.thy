@@ -63,7 +63,7 @@ axiomatization
 
 syntax
   "_Pi"  :: \<open>[pttrn, 'a Type, 'b Type] \<Rightarrow> ('a, 'b) Pi Type\<close> ("(2\<Prod>_: _./ _)" 30)
-  "_lam" :: \<open>[pttrn, 'a Type, 'b] \<Rightarrow> 'b\<close> ("(2\<lambda>_: _./ _)" 30)
+  "_lam" :: \<open>[pttrn, 'a Type, 'b] \<Rightarrow> ('a, 'b) Pi\<close> ("(2\<lambda>_: _./ _)" 30)
 translations
   "\<Prod>x: A. B" \<rightleftharpoons> "CONST Pi A (\<lambda>x. B)"
   "\<lambda>x: A. b" \<rightleftharpoons> "CONST lam A (\<lambda>x. b)"
