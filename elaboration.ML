@@ -1,5 +1,18 @@
 structure Elaboration = struct
 
+(** Tracing **)
+
+fun probe (n: int) ctxt ts =
+  let
+    val _ = tracing (
+      "======== Syntax phase level " ^ @{make_string} n ^ " ========" ^
+      "\nTerms\n-----\n" ^
+      (space_implode "\n" (map (fn t => "\<^item> " ^  @{make_string} t) ts))
+    )
+  in
+    ts
+  end
+
 (** Prep phase **)
 
 fun iargs_to_vars idx tm =

@@ -27,19 +27,6 @@ section \<open>Elaboration\<close>
 ML_file \<open>elaboration.ML\<close>
 
 ML \<open>
-(** Tracing **)
-
-fun probe (n: int) ctxt ts =
-  let
-    val _ = tracing (
-      "======== Syntax phase level " ^ @{make_string} n ^ " ========" ^
-      "\nTerms\n-----\n" ^
-      (space_implode "\n" (map (fn t => "\<^item> " ^  @{make_string} t) ts))
-    )
-  in
-    ts
-  end
-
 val _ = Context.>>
   (Syntax_Phases.term_check 1 "" (fn ctxt => map (Elaboration.prep_holes ctxt)))
 \<close>
@@ -98,5 +85,6 @@ unbundle pathinv_syntax pathcomp_syntax
 term "p\<inverse>\<inverse>"
 term "p \<bullet> q\<inverse>"
 
+term "p \<bullet> (q \<bullet> r) = p \<bullet> q \<bullet> r"
 
 end
