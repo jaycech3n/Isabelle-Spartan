@@ -19,56 +19,47 @@ named_theorems forms and intros and elims and decs and reds and congs
 
 section \<open>Logical framework types\<close>
 
-\<comment>\<open>Meta-terms\<close>
-class Mt
-default_sort Mt
+subsection \<open>Universe levels\<close>
 
-\<comment>\<open>
-  We might consider also having a class MT for meta-types, but then we'd need to mess
-  around with the sorts of the arguments of the meta-types and the typing judgment
-  constant, and it's not clear this would work.
-\<close>
+class Lvl
 
-typedecl ('a, 'b) Pi
-typedecl ('a, 'b) Sig
-typedecl 'a Id
-typedecl 'a Type
-typedecl Nat
+typedecl i
+typedecl 'j Type
+typedecl ('i, 'j) Max
 
-instance Pi   :: (\<open>Mt\<close>, \<open>Mt\<close>) \<open>Mt\<close> ..
-instance Sig  :: (\<open>Mt\<close>, \<open>Mt\<close>) \<open>Mt\<close> ..
-instance Id   :: (\<open>Mt\<close>) \<open>Mt\<close> ..
-instance Type :: (\<open>Mt\<close>) \<open>Mt\<close> ..
-
+instance i   :: \<open>Lvl\<close> ..
+instance Type :: (\<open>Lvl\<close>) \<open>Lvl\<close> ..
+instance Max :: (\<open>Lvl\<close>, \<open>Lvl\<close>) \<open>Lvl\<close> ..
 
 section \<open>Types & typing\<close>
 
+class Mt
+default_sort Mt
+
 subsection \<open>Judgments\<close>
 
-consts has_type :: \<open>['a, 'a Type] \<Rightarrow> prop\<close> ("(2_:/ _)")
-
+consts has_type :: \<open>['i::Lvl, 'i Type] \<Rightarrow> prop\<close> ("(2_:/ _)")
 
 subsection \<open>Universes\<close>
 
-axiomatization U :: \<open>'a Type\<close>
+axiomatization U :: \<open>'i::Lvl\<close>
 axiomatization where hierarchy [forms]: "U: U"
-
 
 subsection \<open>\<Prod>-type\<close>
 
 axiomatization
-  Pi  :: \<open>['a Type, 'a \<Rightarrow> 'b Type] \<Rightarrow> ('a, 'b) Pi Type\<close> and
-  lam :: \<open>['a Type, 'a \<Rightarrow> 'b] \<Rightarrow> ('a, 'b) Pi\<close> and
-  app :: \<open>[('a, 'b) Pi, 'a] \<Rightarrow> 'b\<close> ("(1_ `_)" [120, 121] 120)
+  Pi  :: \<open>['i::Lvl, _ \<Rightarrow> 'j::Lvl] \<Rightarrow> ('i, 'j) Max Type\<close> and
+  lam :: \<open>['i, _ \<Rightarrow> _] \<Rightarrow> _\<close> and
+  app :: \<open>[_, _] \<Rightarrow> _\<close> ("(1_ `_)" [120, 121] 120)
 
 syntax
-  "_Pi"  :: \<open>[pttrn, 'a Type, 'b Type] \<Rightarrow> ('a, 'b) Pi Type\<close> ("(2\<Prod>_: _./ _)" 30)
-  "_lam" :: \<open>[pttrn, 'a Type, 'b] \<Rightarrow> ('a, 'b) Pi\<close> ("(2\<lambda>_: _./ _)" 30)
+  "_Pi"  :: \<open>[pttrn, 'i::Lvl, 'j::Lvl] \<Rightarrow> ('i, 'j) Max Type\<close> ("(2\<Prod>_: _./ _)" 30)
+  "_Fn"  :: \<open>'i::Lvl \<Rightarrow> 'j::Lvl \<Rightarrow> ('i, 'j) Max Type\<close> (infixr "\<rightarrow>" 40)
+  "_lam" :: \<open>[pttrn, 'i::Lvl, _] \<Rightarrow> _\<close> ("(2\<lambda>_: _./ _)" 30)
 translations
   "\<Prod>x: A. B" \<rightleftharpoons> "CONST Pi A (\<lambda>x. B)"
+  "A \<rightarrow> B" \<rightleftharpoons> "\<Prod>_: A. B"
   "\<lambda>x: A. b" \<rightleftharpoons> "CONST lam A (\<lambda>x. b)"
-
-abbreviation Fn (infixr "\<rightarrow>" 40) where "A \<rightarrow> B \<equiv> \<Prod>_: A. B"
 
 axiomatization where
   PiF [forms]: "\<lbrakk>A: U; \<And>x. x: A \<Longrightarrow> B x: U\<rbrakk> \<Longrightarrow> \<Prod>x: A. B x: U" and
@@ -94,13 +85,12 @@ axiomatization where
 subsection \<open>\<Sum>-type\<close>
 
 axiomatization
-  Sig    :: \<open>['a Type, 'a \<Rightarrow> 'b Type] \<Rightarrow> ('a, 'b) Sig Type\<close> and
-  pair   :: \<open>['a, 'b] \<Rightarrow> ('a, 'b) Sig\<close> ("(2<_,/ _>)") and
-  SigInd ::
-    \<open>['a Type, 'a \<Rightarrow> 'b Type, ('a, 'b) Sig \<Rightarrow> 'c Type, ['a, 'b] \<Rightarrow> 'c, ('a, 'b) Sig] \<Rightarrow> 'c\<close>
+  Sig    :: \<open>['i::Lvl, _ \<Rightarrow> 'j::Lvl] \<Rightarrow> ('i, 'j) Max Type\<close> and
+  pair   :: \<open>[_, _] \<Rightarrow> _\<close> ("(2<_,/ _>)") and
+  SigInd :: \<open>['i::Lvl, _ \<Rightarrow> 'j::Lvl, _ \<Rightarrow> 'k::Lvl, [_, _] \<Rightarrow> _, _] \<Rightarrow> _\<close>
 
 syntax
-  "_Sum" :: \<open>[idt, 'a Type, 'b Type] \<Rightarrow> ('a, 'b) Sig Type\<close> ("(2\<Sum>_: _./ _)" 20)
+  "_Sum" :: \<open>[idt, 'i, 'j] \<Rightarrow> ('i, 'j) Max Type\<close> ("(2\<Sum>_: _./ _)" 20)
 translations
   "\<Sum>x: A. B" \<rightleftharpoons> "CONST Sig A (\<lambda>x. B)"
 
@@ -139,12 +129,12 @@ axiomatization where
 subsection \<open>Identity type\<close>
 
 axiomatization
-  Id    :: \<open>['a Type, 'a, 'a] \<Rightarrow> 'a Id Type\<close> and
-  refl  :: \<open>'a \<Rightarrow> 'a Id\<close> and
-  IdInd :: \<open>['a Type, ['a, 'a, 'a Id] \<Rightarrow> 'c Type, 'a \<Rightarrow> 'c, 'a, 'a, 'a Id] \<Rightarrow> 'c\<close>
+  Id    :: \<open>['i::Lvl, _, _] \<Rightarrow> 'i::Lvl\<close> and
+  refl  :: \<open>_ \<Rightarrow> _\<close> and
+  IdInd :: \<open>['i::Lvl, [_, _, _] \<Rightarrow> 'j::Lvl, _ \<Rightarrow> _, _, _, _] \<Rightarrow> _\<close>
 
 syntax
-  "_Id" :: \<open>['a, 'a Type, 'a] \<Rightarrow> 'a Id Type\<close> ("(2_ =\<^bsub>_\<^esub>/ _)" [101, 0, 101] 100)
+  "_Id" :: \<open>[_, 'i::Lvl, _] \<Rightarrow> 'i::Lvl\<close> ("(2_ =\<^bsub>_\<^esub>/ _)" [101, 0, 101] 100)
 translations
   "a =\<^bsub>A\<^esub> b" \<rightleftharpoons> "CONST Id A a b"
 
@@ -167,6 +157,10 @@ axiomatization where
     \<And>x. x: A \<Longrightarrow> f x: C x x (refl x)
     \<rbrakk> \<Longrightarrow> IdInd A C f a a (refl a) \<equiv> f a"
 
+lemma
+  assumes "A: U"
+  shows "A =\<^bsub>U\<^esub> (A \<rightarrow> A): U"
+oops
 
 section \<open>Basic methods\<close>
 
@@ -306,13 +300,17 @@ section \<open>Functions\<close>
 
 subsection \<open>Composition\<close>
 
-definition funcomp :: \<open>['a Type, ('b, 'c) Pi, ('a, 'b) Pi] \<Rightarrow> ('a, 'c) Pi\<close>
+definition funcomp :: \<open>'i::Lvl \<Rightarrow> 'a \<Rightarrow> 'b \<Rightarrow> 'c\<close> (* :: \<open>['a Type, ('b, 'c) Pi, ('a, 'b) Pi] \<Rightarrow> ('a, 'c) Pi\<close> *)
   where "funcomp A g f \<equiv> \<lambda>x: A. g `(f `x)"
 
+term funcomp
+
 syntax
-  "_funcomp" :: \<open>[('b, 'c) Pi, 'a Type, ('a, 'b) Pi] \<Rightarrow> ('a, 'c) Pi\<close> ("(2_ \<circ>\<^bsub>_\<^esub>/ _)" [111, 0, 110] 110)
+  "_funcomp" :: \<open>_ \<Rightarrow> 'i::Lvl \<Rightarrow> _ \<Rightarrow> _\<close> (* :: \<open>[('b, 'c) Pi, 'a Type, ('a, 'b) Pi] \<Rightarrow> ('a, 'c) Pi\<close> *) ("(2_ \<circ>\<^bsub>_\<^esub>/ _)" [111, 0, 110] 110)
 translations
   "g \<circ>\<^bsub>A\<^esub> f" \<rightleftharpoons> "CONST funcomp A g f"
+
+term "g \<circ>\<^bsub>A\<^esub> f"
 
 lemma funcompI:
   assumes
