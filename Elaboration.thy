@@ -8,9 +8,9 @@ begin
 section \<open>Implicit argument notation\<close>
 
 consts
-  iarg   :: \<open>('a \<Rightarrow> 'a) \<Rightarrow> 'a\<close>
-  idummy :: \<open>'a\<close> ("?")
-  iinfo :: \<open>'a \<Rightarrow> 'a Type \<Rightarrow> 'a\<close> (infix ":>" 5)
+  iarg   :: \<open>('i \<Rightarrow> 'i) \<Rightarrow> 'i\<close>
+  idummy :: \<open>'i\<close> ("?")
+  iinfo :: \<open>'i \<Rightarrow> 'j \<Rightarrow> 'i\<close> (infix ":>" 5)
 
 syntax
   "_iarg" :: \<open>id_position \<Rightarrow> logic\<close> ("{_}")

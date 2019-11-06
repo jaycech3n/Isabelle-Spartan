@@ -6,13 +6,15 @@ imports
   "HOL-Eisbach.Eisbach"
   "HOL-Eisbach.Eisbach_Tools"
 keywords
-  "schematic_subgoal" :: prf_script_goal % "proof"
+  "schematic_subgoal" :: prf_script_goal % "proof" and
+  "print_coercions" :: thy_decl
 
 begin
 
 declare [[names_short, eta_contract=false]]
 
 ML_file \<open>schematic_subgoal.ML\<close>
+ML_file \<open>subtyping.ML\<close>
 
 named_theorems forms and intros and elims and decs and reds and congs
 
@@ -22,40 +24,39 @@ section \<open>Logical framework types\<close>
 subsection \<open>Universe levels\<close>
 
 class Lvl
+default_sort Lvl
 
-typedecl i
-typedecl 'j Type
-typedecl ('i, 'j) Max
+typedecl o
+typedecl 'j T \<comment>\<open>akin to successor\<close>
+typedecl ('i, 'j) V \<comment>\<open>universe joins\<close>
 
-instance i   :: \<open>Lvl\<close> ..
-instance Type :: (\<open>Lvl\<close>) \<open>Lvl\<close> ..
-instance Max :: (\<open>Lvl\<close>, \<open>Lvl\<close>) \<open>Lvl\<close> ..
+instance o   :: \<open>Lvl\<close> ..
+instance T :: (\<open>Lvl\<close>) \<open>Lvl\<close> ..
+instance V :: (\<open>Lvl\<close>, \<open>Lvl\<close>) \<open>Lvl\<close> ..
+
 
 section \<open>Types & typing\<close>
 
-class Mt
-default_sort Mt
-
 subsection \<open>Judgments\<close>
 
-consts has_type :: \<open>['i::Lvl, 'i Type] \<Rightarrow> prop\<close> ("(2_:/ _)")
+consts has_type :: \<open>'i \<Rightarrow> 'i T \<Rightarrow> prop\<close> ("(2_:/ _)")
 
 subsection \<open>Universes\<close>
 
-axiomatization U :: \<open>'i::Lvl\<close>
+axiomatization U :: \<open>'i T\<close>
 axiomatization where hierarchy [forms]: "U: U"
 
 subsection \<open>\<Prod>-type\<close>
 
 axiomatization
-  Pi  :: \<open>['i::Lvl, _ \<Rightarrow> 'j::Lvl] \<Rightarrow> ('i, 'j) Max Type\<close> and
-  lam :: \<open>['i, _ \<Rightarrow> _] \<Rightarrow> _\<close> and
-  app :: \<open>[_, _] \<Rightarrow> _\<close> ("(1_ `_)" [120, 121] 120)
+  Pi  :: \<open>'i T \<Rightarrow> ('i \<Rightarrow> 'j T) \<Rightarrow> ('i, 'j) V T\<close> and
+  lam :: \<open>'i T \<Rightarrow> ('i \<Rightarrow> 'j) \<Rightarrow> ('i, 'j) V\<close> and
+  app :: \<open>('i, 'j) V \<Rightarrow> ('i, 'j) V \<Rightarrow> ('i, 'j) V\<close> ("(1_ `_)" [120, 121] 120)
 
 syntax
-  "_Pi"  :: \<open>[pttrn, 'i::Lvl, 'j::Lvl] \<Rightarrow> ('i, 'j) Max Type\<close> ("(2\<Prod>_: _./ _)" 30)
-  "_Fn"  :: \<open>'i::Lvl \<Rightarrow> 'j::Lvl \<Rightarrow> ('i, 'j) Max Type\<close> (infixr "\<rightarrow>" 40)
-  "_lam" :: \<open>[pttrn, 'i::Lvl, _] \<Rightarrow> _\<close> ("(2\<lambda>_: _./ _)" 30)
+  "_Pi"  :: \<open>pttrn \<Rightarrow> 'i T \<Rightarrow> 'j T \<Rightarrow> ('i, 'j) V\<close> ("(2\<Prod>_: _./ _)" 30)
+  "_Fn"  :: \<open>'i T \<Rightarrow> 'j T \<Rightarrow> ('i, 'j) V\<close> (infixr "\<rightarrow>" 40)
+  "_lam" :: \<open>pttrn \<Rightarrow> 'i T \<Rightarrow> 'j \<Rightarrow> ('i, 'j) V\<close> ("(2\<lambda>_: _./ _)" 30)
 translations
   "\<Prod>x: A. B" \<rightleftharpoons> "CONST Pi A (\<lambda>x. B)"
   "A \<rightarrow> B" \<rightleftharpoons> "\<Prod>_: A. B"
@@ -64,9 +65,17 @@ translations
 axiomatization where
   PiF [forms]: "\<lbrakk>A: U; \<And>x. x: A \<Longrightarrow> B x: U\<rbrakk> \<Longrightarrow> \<Prod>x: A. B x: U" and
 
-  PiI [intros]: "\<lbrakk>\<And>x. x: A \<Longrightarrow> b x: B x; A: U\<rbrakk> \<Longrightarrow> \<lambda>x: A. b x: \<Prod>x: A. B x" and
+  PiI [intros]: "\<lbrakk>\<And>x. x: A \<Longrightarrow> b x: B x; A: U\<rbrakk> \<Longrightarrow> \<lambda>x: A. b x: \<Prod>x: A. B x"
 
-  PiE [elims]: "\<lbrakk>f: \<Prod>x: A. B x; a: A\<rbrakk> \<Longrightarrow> f `a: B a" and
+axiomatization where
+
+  PiE [elims]: "\<lbrakk>f: \<Prod>x: A. B x; a: A\<rbrakk> \<Longrightarrow> f `a: B a"
+
+(*
+  Okay, this is a failed attempt. We need commutativity and associativity of the join
+  operation, among other things. I need to encode universe levels deeply. *)
+
+axiomatization where
 
   beta [reds]: "\<lbrakk>\<And>x. x: A \<Longrightarrow> b x: B x; a: A\<rbrakk> \<Longrightarrow> (\<lambda>x: A. b x) `a \<equiv> b a" and
 
@@ -85,12 +94,12 @@ axiomatization where
 subsection \<open>\<Sum>-type\<close>
 
 axiomatization
-  Sig    :: \<open>['i::Lvl, _ \<Rightarrow> 'j::Lvl] \<Rightarrow> ('i, 'j) Max Type\<close> and
-  pair   :: \<open>[_, _] \<Rightarrow> _\<close> ("(2<_,/ _>)") and
-  SigInd :: \<open>['i::Lvl, _ \<Rightarrow> 'j::Lvl, _ \<Rightarrow> 'k::Lvl, [_, _] \<Rightarrow> _, _] \<Rightarrow> _\<close>
+  Sig    :: \<open>'i T \<Rightarrow> ('i \<Rightarrow> 'j T) \<Rightarrow> ('i, 'j) V T\<close> and
+  pair   :: \<open>'i \<Rightarrow> 'j \<Rightarrow> ('i, 'j) V\<close> ("(2<_,/ _>)") and
+  SigInd :: \<open>['i T, 'i \<Rightarrow> 'j T, ('i, 'j) V \<Rightarrow> 'k T, 'i \<Rightarrow> 'j \<Rightarrow>'k, ('i, 'j) V] \<Rightarrow> 'k\<close>
 
 syntax
-  "_Sum" :: \<open>[idt, 'i, 'j] \<Rightarrow> ('i, 'j) Max Type\<close> ("(2\<Sum>_: _./ _)" 20)
+  "_Sum" :: \<open>[idt, 'i, 'j] \<Rightarrow> ('i, 'j) V T\<close> ("(2\<Sum>_: _./ _)" 20)
 translations
   "\<Sum>x: A. B" \<rightleftharpoons> "CONST Sig A (\<lambda>x. B)"
 
@@ -129,12 +138,12 @@ axiomatization where
 subsection \<open>Identity type\<close>
 
 axiomatization
-  Id    :: \<open>['i::Lvl, _, _] \<Rightarrow> 'i::Lvl\<close> and
-  refl  :: \<open>_ \<Rightarrow> _\<close> and
-  IdInd :: \<open>['i::Lvl, [_, _, _] \<Rightarrow> 'j::Lvl, _ \<Rightarrow> _, _, _, _] \<Rightarrow> _\<close>
+  Id    :: \<open>['i T, 'i, 'i] \<Rightarrow> 'i T\<close> and
+  refl  :: \<open>'i \<Rightarrow> 'i\<close> and
+  IdInd :: \<open>['i T, ['i, 'i, 'i] \<Rightarrow> 'j T, 'i \<Rightarrow> 'j, 'i, 'i, 'i] \<Rightarrow> 'j\<close>
 
 syntax
-  "_Id" :: \<open>[_, 'i::Lvl, _] \<Rightarrow> 'i::Lvl\<close> ("(2_ =\<^bsub>_\<^esub>/ _)" [101, 0, 101] 100)
+  "_Id" :: \<open>[_, 'i, _] \<Rightarrow> 'i\<close> ("(2_ =\<^bsub>_\<^esub>/ _)" [101, 0, 101] 100)
 translations
   "a =\<^bsub>A\<^esub> b" \<rightleftharpoons> "CONST Id A a b"
 
@@ -156,6 +165,8 @@ axiomatization where
     \<And>x y p. \<lbrakk>x: A; y: A; p: x =\<^bsub>A\<^esub> y\<rbrakk> \<Longrightarrow> C x y p: U;
     \<And>x. x: A \<Longrightarrow> f x: C x x (refl x)
     \<rbrakk> \<Longrightarrow> IdInd A C f a a (refl a) \<equiv> f a"
+
+term "A =\<^bsub>U\<^esub> (A \<rightarrow> A)"
 
 lemma
   assumes "A: U"
@@ -300,16 +311,17 @@ section \<open>Functions\<close>
 
 subsection \<open>Composition\<close>
 
-definition funcomp :: \<open>'i::Lvl \<Rightarrow> 'a \<Rightarrow> 'b \<Rightarrow> 'c\<close> (* :: \<open>['a Type, ('b, 'c) Pi, ('a, 'b) Pi] \<Rightarrow> ('a, 'c) Pi\<close> *)
+definition funcomp
   where "funcomp A g f \<equiv> \<lambda>x: A. g `(f `x)"
 
 term funcomp
 
 syntax
-  "_funcomp" :: \<open>_ \<Rightarrow> 'i::Lvl \<Rightarrow> _ \<Rightarrow> _\<close> (* :: \<open>[('b, 'c) Pi, 'a Type, ('a, 'b) Pi] \<Rightarrow> ('a, 'c) Pi\<close> *) ("(2_ \<circ>\<^bsub>_\<^esub>/ _)" [111, 0, 110] 110)
+  "_funcomp" :: \<open>_ \<Rightarrow> 'i \<Rightarrow> _ \<Rightarrow> _\<close> (* :: \<open>[('b, 'c) Pi, 'a T, ('a, 'b) Pi] \<Rightarrow> ('a, 'c) Pi\<close> *) ("(2_ \<circ>\<^bsub>_\<^esub>/ _)" [111, 0, 110] 110)
 translations
   "g \<circ>\<^bsub>A\<^esub> f" \<rightleftharpoons> "CONST funcomp A g f"
 
+term "funcomp A g f"
 term "g \<circ>\<^bsub>A\<^esub> f"
 
 lemma funcompI:
