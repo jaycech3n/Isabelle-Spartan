@@ -8,9 +8,9 @@ begin
 section \<open>Implicit argument notation\<close>
 
 consts
-  iarg   :: \<open>('a \<Rightarrow> 'a) \<Rightarrow> 'a\<close>
-  idummy :: \<open>'a\<close> ("?")
-  iinfo :: \<open>'a \<Rightarrow> 'a Type \<Rightarrow> 'a\<close> (infix ":>" 5)
+  iarg   :: \<open>(o \<Rightarrow> o) \<Rightarrow> o\<close>
+  idummy :: \<open>o\<close> ("?")
+  iannot :: \<open>o \<Rightarrow> o \<Rightarrow> o\<close> (infix ":>" 5)
 
 syntax
   "_iarg" :: \<open>id_position \<Rightarrow> logic\<close> ("{_}")
@@ -43,7 +43,7 @@ definition Id_i (infix "=" 100)
   where [implicit]: "x = y \<equiv> (x :> {A}) =\<^bsub>{A}\<^esub> (y :> {A})"
 
 schematic_goal
-  assumes "f: A \<rightarrow> B" "g: B \<rightarrow> C" "h: C \<rightarrow> D" "A: U" "B: U" "C: U" "D: U"
+  assumes "f: A \<rightarrow> B" "g: B \<rightarrow> C" "h: C \<rightarrow> D" "A: U i" "B: U i" "C: U i" "D: U i"
   shows "h \<circ> g \<circ> f: A \<rightarrow> D"
   apply (rule funcompI)
 oops

@@ -1,0 +1,82 @@
+structure Equality:
+sig
+
+val equality_context_tac: Facts.ref -> Proof.context -> context_tactic
+
+end = struct
+
+(* Context assumptions that have already been pushed into the type family *)
+structure Inserts = Proof_Data (
+  type T = term Item_Net.T
+  val init = K (Item_Net.init Term.aconv_untyped single)
+)
+
+(* Number of distinct subterms in `tms` that appear in `tm` *)
+fun subterm_count tms tm = length (filter I (map (fn t => Lib.has_subterm [t] tm) tms))
+
+fun push_hyp_tac t = Subgoal.FOCUS_PARAMS (fn {context = ctxt, concl, ...} =>
+  let
+    val (_, C) = Lib.dest_typing (Thm.term_of concl)
+    val B = Thm.cterm_of ctxt (lambda t C)
+    val a = Thm.cterm_of ctxt t
+    (* The resolvent is PiE[where ?B=B and ?a=a] *)
+    val resolvent = Drule.infer_instantiate' ctxt [NONE, NONE, SOME B, SOME a] @{thm PiE}
+  in
+    HEADGOAL (resolve_tac ctxt [resolvent])
+    THEN SOMEGOAL (known_raw_tac ctxt)
+  end)
+
+fun induction_tac p A x y ctxt =
+  let
+    val [p, A, x, y] = map (Thm.cterm_of ctxt) [p, A, x, y]
+  in
+    HEADGOAL (resolve_tac ctxt
+      [Drule.infer_instantiate' ctxt [SOME p, SOME A, SOME x, SOME y] @{thm IdE}])
+  end
+
+fun side_conds_tac ctxt =
+  let
+    val intros = Named_Theorems.get ctxt \<^named_theorems>\<open>intros\<close>
+    val forms = Named_Theorems.get ctxt \<^named_theorems>\<open>forms\<close>
+  in
+    REPEAT o CHANGED o (known_raw_tac ctxt ORELSE' resolve_tac ctxt (intros @ forms))
+  end
+
+fun equality_context_tac fact ctxt =
+  let
+    val eq_th = Proof_Context.get_fact_single ctxt fact
+    val (p, (A, x, y)) = (Lib.dest_typing ##> Lib.dest_Id) (Thm.prop_of eq_th)
+
+    val hyps =
+      Facts.props (Proof_Context.facts_of ctxt)
+      |> map (Lib.dest_typing o Thm.prop_of o fst)
+      |> filter_out (fn (t, _) =>
+          Term.aconv (t, p) orelse Item_Net.member (Inserts.get ctxt) t)
+      |> map (fn (t, T) => ((t, T), subterm_count [p, x, y] T))
+      |> filter (fn (_, i) => i > 0)
+      (*
+        `t1: T1` comes before `t2: T2` if T1 contains t2 as subterm.
+        If they are incomparable, then order by decreasing `subterm_count [p, x, y] T`.
+      *)
+      |> sort (fn (((t1, _), i), ((_, T2), j)) =>
+          Lib.cond_order (Lib.subterm_order T2 t1) (int_ord (j, i)))
+      |> map #1
+
+    val record_inserts =
+      Inserts.map (fold (fn (t, _) => fn net => Item_Net.update t net) hyps)
+
+    val tac =
+      fold (fn (t, _) => fn tac => tac THEN HEADGOAL (push_hyp_tac t ctxt)) hyps all_tac
+      THEN (
+        induction_tac p A x y ctxt
+        THEN RANGE (replicate 3 (known_raw_tac ctxt) @ [side_conds_tac ctxt]) 1
+      )
+      THEN (
+        REPEAT_DETERM_N (length hyps) (SOMEGOAL (resolve_tac ctxt @{thms PiI}))
+        THEN ALLGOALS (side_conds_tac ctxt)
+      )
+  in
+    fn (ctxt, st) => Method.CONTEXT (record_inserts ctxt) (tac st)
+  end
+
+end

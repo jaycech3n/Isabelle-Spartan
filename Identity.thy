@@ -14,22 +14,22 @@ named_theorems eqs \<comment>\<open>For propositional equalities\<close>
 method eqs = rule eqs
 
 schematic_goal pathcomp_left_refl [eqs]:
-  assumes "A: U" "x: A" "y: A" "p: x =\<^bsub>A\<^esub> y"
+  assumes "A: U i" "x: A" "y: A" "p: x =\<^bsub>A\<^esub> y"
   shows "?prf: pathcomp A x x y (refl x) p =\<^bsub>x=\<^bsub>A\<^esub> y\<^esub> p"
   by (equality \<open>p: _\<close>) ((rule Id_transitive; routine), (reduce; routine))
 
 schematic_goal pathcomp_right_refl [eqs]:
-  assumes "A: U" "x: A" "y: A" "p: x =\<^bsub>A\<^esub> y"
+  assumes "A: U i" "x: A" "y: A" "p: x =\<^bsub>A\<^esub> y"
   shows "?prf: pathcomp A x y y p (refl y) =\<^bsub>x=\<^bsub>A\<^esub> y\<^esub> p"
   by (equality \<open>p: _\<close>) ((rule Id_transitive; routine), (reduce; routine))
 
 schematic_goal pathcomp_left_inv [eqs]:
-  assumes "A: U" "x: A" "y: A" "p: y =\<^bsub>A\<^esub> x"
+  assumes "A: U i" "x: A" "y: A" "p: y =\<^bsub>A\<^esub> x"
   shows "?prf: pathcomp A x y x (pathinv A y x p) p =\<^bsub>x =\<^bsub>A\<^esub> x\<^esub> (refl x)"
   by (equality \<open>p: _\<close>) (((rule Id_transitive Id_symmetric)+; routine?), (reduce+; routine))
 
 schematic_goal pathcomp_right_inv [eqs]:
-  assumes "A: U" "x: A" "y: A" "p: x =\<^bsub>A\<^esub> y"
+  assumes "A: U i" "x: A" "y: A" "p: x =\<^bsub>A\<^esub> y"
   shows "?prf: pathcomp A x y x p (pathinv A x y p) =\<^bsub>x =\<^bsub>A\<^esub> x\<^esub> (refl x)"
 apply (equality \<open>p: _\<close>)
   apply (rule Id_transitive; routine?)
@@ -38,7 +38,7 @@ apply (equality \<open>p: _\<close>)
 done
 
 schematic_goal pathinv_pathinv [eqs]:
-  assumes "A: U" "x: A" "y: A" "p: x =\<^bsub>A\<^esub> y"
+  assumes "A: U i" "x: A" "y: A" "p: x =\<^bsub>A\<^esub> y"
   shows "?prf: pathinv A y x (pathinv A x y p) =\<^bsub>x =\<^bsub>A\<^esub> y\<^esub> p"
   by (equality \<open>p: _\<close>) (((rule Id_symmetric)+; routine), (reduce+; routine))
 
@@ -53,7 +53,7 @@ text \<open>
 schematic_goal pathcomp_assoc:
   assumes
     "p: x =\<^bsub>A\<^esub> y" "q: y =\<^bsub>A\<^esub> z" "r: z =\<^bsub>A\<^esub> w"
-    "A: U" "x: A" "y: A" "z: A" "w: A"
+    "A: U i" "x: A" "y: A" "z: A" "w: A"
   shows "?prf:
     pathcomp A x y w p (pathcomp A y z w q r) =\<^bsub>x =\<^bsub>A\<^esub> w\<^esub>
       pathcomp A x z w (pathcomp A x y z p q) r"
@@ -73,7 +73,7 @@ done
 schematic_goal Id_transfer_derivation:
   assumes
     "x: A" "y: A" "p: x =\<^bsub>A\<^esub> y"
-    "f: A \<rightarrow> B" "A: U" "B: U"
+    "f: A \<rightarrow> B" "A: U i" "B: U i"
   shows "?prf: f `x =\<^bsub>B\<^esub> f `y"
   by (equality \<open>p: _\<close>) routine
 
@@ -82,12 +82,12 @@ definition "ap f A B x y p \<equiv> IdInd A (\<lambda>x y _. f `x =\<^bsub>B\<^e
 lemma Id_transfer:
   assumes
     "p: x =\<^bsub>A\<^esub> y" "x: A" "y: A"
-    "f: A \<rightarrow> B" "A: U" "B: U"
+    "f: A \<rightarrow> B" "A: U i" "B: U i"
   shows "ap f A B x y p: f `x =\<^bsub>B\<^esub> f `y"
   unfolding ap_def by (rule Id_transfer_derivation assms)+
 
 lemma ap_comp [reds]:
-  assumes "f: A \<rightarrow> B" "A: U" "B: U" "x: A"
+  assumes "f: A \<rightarrow> B" "A: U i" "B: U i" "x: A"
   shows "ap f A B x x (refl x) \<equiv> refl (f `x)"
   unfolding ap_def by (reduce | routine)+
 
