@@ -23,7 +23,7 @@ fun push_hyp_tac t = Subgoal.FOCUS_PARAMS (fn {context = ctxt, concl, ...} =>
     val resolvent = Drule.infer_instantiate' ctxt [NONE, NONE, SOME B, SOME a] @{thm PiE}
   in
     HEADGOAL (resolve_tac ctxt [resolvent])
-    THEN SOMEGOAL (known_raw_tac ctxt)
+    THEN SOMEGOAL (known_tac ctxt)
   end)
 
 fun induction_tac p A x y ctxt =
@@ -37,9 +37,8 @@ fun induction_tac p A x y ctxt =
 fun side_conds_tac ctxt =
   let
     val intros = Named_Theorems.get ctxt \<^named_theorems>\<open>intros\<close>
-    val forms = Named_Theorems.get ctxt \<^named_theorems>\<open>forms\<close>
   in
-    REPEAT o CHANGED o (known_raw_tac ctxt ORELSE' resolve_tac ctxt (intros @ forms))
+    REPEAT o CHANGED o (known_tac ctxt ORELSE' resolve_tac ctxt intros)
   end
 
 fun equality_context_tac fact ctxt =
@@ -69,7 +68,7 @@ fun equality_context_tac fact ctxt =
       fold (fn (t, _) => fn tac => tac THEN HEADGOAL (push_hyp_tac t ctxt)) hyps all_tac
       THEN (
         induction_tac p A x y ctxt
-        THEN RANGE (replicate 3 (known_raw_tac ctxt) @ [side_conds_tac ctxt]) 1
+        THEN RANGE (replicate 3 (known_tac ctxt) @ [side_conds_tac ctxt]) 1
       )
       THEN (
         REPEAT_DETERM_N (length hyps) (SOMEGOAL (resolve_tac ctxt @{thms PiI}))

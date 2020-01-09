@@ -22,6 +22,7 @@ val cond_order: order -> order -> order
 
 end = struct
 
+
 (** Lists **)
 fun max gt (x::xs) = fold (fn a => fn b => if gt (a, b) then a else b) xs x
   | max _ [] = error "max of empty list"
@@ -49,12 +50,13 @@ fun dest_typing (Const (\<^const_name>\<open>has_type\<close>, _) $ t $ T) = (t,
 (** Subterms **)
 
 fun has_subterm tms =
-  Term.exists_subterm (foldl1 (op orf) (map (fn t => fn s => Term.aconv_untyped (s, t)) tms))
+  Term.exists_subterm
+    (foldl1 (op orf) (map (fn t => fn s => Term.aconv_untyped (s, t)) tms))
 
 (*
-  Souped-up version of Term.fold_aterms. At each node n in the AST, the  mapped function f
-  is additionally passed a unique index i and a list of the results of f at all children
-  of n.
+  Souped-up version of Term.fold_aterms. At each node n in the AST, the function
+  f is additionally passed a unique index i and a list of the results of f at
+  all children of n.
 *)
 fun fold_aterms f t =
   let

@@ -1,8 +1,8 @@
 (*  Title:      schematic_subgoal.ML
     Author:     Joshua Chen
 
-A modified version of the Isar `subgoal` command that
-keeps schematic variables in the goal state.
+A modified version of the Isar `subgoal` command that keeps
+schematic variables in the goal state.
 *)
 
 local
