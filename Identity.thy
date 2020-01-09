@@ -17,27 +17,27 @@ schematic_goal pathcomp_left_refl [eqs]:
   assumes "A: U i" "x: A" "y: A" "p: x =\<^bsub>A\<^esub> y"
   shows "?prf: pathcomp A x x y (refl x) p =\<^bsub>x=\<^bsub>A\<^esub> y\<^esub> p"
   apply (equality \<open>p: _\<close>)
-  apply (rule Id_transitive)
-  apply intros
-  apply reduce
+    apply (rule Id_transitive)
+      apply intros
+    apply reduce
   done
 
 schematic_goal pathcomp_right_refl [eqs]:
   assumes "A: U i" "x: A" "y: A" "p: x =\<^bsub>A\<^esub> y"
   shows "?prf: pathcomp A x y y p (refl y) =\<^bsub>x=\<^bsub>A\<^esub> y\<^esub> p"
   apply (equality \<open>p: _\<close>)
-  apply (rule Id_transitive)
-  apply intros
-  apply reduce
+    apply (rule Id_transitive)
+      apply intros
+    apply reduce
   done
 
 schematic_goal pathcomp_left_inv [eqs]:
   assumes "A: U i" "x: A" "y: A" "p: y =\<^bsub>A\<^esub> x"
   shows "?prf: pathcomp A x y x (pathinv A y x p) p =\<^bsub>x =\<^bsub>A\<^esub> x\<^esub> (refl x)"
   apply (equality \<open>p: _\<close>)
-  apply (rule Id_transitive)
-  apply (rule Id_symmetric)
-  apply reduce
+    apply (rule Id_transitive)
+      apply (rule Id_symmetric)
+    apply reduce
   done
 
 schematic_goal pathcomp_right_inv [eqs]:
@@ -52,7 +52,11 @@ schematic_goal pathcomp_right_inv [eqs]:
 schematic_goal pathinv_pathinv [eqs]:
   assumes "A: U i" "x: A" "y: A" "p: x =\<^bsub>A\<^esub> y"
   shows "?prf: pathinv A y x (pathinv A x y p) =\<^bsub>x =\<^bsub>A\<^esub> y\<^esub> p"
-  by (equality \<open>p: _\<close>) (((rule Id_symmetric)+; routine), (reduce+; routine))
+  apply (equality \<open>p:_\<close>)
+    apply (rule Id_symmetric)
+      apply (rule Id_symmetric)
+    apply reduce
+  done
 
 text \<open>
   Associativity of path composition can be proved by a triply-nested path
@@ -74,10 +78,21 @@ schematic_goal pathcomp_assoc:
     apply ((rule Id_transitive)+) [2]
     schematic_subgoal premises for x q
       apply (equality \<open>q: _\<close>)
-        apply ((rule Id_transitive; routine?)+) [2]
+        apply (rule Id_transitive)
+          apply intros
+          apply (rule Id_transitive)
+        apply (rule Id_transitive)
+          apply (rule Id_transitive)
+            apply intros
         schematic_subgoal premises for x r
           apply (equality \<open>r: _\<close>)
-            apply ((rule Id_transitive; routine?)+) [2]
+            apply (rule Id_transitive)
+              apply intros
+              apply (rule Id_transitive)
+                apply intros
+            apply (rule Id_transitive)
+              apply (rule Id_transitive)
+                apply intros+
             apply reduce
         done
     done
