@@ -4,9 +4,9 @@ Experiments in dependent type theory support in Isabelle.
 
 - Current work is focused on:
 
-  - [ ] Term elaboration
-  - [ ] The universe hierarchy
-  - [x] Better Isar integration with identity type reasoning — *commit `90121d4`*
+  - Term elaboration
+  - Better Isar integration with identity type reasoning
+  - Automating the universe hierarchy
 
 - You may also be interested in [homotopy type theory in Isabelle](https://github.com/jaycech3n/Isabelle-HoTT), which this project aims to improve on.
 
