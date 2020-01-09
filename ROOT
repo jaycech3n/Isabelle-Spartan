@@ -4,6 +4,6 @@ session Spartan = Pure +
     "HOL-Eisbach"
   theories
     Spartan
-    (* Identity
-    Elaboration *)
+    Identity
+    Elaboration
 

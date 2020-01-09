@@ -220,6 +220,12 @@ method_setup intros =
 method_setup elims =
   \<open>Scan.succeed (fn ctxt => SIMPLE_METHOD (HEADGOAL (elims_tac ctxt)))\<close>
 
+method_setup rule =
+  \<open>Attrib.thms >> (fn ths => fn ctxt =>
+    SIMPLE_METHOD (HEADGOAL (
+      resolve_tac ctxt ths
+      THEN_ALL_NEW (TRY o known_tac ctxt))))\<close>
+
 method routine = (intros|elims)+
 
 \<comment>\<open>The Simplifier is used as a basis for some methods.\<close>
