@@ -21,7 +21,7 @@ ML_file \<open>schematic_subgoal.ML\<close>
 ML_file \<open>$ISABELLE_HOME/src/Tools/subtyping.ML\<close>
 declare [[coercion_enabled]]
 
-named_theorems intros and elims
+named_theorems intros and elims and comps
 
 
 section \<open>Metatype setup\<close>
@@ -77,7 +77,7 @@ axiomatization where
 
   PiE [elims]: "\<lbrakk>f: \<Prod>x: A. B x; a: A\<rbrakk> \<Longrightarrow> f `a: B a" and
 
-  beta [simp]: "\<lbrakk>\<And>x. x: A \<Longrightarrow> b x: B x; a: A\<rbrakk> \<Longrightarrow> (\<lambda>x: A. b x) `a \<equiv> b a" and
+  beta [comps]: "\<lbrakk>\<And>x. x: A \<Longrightarrow> b x: B x; a: A\<rbrakk> \<Longrightarrow> (\<lambda>x: A. b x) `a \<equiv> b a" and
 
   eta: "f: \<Prod>x: A. B x \<Longrightarrow> \<lambda>x: A. f `x \<equiv> f" and
 
@@ -119,7 +119,7 @@ axiomatization where
     \<And>x y. \<lbrakk>x: A; y: B x\<rbrakk> \<Longrightarrow> f x y: C <x,y>
     \<rbrakk> \<Longrightarrow> SigInd A B C f p: C p" and
 
-  Sig_comp [simp]: "\<lbrakk>
+  Sig_comp [comps]: "\<lbrakk>
     a: A;
     b: B a;
     \<And>x. x: A \<Longrightarrow> B x: U i;
@@ -160,7 +160,7 @@ axiomatization where
     \<And>x. x: A \<Longrightarrow> f x: C x x (refl x)
     \<rbrakk> \<Longrightarrow> IdInd A C f a b p: C a b p" and
 
-  Id_comp [simp]: "\<lbrakk>
+  Id_comp [comps]: "\<lbrakk>
     a: A;
     \<And>x y p. \<lbrakk>x: A; y: A; p: x =\<^bsub>A\<^esub> y\<rbrakk> \<Longrightarrow> C x y p: U i;
     \<And>x. x: A \<Longrightarrow> f x: C x x (refl x)
@@ -220,9 +220,9 @@ method_setup intros =
 method_setup elims =
   \<open>Scan.succeed (fn ctxt => SIMPLE_METHOD (HEADGOAL (elims_tac ctxt)))\<close>
 
+method routine = (intros|elims)+
 
-section \<open>Simplifier setup\<close>
-
+\<comment>\<open>The Simplifier is used as a basis for some methods.\<close>
 setup \<open>
 let
   fun solver_tac ctxt =
@@ -235,6 +235,10 @@ in
     ctxt addSolver (mk_solver "" solver_tac))
 end
 \<close>
+
+text \<open>Reduces terms via judgmental equalities:\<close>
+
+method reduce uses add = (simp add: comps add)
 
 
 section \<open>Identity induction\<close>
@@ -272,7 +276,7 @@ lemma funcompI:
     "\<And>x. x : B \<Longrightarrow> C x: U i"
   shows
     "g \<circ>\<^bsub>A\<^esub> f: \<Prod>x: A. C (f `x)"
-  unfolding funcomp_def by simp
+  unfolding funcomp_def by routine
 
 lemma funcomp_assoc:
   assumes
@@ -282,16 +286,16 @@ lemma funcomp_assoc:
     "A: U i"
   shows
     "(h \<circ>\<^bsub>B\<^esub> g) \<circ>\<^bsub>A\<^esub> f \<equiv> h \<circ>\<^bsub>A\<^esub> g \<circ>\<^bsub>A\<^esub> f"
-  unfolding funcomp_def by simp
+  unfolding funcomp_def by reduce
 
-lemma funcomp_comp [simp]:
+lemma funcomp_comp [comps]:
   assumes
     "\<And>x. x: A \<Longrightarrow> b x: B"
     "\<And>x. x: B \<Longrightarrow> c x: C x"
     "A: U i"
   shows
     "(\<lambda>x: B. c x) \<circ>\<^bsub>A\<^esub> (\<lambda>x: A. b x) \<equiv> \<lambda>x: A. c (b x)"
-  unfolding funcomp_def by simp
+  unfolding funcomp_def by reduce
 
 
 section \<open>Identity function\<close>
@@ -300,52 +304,42 @@ definition id where "id A \<equiv> \<lambda>x: A. x"
 
 lemma
   idI: "A: U i \<Longrightarrow> id A: A \<rightarrow> A" and
-  id_comp [simp]: "x: A \<Longrightarrow> (id A) `x \<equiv> x"
-  unfolding id_def by simp+
+  id_comp [comps]: "x: A \<Longrightarrow> (id A) `x \<equiv> x"
+  unfolding id_def by reduce+
 
-lemma id_left [simp]:
-  assumes
-    "f: A \<rightarrow> B" "A: U i" "B: U i"
-  shows
-    "(id B) \<circ>\<^bsub>A\<^esub> f \<equiv> f"
+lemma id_left [comps]:
+  assumes "f: A \<rightarrow> B" "A: U i" "B: U i"
+  shows "(id B) \<circ>\<^bsub>A\<^esub> f \<equiv> f"
   unfolding id_def
-  by (subst eta[symmetric, of f], simp+) (simp add: eta)
+  by (subst eta[symmetric, of f], reduce+) (reduce add: eta)
 
-lemma id_right [simp]:
-  assumes
-    "f: A \<rightarrow> B" "A: U i" "B: U i"
-  shows
-    "f \<circ>\<^bsub>A\<^esub> (id A) \<equiv> f"
+lemma id_right [comps]:
+  assumes "f: A \<rightarrow> B" "A: U i" "B: U i"
+  shows "f \<circ>\<^bsub>A\<^esub> (id A) \<equiv> f"
   unfolding id_def
-  by (subst eta[symmetric, of f], simp+) (simp add: eta)
+  by (subst eta[symmetric, of f], reduce+) (reduce add: eta)
 
 
  section \<open>Identity\<close>
 
 schematic_goal Id_symmetric_derivation:
-  assumes
-    "p: x =\<^bsub>A\<^esub> y" "x: A" "y: A" "A: U i"
-  shows
-    "?prf: y =\<^bsub>A\<^esub> x"
-  by simp
+  assumes "p: x =\<^bsub>A\<^esub> y" "x: A" "y: A" "A: U i"
+  shows "?prf: y =\<^bsub>A\<^esub> x"
+  by routine
 
 (*TODO: automatically generate definitions for the terms derived in the above manner*)
 
 definition "pathinv A x y p \<equiv> IdInd A (\<lambda>x y _. y =\<^bsub>A\<^esub> x) (\<lambda>x. refl x) x y p"
 
 lemma Id_symmetric:
-  assumes
-    "p: x =\<^bsub>A\<^esub> y" "x: A" "y: A" "A: U i"
-  shows
-    "pathinv A x y p: y =\<^bsub>A\<^esub> x"
-  unfolding pathinv_def using Id_symmetric_derivation by simp
+  assumes "p: x =\<^bsub>A\<^esub> y" "x: A" "y: A" "A: U i"
+  shows "pathinv A x y p: y =\<^bsub>A\<^esub> x"
+  unfolding pathinv_def by reduce
 
-lemma pathinv_comp [simp]:
-  assumes
-    "x: A" "A: U i"
-  shows
-    "pathinv A x x (refl x) \<equiv> refl x"
-  unfolding pathinv_def by simp
+lemma pathinv_comp [comps]:
+  assumes "x: A" "A: U i"
+  shows "pathinv A x x (refl x) \<equiv> refl x"
+  unfolding pathinv_def by reduce
 
 schematic_goal Id_transitive_derivation:
   assumes
@@ -371,11 +365,12 @@ lemma Id_transitive:
     "A: U i" "x: A" "y: A" "z: A"
   shows
     "pathcomp A x y z p q: x =\<^bsub>A\<^esub> z"
-  unfolding pathcomp_def using Id_transitive_derivation by simp
+  unfolding pathcomp_def using Id_transitive_derivation by reduce
 
-lemma pathcomp_comp [simp]:
-  "\<lbrakk>A: U i; a: A\<rbrakk> \<Longrightarrow> pathcomp A a a a (refl a) (refl a) \<equiv> refl a"
-  unfolding pathcomp_def by simp
+lemma pathcomp_comp [comps]:
+  assumes "A: U i" "a: A"
+  shows "pathcomp A a a a (refl a) (refl a) \<equiv> refl a"
+  unfolding pathcomp_def by reduce
 
 
 section \<open>Pairs\<close>
@@ -383,27 +378,29 @@ section \<open>Pairs\<close>
 definition "fst A B p \<equiv> SigInd A B (\<lambda>_. A) (\<lambda>x y. x) p"
 definition "snd A B p \<equiv> SigInd A B (\<lambda>p. B (fst A B p)) (\<lambda>x y. y) p"
 
-lemma fst [elims]: "\<lbrakk>p: \<Sum>x: A. B x; A: U i; \<And>x. x: A \<Longrightarrow> B x: U i\<rbrakk> \<Longrightarrow> fst A B p: A"
-  unfolding fst_def by simp
+lemma fst [elims]:
+  assumes "p: \<Sum>x: A. B x" "A: U i" "\<And>x. x: A \<Longrightarrow> B x: U i"
+  shows "fst A B p: A"
+  unfolding fst_def by reduce
 
-lemma fst_of_pair [simp]:
+lemma fst_of_pair [comps]:
   assumes
     "A: U i"
-    "\<And>x. x: A \<Longrightarrow> B x: U i"
     "a: A"
     "b: B a"
+    "\<And>x. x: A \<Longrightarrow> B x: U i"
   shows "fst A B <a, b> \<equiv> a"
-  unfolding fst_def by simp
+  unfolding fst_def by reduce
 
 lemma snd [elims]:
   assumes "p: \<Sum>x: A. B x" "A: U i" "\<And>x. x: A \<Longrightarrow> B x: U i"
   shows "snd A B p: B (fst A B p)"
-  unfolding snd_def by simp+
+  unfolding snd_def by reduce+
 
-lemma snd_of_pair [simp]:
+lemma snd_of_pair [comps]:
   assumes "A: U i" "\<And>x. x: A \<Longrightarrow> B x: U i" "a: A" "b: B a"
   shows "snd A B <a, b> \<equiv> b"
-  unfolding snd_def by simp
+  unfolding snd_def by reduce
 
 
 end
