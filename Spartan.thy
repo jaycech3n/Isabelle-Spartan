@@ -369,6 +369,7 @@ schematic_goal Id_transitive_derivation:
   apply (equality \<open>p: _\<close>)
     schematic_subgoal premises for x q
       apply (equality \<open>q: _\<close>)
+        apply intros
     done
   done
 
