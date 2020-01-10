@@ -5,12 +5,17 @@ sig
 val max: ('a * 'a -> bool) -> 'a list -> 'a
 val maxint: int list -> int
 
-(*Term constructors and destructors*)
-val mk_Var: string -> int -> typ -> term
-val mk_Pi: term -> term -> term -> term
-val dest_Id: term -> term * term * term
+(*Terms*)
+val is_rigid: term -> bool
 val dest_eq: term -> term * term
+val mk_Var: string -> int -> typ -> term
+
+val is_typing: term -> bool
 val dest_typing: term -> term * term
+val term_of_typing: term -> term
+val type_of_typing: term -> term
+val dest_Id: term -> term * term * term
+val mk_Pi: term -> term -> term -> term
 
 (*Subterms*)
 val has_subterm: term list -> term -> bool
@@ -24,27 +29,40 @@ end = struct
 
 
 (** Lists **)
+
 fun max gt (x::xs) = fold (fn a => fn b => if gt (a, b) then a else b) xs x
   | max _ [] = error "max of empty list"
 
 val maxint = max (op >)
 
 
-(** Constructors and destructors **)
+(** Terms **)
+
+(* Meta *)
+
+val is_rigid = not o is_Var o head_of
+
+fun dest_eq (Const (\<^const_name>\<open>Pure.eq\<close>, _) $ t $ def) = (t, def)
+  | dest_eq _ = error "dest_eq"
 
 fun mk_Var name idx T = Var ((name, idx), T)
 
-fun mk_Pi v typ body = Const (\<^const_name>\<open>Pi\<close>, dummyT) $ typ $ lambda v body
+(* Object *)
+
+fun is_typing (Const (\<^const_name>\<open>has_type\<close>, _) $ _ $ _) = true
+  | is_typing _ = false
+
+fun dest_typing (Const (\<^const_name>\<open>has_type\<close>, _) $ t $ T) = (t, T)
+  | dest_typing _ = error "dest_typing"
+
+val term_of_typing = #1 o dest_typing
+val type_of_typing = #2 o dest_typing
 
 fun dest_Id tm = case tm of
     Const (\<^const_name>\<open>Id\<close>, _) $ A $ x $ y => (A, x, y)
   | _ => error "dest_Id"
 
-fun dest_eq (Const (\<^const_name>\<open>Pure.eq\<close>, _) $ t $ def) = (t, def)
-  | dest_eq _ = error "dest_def"
-
-fun dest_typing (Const (\<^const_name>\<open>has_type\<close>, _) $ t $ T) = (t, T)
-  | dest_typing _ = error "dest_typing"
+fun mk_Pi v typ body = Const (\<^const_name>\<open>Pi\<close>, dummyT) $ typ $ lambda v body
 
 
 (** Subterms **)

@@ -21,7 +21,7 @@ ML_file \<open>schematic_subgoal.ML\<close>
 ML_file \<open>$ISABELLE_HOME/src/Tools/subtyping.ML\<close>
 declare [[coercion_enabled]]
 
-named_theorems intros and elims and comps
+named_theorems intros and elims and comps and typechk
 
 
 section \<open>Metatype setup\<close>
@@ -204,6 +204,23 @@ fun elims_tac ctxt = SUBGOAL (fn (_, i) =>
   ((resolve_tac ctxt (Named_Theorems.get ctxt \<^named_theorems>\<open>elims\<close>)
     THEN' known_tac ctxt)
   THEN_ALL_NEW (TRY o known_tac ctxt)) i)
+
+(*Typechecking: try to solve goals of the form "a: A" where a is rigid*)
+fun typechk_tac ctxt = SUBGOAL (fn (goal, i) =>
+  let
+    val concl = Logic.strip_assums_concl goal
+  in
+    if Lib.is_typing concl andalso Lib.is_rigid (Lib.term_of_typing concl)
+    then
+      let val net = Tactic.build_net
+        ((Named_Theorems.get ctxt \<^named_theorems>\<open>typechk\<close>)
+        @(Named_Theorems.get ctxt \<^named_theorems>\<open>intros\<close>)
+        @(Named_Theorems.get ctxt \<^named_theorems>\<open>elims\<close>))
+      in
+        (REPEAT_ALL_NEW (known_tac ctxt ORELSE' resolve_from_net_tac ctxt net)) i
+      end
+    else no_tac
+  end)
 \<close>
 
 method_setup assumptions =
@@ -220,30 +237,26 @@ method_setup intros =
 method_setup elims =
   \<open>Scan.succeed (fn ctxt => SIMPLE_METHOD (HEADGOAL (elims_tac ctxt)))\<close>
 
+method_setup typechk =
+  \<open>Scan.succeed (fn ctxt => SIMPLE_METHOD (HEADGOAL (typechk_tac ctxt)))\<close>
+
 method_setup rule =
   \<open>Attrib.thms >> (fn ths => fn ctxt =>
     SIMPLE_METHOD (HEADGOAL (
       resolve_tac ctxt ths
       THEN_ALL_NEW (TRY o known_tac ctxt))))\<close>
 
-method routine = (intros|elims)+
-
-\<comment>\<open>The Simplifier is used as a basis for some methods.\<close>
+\<comment>\<open>The Simplifier is used as a basis for some methods\<close>
 setup \<open>
 let
-  fun solver_tac ctxt =
-    REPEAT o CHANGED o (
-      known_tac ctxt ORELSE'
-      intros_tac ctxt ORELSE'
-      elims_tac ctxt)
+  fun solver_tac ctxt = REPEAT o CHANGED o typechk_tac ctxt
 in
   map_theory_simpset (fn ctxt =>
     ctxt addSolver (mk_solver "" solver_tac))
 end
 \<close>
 
-text \<open>Reduces terms via judgmental equalities:\<close>
-
+\<comment>\<open>Reduces terms via judgmental equalities\<close>
 method reduce uses add = (simp add: comps add)
 
 
@@ -273,7 +286,7 @@ syntax
 translations
   "g \<circ>\<^bsub>A\<^esub> f" \<rightleftharpoons> "CONST funcomp A g f"
 
-lemma funcompI:
+lemma funcompI [typechk]:
   assumes
     "f: A \<rightarrow> B"
     "g: \<Prod>x: B. C x"
@@ -282,7 +295,7 @@ lemma funcompI:
     "\<And>x. x : B \<Longrightarrow> C x: U i"
   shows
     "g \<circ>\<^bsub>A\<^esub> f: \<Prod>x: A. C (f `x)"
-  unfolding funcomp_def by routine
+  unfolding funcomp_def by typechk
 
 lemma funcomp_assoc:
   assumes
@@ -309,7 +322,7 @@ section \<open>Identity function\<close>
 definition id where "id A \<equiv> \<lambda>x: A. x"
 
 lemma
-  idI: "A: U i \<Longrightarrow> id A: A \<rightarrow> A" and
+  idI [typechk]: "A: U i \<Longrightarrow> id A: A \<rightarrow> A" and
   id_comp [comps]: "x: A \<Longrightarrow> (id A) `x \<equiv> x"
   unfolding id_def by reduce+
 
@@ -331,16 +344,16 @@ lemma id_right [comps]:
 schematic_goal Id_symmetric_derivation:
   assumes "p: x =\<^bsub>A\<^esub> y" "x: A" "y: A" "A: U i"
   shows "?prf: y =\<^bsub>A\<^esub> x"
-  by routine
+  by elims intros+
 
 (*TODO: automatically generate definitions for the terms derived in the above manner*)
 
 definition "pathinv A x y p \<equiv> IdInd A (\<lambda>x y _. y =\<^bsub>A\<^esub> x) (\<lambda>x. refl x) x y p"
 
-lemma Id_symmetric:
+lemma Id_symmetric [typechk]:
   assumes "p: x =\<^bsub>A\<^esub> y" "x: A" "y: A" "A: U i"
   shows "pathinv A x y p: y =\<^bsub>A\<^esub> x"
-  unfolding pathinv_def by reduce
+  unfolding pathinv_def by typechk
 
 lemma pathinv_comp [comps]:
   assumes "x: A" "A: U i"
@@ -365,13 +378,13 @@ definition "pathcomp A x y z p q \<equiv>
     (\<lambda>x. \<lambda>q: x =\<^bsub>A\<^esub> z. IdInd A (\<lambda>x z _. (x =\<^bsub>A\<^esub> z)) (\<lambda>x. refl x) x z q)
     x y p `q"
 
-lemma Id_transitive:
+lemma Id_transitive [typechk]:
   assumes
     "p: x =\<^bsub>A\<^esub> y" "q: y =\<^bsub>A\<^esub> z"
     "A: U i" "x: A" "y: A" "z: A"
   shows
     "pathcomp A x y z p q: x =\<^bsub>A\<^esub> z"
-  unfolding pathcomp_def using Id_transitive_derivation by reduce
+  unfolding pathcomp_def by typechk
 
 lemma pathcomp_comp [comps]:
   assumes "A: U i" "a: A"
@@ -387,7 +400,7 @@ definition "snd A B p \<equiv> SigInd A B (\<lambda>p. B (fst A B p)) (\<lambda>
 lemma fst [elims]:
   assumes "p: \<Sum>x: A. B x" "A: U i" "\<And>x. x: A \<Longrightarrow> B x: U i"
   shows "fst A B p: A"
-  unfolding fst_def by reduce
+  unfolding fst_def by typechk
 
 lemma fst_of_pair [comps]:
   assumes
@@ -401,7 +414,7 @@ lemma fst_of_pair [comps]:
 lemma snd [elims]:
   assumes "p: \<Sum>x: A. B x" "A: U i" "\<And>x. x: A \<Longrightarrow> B x: U i"
   shows "snd A B p: B (fst A B p)"
-  unfolding snd_def by reduce+
+  unfolding snd_def by typechk reduce
 
 lemma snd_of_pair [comps]:
   assumes "A: U i" "\<And>x. x: A \<Longrightarrow> B x: U i" "a: A" "b: B a"
