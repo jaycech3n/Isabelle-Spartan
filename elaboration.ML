@@ -56,10 +56,10 @@ fun prep_holes ctxt =
     Lib.fold_aterms expand
   end
 
-fun strip_iinfo (Const (\<^const_name>\<open>iannot\<close>, _) $ t $ _) = t
+(* fun strip_iinfo (Const (\<^const_name>\<open>iannot\<close>, _) $ t $ _) = t
   | strip_iinfo (t $ u) = strip_iinfo t $ strip_iinfo u
   | strip_iinfo (Abs (x, T, t)) = Abs (x, T, strip_iinfo t)
-  | strip_iinfo t = t
+  | strip_iinfo t = t *)
 
 
 end

@@ -179,18 +179,31 @@ ML_file "~~/src/Tools/IsaPlanner/zipper.ML"
 ML_file "~~/src/Tools/eqsubst.ML"
 
 ML \<open>
-(*An assumption tactic that doesn't instantiate schematic variables*)
-val assumptions_tac = Subgoal.FOCUS (fn {context, prems, ...} =>
-  HEADGOAL (resolve_tac context prems))
-
-(*Solves a subgoal by unifying and resolving with context facts and
-  simplifier premises, or *non-unifying* assumption*)
-fun known_tac ctxt = SUBGOAL (fn (_, i) =>
+(*An assumption tactic that only solves typing subgoals with rigid terms and
+  judgmental equalities without schematic variables*)
+fun assumptions_tac ctxt = SUBGOAL (fn (goal, i) =>
   let
-    val ths = map fst (Facts.props (Proof_Context.facts_of ctxt))
+    val concl = Logic.strip_assums_concl goal
   in
-    resolve_tac ctxt (ths @ Simplifier.prems_of ctxt) i
-    ORELSE assumptions_tac ctxt i
+    if
+      Lib.is_typing concl andalso Lib.is_rigid (Lib.term_of_typing concl)
+      orelse not ((exists_subterm is_Var) concl)
+    then assume_tac ctxt i
+    else no_tac
+  end)
+
+(*Solves a typing subgoal with rigid term by unifying types and resolving with
+  context facts and simplifier premises, or by *non-unifying* assumption*)
+fun known_tac ctxt = SUBGOAL (fn (goal, i) =>
+  let
+    val concl = Logic.strip_assums_concl goal
+  in
+    ((if Lib.is_typing concl andalso Lib.is_rigid (Lib.term_of_typing concl)
+      then
+        let val ths = map fst (Facts.props (Proof_Context.facts_of ctxt))
+        in resolve_tac ctxt (ths @ Simplifier.prems_of ctxt) end
+      else K no_tac)
+    ORELSE' assumptions_tac ctxt) i
   end)
 
 (*Applies some introduction rule*)
@@ -288,30 +301,30 @@ translations
 
 lemma funcompI [typechk]:
   assumes
-    "f: A \<rightarrow> B"
-    "g: \<Prod>x: B. C x"
     "A: U i"
     "B: U i"
     "\<And>x. x : B \<Longrightarrow> C x: U i"
+    "f: A \<rightarrow> B"
+    "g: \<Prod>x: B. C x"
   shows
     "g \<circ>\<^bsub>A\<^esub> f: \<Prod>x: A. C (f `x)"
   unfolding funcomp_def by typechk
 
-lemma funcomp_assoc:
+lemma funcomp_assoc [comps]:
   assumes
+    "A: U i"
     "f: A \<rightarrow> B"
     "g: B \<rightarrow> C"
     "h: \<Prod>x: C. D x"
-    "A: U i"
   shows
     "(h \<circ>\<^bsub>B\<^esub> g) \<circ>\<^bsub>A\<^esub> f \<equiv> h \<circ>\<^bsub>A\<^esub> g \<circ>\<^bsub>A\<^esub> f"
   unfolding funcomp_def by reduce
 
 lemma funcomp_comp [comps]:
   assumes
+    "A: U i"
     "\<And>x. x: A \<Longrightarrow> b x: B"
     "\<And>x. x: B \<Longrightarrow> c x: C x"
-    "A: U i"
   shows
     "(\<lambda>x: B. c x) \<circ>\<^bsub>A\<^esub> (\<lambda>x: A. b x) \<equiv> \<lambda>x: A. c (b x)"
   unfolding funcomp_def by reduce
@@ -327,43 +340,43 @@ lemma
   unfolding id_def by reduce+
 
 lemma id_left [comps]:
-  assumes "f: A \<rightarrow> B" "A: U i" "B: U i"
+  assumes "A: U i" "B: U i" "f: A \<rightarrow> B"
   shows "(id B) \<circ>\<^bsub>A\<^esub> f \<equiv> f"
   unfolding id_def
   by (subst eta[symmetric, of f], reduce+) (reduce add: eta)
 
 lemma id_right [comps]:
-  assumes "f: A \<rightarrow> B" "A: U i" "B: U i"
+  assumes "A: U i" "B: U i" "f: A \<rightarrow> B"
   shows "f \<circ>\<^bsub>A\<^esub> (id A) \<equiv> f"
   unfolding id_def
   by (subst eta[symmetric, of f], reduce+) (reduce add: eta)
 
 
- section \<open>Identity\<close>
+section \<open>Identity\<close>
 
 schematic_goal Id_symmetric_derivation:
-  assumes "p: x =\<^bsub>A\<^esub> y" "x: A" "y: A" "A: U i"
+  assumes "A: U i" "x: A" "y: A" "p: x =\<^bsub>A\<^esub> y"
   shows "?prf: y =\<^bsub>A\<^esub> x"
-  by elims intros+
+  by (equality \<open>p:_\<close>) intros
 
 (*TODO: automatically generate definitions for the terms derived in the above manner*)
 
 definition "pathinv A x y p \<equiv> IdInd A (\<lambda>x y _. y =\<^bsub>A\<^esub> x) (\<lambda>x. refl x) x y p"
 
 lemma Id_symmetric [typechk]:
-  assumes "p: x =\<^bsub>A\<^esub> y" "x: A" "y: A" "A: U i"
+  assumes "A: U i" "x: A" "y: A" "p: x =\<^bsub>A\<^esub> y"
   shows "pathinv A x y p: y =\<^bsub>A\<^esub> x"
   unfolding pathinv_def by typechk
 
 lemma pathinv_comp [comps]:
-  assumes "x: A" "A: U i"
+  assumes "A: U i" "x: A"
   shows "pathinv A x x (refl x) \<equiv> refl x"
   unfolding pathinv_def by reduce
 
 schematic_goal Id_transitive_derivation:
   assumes
-    "p: x =\<^bsub>A\<^esub> y" "q: y =\<^bsub>A\<^esub> z"
     "A: U i" "x: A" "y: A" "z: A"
+    "p: x =\<^bsub>A\<^esub> y" "q: y =\<^bsub>A\<^esub> z"
   shows
     "?prf: x =\<^bsub>A\<^esub> z"
   apply (equality \<open>p: _\<close>)
@@ -381,8 +394,8 @@ definition "pathcomp A x y z p q \<equiv>
 
 lemma Id_transitive [typechk]:
   assumes
-    "p: x =\<^bsub>A\<^esub> y" "q: y =\<^bsub>A\<^esub> z"
     "A: U i" "x: A" "y: A" "z: A"
+    "p: x =\<^bsub>A\<^esub> y" "q: y =\<^bsub>A\<^esub> z"
   shows
     "pathcomp A x y z p q: x =\<^bsub>A\<^esub> z"
   unfolding pathcomp_def by typechk
@@ -399,21 +412,21 @@ definition "fst A B p \<equiv> SigInd A B (\<lambda>_. A) (\<lambda>x y. x) p"
 definition "snd A B p \<equiv> SigInd A B (\<lambda>p. B (fst A B p)) (\<lambda>x y. y) p"
 
 lemma fst [elims]:
-  assumes "p: \<Sum>x: A. B x" "A: U i" "\<And>x. x: A \<Longrightarrow> B x: U i"
+  assumes "A: U i" "\<And>x. x: A \<Longrightarrow> B x: U i" "p: \<Sum>x: A. B x"
   shows "fst A B p: A"
   unfolding fst_def by typechk
 
 lemma fst_of_pair [comps]:
   assumes
     "A: U i"
+    "\<And>x. x: A \<Longrightarrow> B x: U i"
     "a: A"
     "b: B a"
-    "\<And>x. x: A \<Longrightarrow> B x: U i"
   shows "fst A B <a, b> \<equiv> a"
   unfolding fst_def by reduce
 
 lemma snd [elims]:
-  assumes "p: \<Sum>x: A. B x" "A: U i" "\<And>x. x: A \<Longrightarrow> B x: U i"
+  assumes "A: U i" "\<And>x. x: A \<Longrightarrow> B x: U i" "p: \<Sum>x: A. B x"
   shows "snd A B p: B (fst A B p)"
   unfolding snd_def by typechk reduce
 

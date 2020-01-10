@@ -1,0 +1,90 @@
+theory Implicits
+imports Spartan
+
+begin
+
+text \<open>This theory provides functionality for implicits and elaboration.\<close>
+
+section \<open>Implicit arguments\<close>
+
+consts
+  iarg   :: \<open>(o \<Rightarrow> o) \<Rightarrow> o\<close>
+  idummy :: \<open>o\<close> ("?")
+  iannot :: \<open>o \<Rightarrow> o \<Rightarrow> o\<close> (infix ":>" 5)
+
+syntax
+  "_iarg" :: \<open>id_position \<Rightarrow> logic\<close> ("{_}")
+translations
+  "{x}" \<rightleftharpoons> "CONST iarg (\<lambda>x. ?)"
+
+ML_file \<open>implicits.ML\<close>
+
+attribute_setup implicit = \<open>Scan.succeed Implicits.implicit_defs_attr\<close>
+
+(*This is old preparatory work for term elaboration and should be cleaned up in
+  the near future*)
+ML_file \<open>elaboration.ML\<close>
+
+ML \<open>
+val _ = Context.>>
+  (Syntax_Phases.term_check 1 "" (fn ctxt => map (Elaboration.prep_holes ctxt)))
+\<close>
+
+
+section \<open>Notation\<close>
+
+definition [implicit]:
+  "Id_i x y \<equiv> x =\<^bsub>{A}\<^esub> y" (* "x = y \<equiv> (x :> {A}) =\<^bsub>{A}\<^esub> (y :> {A})" *)
+
+bundle Id_syntax begin
+  notation Id_i (infix "=" 110)
+end
+
+bundle no_Id_syntax begin
+  no_notation Id_i (infix "=" 110)
+end
+
+definition [implicit]:
+  "funcomp_i g f \<equiv> g \<circ>\<^bsub>{A}\<^esub> f" (* "funcomp_i g f \<equiv> g \<circ>\<^bsub>{A}\<^esub> (f :> {A} \<rightarrow> ?)" *)
+
+bundle funcomp_syntax begin
+  notation funcomp_i (infixr "\<circ>" 110)
+end
+
+bundle no_funcomp_syntax begin
+  no_notation funcomp_i (infixr "\<circ>" 110)
+end
+
+definition [implicit]:
+  "pathinv_i p \<equiv> pathinv {A} {x} {y} p"
+  (* "pathinv_i p \<equiv> pathinv {A} {x} {y} (p :> {x} =\<^bsub>{A}\<^esub> {y})" *)
+
+bundle pathinv_syntax begin
+  notation pathinv_i ("_\<inverse>" [1000])
+end
+
+bundle no_pathinv_syntax begin
+  no_notation pathinv_i ("_\<inverse>" [1000])
+end
+
+definition [implicit]:
+  "pathcomp_i p q \<equiv> pathcomp {A} {x} {y} {z} p q"
+  (* "pathcomp_i p q \<equiv>
+  pathcomp {A} {x} {y} {z} (p :> {x} =\<^bsub>{A}\<^esub> {y}) (q :> {y} =\<^bsub>{A}\<^esub> {z})" *)
+
+bundle pathcomp_syntax begin
+  notation pathcomp_i (infixl "\<bullet>" 120)
+end
+
+bundle no_pathcomp_syntax begin
+  no_notation pathcomp_i (infixl "\<bullet>" 120)
+end
+
+unbundle
+  Id_syntax
+  funcomp_syntax
+  pathinv_syntax
+  pathcomp_syntax
+
+
+end
