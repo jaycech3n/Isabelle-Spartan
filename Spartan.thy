@@ -320,13 +320,22 @@ lemma funcomp_assoc [comps]:
     "(h \<circ>\<^bsub>B\<^esub> g) \<circ>\<^bsub>A\<^esub> f \<equiv> h \<circ>\<^bsub>A\<^esub> g \<circ>\<^bsub>A\<^esub> f"
   unfolding funcomp_def by reduce
 
-lemma funcomp_comp [comps]:
+lemma funcomp_lambda_comp [comps]:
   assumes
     "A: U i"
     "\<And>x. x: A \<Longrightarrow> b x: B"
     "\<And>x. x: B \<Longrightarrow> c x: C x"
   shows
     "(\<lambda>x: B. c x) \<circ>\<^bsub>A\<^esub> (\<lambda>x: A. b x) \<equiv> \<lambda>x: A. c (b x)"
+  unfolding funcomp_def by reduce
+
+lemma funcomp_apply_comp [comps]:
+  assumes
+    "A: U i" "B: U i"
+    "\<And>x y. x: B \<Longrightarrow> C x: U i"
+    "f: A \<rightarrow> B" "g: \<Prod>x: B. C x"
+    "x: A"
+  shows "(g \<circ>\<^bsub>A\<^esub> f) `x \<equiv> g `(f `x)"
   unfolding funcomp_def by reduce
 
 
