@@ -7,6 +7,8 @@ imports Implicits
 
 begin
 
+section \<open>Basic propositional equalities\<close>
+
 (*TODO: Better integration of equality type directly into reasoning...*)
 
 named_theorems eqs \<comment>\<open>For propositional equalities\<close>
@@ -67,6 +69,9 @@ schematic_goal pathcomp_assoc:
     done
   done
 
+
+section \<open>Functoriality of functions\<close>
+
 schematic_goal Id_transfer_derivation:
   assumes
     "A: U i" "B: U i" "f: A \<rightarrow> B"
@@ -79,18 +84,10 @@ schematic_goal Id_transfer_derivation:
 definition "ap A B f x y p \<equiv>
   IdInd A (\<lambda>x y _. f `x =\<^bsub>B\<^esub> f `y) (\<lambda>x. refl (f `x)) x y p"
 
-definition [implicit]:
-  "ap_i f p \<equiv> ap {A} {B} f {x} {y} p"
+definition ap_i ("_[_]" [1000, 0])
+  where [implicit]: "ap_i f p \<equiv> ap {A} {B} f {x} {y} p"
 
-bundle ap_syntax begin
-  notation ap_i ("_[_]" [1000, 0])
-end
-
-bundle no_ap_syntax begin
-  no_notation ap_i ("_[_]" [1000, 0])
-end
-
-unbundle ap_syntax
+translations "f[p]" \<leftharpoondown> "CONST ap A B f x y p"
 
 schematic_goal Id_transfer [typechk]:
   assumes
@@ -99,8 +96,8 @@ schematic_goal Id_transfer [typechk]:
   shows "f[p]: f `x = f `y"
   unfolding ap_def by typechk
 
-schematic_goal ap_comp [comps]:
-  assumes "A: U i" "B: U i" "f: A \<rightarrow> B" "x: A"
+schematic_goal ap_refl [comps]:
+  assumes "f: A \<rightarrow> B" "x: A" "A: U i" "B: U i"
   shows "f[refl x] \<equiv> refl (f `x)"
   unfolding ap_def by (subst comps) reduce
 
@@ -142,19 +139,85 @@ schematic_goal ap_pathcomp [typechk]:
   shows "ap_pathcomp A B f x y z p q: f[p \<bullet> q] = f[p] \<bullet> f[q]"
   unfolding ap_pathcomp_def by typechk reduce
 
+schematic_goal ap_pathinv_derivation:
+  assumes
+    "A: U i" "B: U i"
+    "f: A \<rightarrow> B"
+    "x: A" "y: A"
+    "p: x =\<^bsub>A\<^esub> y"
+  shows "?prf: f[p\<inverse>] = f[p]\<inverse>"
+  by (equality \<open>p:_\<close>) (reduce, intros, typechk)
+
+definition "ap_pathinv A B f x y p \<equiv> IdInd A
+  (\<lambda>a b c. ap A B f b a (pathinv A a b c) =\<^bsub>f `b =\<^bsub>B\<^esub> f `a\<^esub>
+    pathinv B (f `a) (f `b) (ap A B f a b c))
+  (\<lambda>x. refl (refl (f `x)))
+  x y p"
+
+schematic_goal ap_pathinv:
+  assumes
+    "A: U i" "B: U i"
+    "f: A \<rightarrow> B"
+    "x: A" "y: A"
+    "p: x =\<^bsub>A\<^esub> y"
+  shows "ap_pathinv A B f x y p: f[p\<inverse>] = f[p]\<inverse>"
+  unfolding ap_pathinv_def by reduce+
+
 schematic_goal ap_funcomp_derivation:
   assumes
     "A: U i" "B: U i" "C: U i"
     "f: A \<rightarrow> B" "g: B \<rightarrow> C"
     "x: A" "y: A" "z: A"
     "p: x =\<^bsub>A\<^esub> y"
-  shows "?prf: ((g \<circ> f)[p]) = (g[f[p]])"
+  shows "?prf: (g \<circ> f)[p] = g[f[p]]"
   apply (equality \<open>p:_\<close>)
-    apply (subst funcomp_apply_comp[symmetric], known)+
-      apply typechk
-    unfolding funcomp_def
+    apply (simp only: funcomp_apply_comp[symmetric])
     apply (reduce, intros, typechk)
   done
+
+definition "ap_funcomp A B C f g x y z p \<equiv> IdInd A
+  (\<lambda>a b c. ap A C (g \<circ>\<^bsub>A\<^esub> f) a b c =\<^bsub>(g \<circ>\<^bsub>A\<^esub> f) `a =\<^bsub>C\<^esub> (g \<circ>\<^bsub>A\<^esub> f) `b\<^esub>
+    ap B C g (f `a) (f `b) (ap A B f a b c))
+  (\<lambda>x. refl (refl (g `(f `x))))
+  x y p"
+
+schematic_goal ap_funcomp [typechk]:
+  assumes
+    "A: U i" "B: U i" "C: U i"
+    "f: A \<rightarrow> B" "g: B \<rightarrow> C"
+    "x: A" "y: A" "z: A"
+    "p: x =\<^bsub>A\<^esub> y"
+  shows "ap_funcomp A B C f g x y z p: (g \<circ> f)[p] = g[f[p]]"
+  unfolding ap_funcomp_def by reduce+
+
+no_translations
+  "x = y" \<leftharpoondown> "x =\<^bsub>A\<^esub> y"
+  "g \<circ> f" \<leftharpoondown> "g \<circ>\<^bsub>A\<^esub> f"
+  "(p)\<inverse>" \<leftharpoondown> "CONST pathinv A x y p"
+  "(p \<bullet> q)" \<leftharpoondown> "CONST pathcomp A x y z p q"
+  "f[p]" \<leftharpoondown> "CONST ap A B f x y p"
+
+(*
+  The following proof exposes two issues:
+
+  1. Among the implicit arguments in the goal are x and y, which need to be
+  modified by the equality method. But this cannot happen before the implicits
+  are instantiated with their correct values!
+
+  2. We might need to simplify under the dependent eliminator, and so need some
+  kind of congruence rule here too.
+*)
+schematic_goal ap_id_derivation:
+  assumes "A: U i" "x: A" "y: A" "p: x =\<^bsub>A\<^esub> y"
+  shows "?prf: ap A A (id A) x y p = p"
+  apply (equality \<open>p:_\<close>)
+    schematic_subgoal for x y p
+      unfolding ap_def
+      thm IdE[
+        of p A x y,
+        where ?C="\<lambda>x y _. id A `x =\<^bsub>A\<^esub> id A `y"
+        and ?f="\<lambda>x. refl (id A `x)"]
+oops
 
 
 end

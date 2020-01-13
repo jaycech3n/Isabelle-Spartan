@@ -77,7 +77,7 @@ axiomatization where
 
   PiE [elims]: "\<lbrakk>f: \<Prod>x: A. B x; a: A\<rbrakk> \<Longrightarrow> f `a: B a" and
 
-  beta [comps]: "\<lbrakk>\<And>x. x: A \<Longrightarrow> b x: B x; a: A\<rbrakk> \<Longrightarrow> (\<lambda>x: A. b x) `a \<equiv> b a" and
+  beta [comps]: "\<lbrakk>a: A; \<And>x. x: A \<Longrightarrow> b x: B x\<rbrakk> \<Longrightarrow> (\<lambda>x: A. b x) `a \<equiv> b a" and
 
   eta: "f: \<Prod>x: A. B x \<Longrightarrow> \<lambda>x: A. f `x \<equiv> f" and
 
@@ -312,10 +312,10 @@ lemma funcompI [typechk]:
 
 lemma funcomp_assoc [comps]:
   assumes
-    "A: U i"
     "f: A \<rightarrow> B"
     "g: B \<rightarrow> C"
     "h: \<Prod>x: C. D x"
+    "A: U i"
   shows
     "(h \<circ>\<^bsub>B\<^esub> g) \<circ>\<^bsub>A\<^esub> f \<equiv> h \<circ>\<^bsub>A\<^esub> g \<circ>\<^bsub>A\<^esub> f"
   unfolding funcomp_def by reduce
@@ -331,10 +331,10 @@ lemma funcomp_lambda_comp [comps]:
 
 lemma funcomp_apply_comp [comps]:
   assumes
-    "A: U i" "B: U i"
-    "\<And>x y. x: B \<Longrightarrow> C x: U i"
     "f: A \<rightarrow> B" "g: \<Prod>x: B. C x"
     "x: A"
+    "A: U i" "B: U i"
+    "\<And>x y. x: B \<Longrightarrow> C x: U i"
   shows "(g \<circ>\<^bsub>A\<^esub> f) `x \<equiv> g `(f `x)"
   unfolding funcomp_def by reduce
 
@@ -349,13 +349,13 @@ lemma
   unfolding id_def by reduce+
 
 lemma id_left [comps]:
-  assumes "A: U i" "B: U i" "f: A \<rightarrow> B"
+  assumes "f: A \<rightarrow> B" "A: U i" "B: U i"
   shows "(id B) \<circ>\<^bsub>A\<^esub> f \<equiv> f"
   unfolding id_def
   by (subst eta[symmetric, of f], reduce+) (reduce add: eta)
 
 lemma id_right [comps]:
-  assumes "A: U i" "B: U i" "f: A \<rightarrow> B"
+  assumes "f: A \<rightarrow> B" "A: U i" "B: U i"
   shows "f \<circ>\<^bsub>A\<^esub> (id A) \<equiv> f"
   unfolding id_def
   by (subst eta[symmetric, of f], reduce+) (reduce add: eta)
@@ -378,7 +378,7 @@ lemma Id_symmetric [typechk]:
   unfolding pathinv_def by typechk
 
 lemma pathinv_comp [comps]:
-  assumes "A: U i" "x: A"
+  assumes "x: A" "A: U i"
   shows "pathinv A x x (refl x) \<equiv> refl x"
   unfolding pathinv_def by reduce
 
@@ -410,7 +410,7 @@ lemma Id_transitive [typechk]:
   unfolding pathcomp_def by typechk
 
 lemma pathcomp_comp [comps]:
-  assumes "A: U i" "a: A"
+  assumes "a: A" "A: U i"
   shows "pathcomp A a a a (refl a) (refl a) \<equiv> refl a"
   unfolding pathcomp_def by reduce
 
@@ -427,10 +427,10 @@ lemma fst [elims]:
 
 lemma fst_of_pair [comps]:
   assumes
-    "A: U i"
-    "\<And>x. x: A \<Longrightarrow> B x: U i"
     "a: A"
     "b: B a"
+    "A: U i"
+    "\<And>x. x: A \<Longrightarrow> B x: U i"
   shows "fst A B <a, b> \<equiv> a"
   unfolding fst_def by reduce
 
@@ -440,7 +440,7 @@ lemma snd [elims]:
   unfolding snd_def by typechk reduce
 
 lemma snd_of_pair [comps]:
-  assumes "A: U i" "\<And>x. x: A \<Longrightarrow> B x: U i" "a: A" "b: B a"
+  assumes "a: A" "b: B a" "A: U i" "\<And>x. x: A \<Longrightarrow> B x: U i"
   shows "snd A B <a, b> \<equiv> b"
   unfolding snd_def by reduce
 

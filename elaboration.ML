@@ -18,7 +18,7 @@ fun probe (n: int) ctxt ts =
 fun iargs_to_vars idx tm =
   let
     fun conv (Const (\<^const_name>\<open>iarg\<close>, _) $ Abs (name, _, Const (\<^const_name>\<open>idummy\<close>, T))) =
-          Var (("_iarg_" ^ name, idx), T)
+          Var (("*" ^ name, idx), T)
       | conv (t $ u) = conv t $ conv u
       | conv (Abs (x, T, t)) = Abs (x, T, conv t)
       | conv t = t
