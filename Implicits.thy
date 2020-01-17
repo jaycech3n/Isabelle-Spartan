@@ -35,20 +35,15 @@ section \<open>Notation\<close>
 
 definition Id_i (infix "=" 110)
   where [implicit]: "Id_i x y \<equiv> x =\<^bsub>{A}\<^esub> y"
-  (* "x = y \<equiv> (x :> {A}) =\<^bsub>{A}\<^esub> (y :> {A})" *)
 
 definition funcomp_i (infixr "\<circ>" 110)
   where [implicit]: "funcomp_i g f \<equiv> g \<circ>\<^bsub>{A}\<^esub> f"
-  (* "funcomp_i g f \<equiv> g \<circ>\<^bsub>{A}\<^esub> (f :> {A} \<rightarrow> ?)" *)
 
 definition pathinv_i ("_\<inverse>" [1000])
   where [implicit]: "pathinv_i p \<equiv> pathinv {A} {x} {y} p"
-  (* "pathinv_i p \<equiv> pathinv {A} {x} {y} (p :> {x} =\<^bsub>{A}\<^esub> {y})" *)
 
 definition pathcomp_i (infixl "\<bullet>" 120)
   where [implicit]: "pathcomp_i p q \<equiv> pathcomp {A} {x} {y} {z} p q"
-  (* "pathcomp_i p q \<equiv>
-  pathcomp {A} {x} {y} {z} (p :> {x} =\<^bsub>{A}\<^esub> {y}) (q :> {y} =\<^bsub>{A}\<^esub> {z})" *)
 
 translations
   "x = y" \<leftharpoondown> "x =\<^bsub>A\<^esub> y"

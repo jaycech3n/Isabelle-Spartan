@@ -6,7 +6,6 @@ imports
   "HOL-Eisbach.Eisbach"
   "HOL-Eisbach.Eisbach_Tools"
 keywords
-  "print_coercions" :: thy_decl and
   "schematic_subgoal" :: prf_script_goal % "proof"
 
 begin
@@ -17,9 +16,6 @@ section \<open>Preamble\<close>
 declare [[names_short, eta_contract=false]]
 
 ML_file \<open>schematic_subgoal.ML\<close>
-
-ML_file \<open>$ISABELLE_HOME/src/Tools/subtyping.ML\<close>
-declare [[coercion_enabled]]
 
 named_theorems intros and elims and comps and typechk
 
