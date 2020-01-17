@@ -26,17 +26,6 @@ fun iargs_to_vars idx tm =
     conv tm
   end
 
-val idummies_to_vars =
-  let
-    fun conv i (Const (\<^const_name>\<open>idummy\<close>, T)) _ = Var (("_idummy", i), T)
-      | conv i (t $ u) _  = conv i t [] $ conv i u []
-      | conv i (Abs (x, T, t)) _ = Abs (x, T, conv i t [])
-      | conv _ t _ = t
-  in
-    (*Every substituted instance must have a new index!*)
-    Lib.fold_aterms conv
-  end
-
 fun prep_holes ctxt =
   let
     fun expand i head args =
@@ -55,11 +44,6 @@ fun prep_holes ctxt =
   in
     Lib.fold_aterms expand
   end
-
-(* fun strip_iinfo (Const (\<^const_name>\<open>iannot\<close>, _) $ t $ _) = t
-  | strip_iinfo (t $ u) = strip_iinfo t $ strip_iinfo u
-  | strip_iinfo (Abs (x, T, t)) = Abs (x, T, strip_iinfo t)
-  | strip_iinfo t = t *)
 
 
 end

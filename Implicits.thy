@@ -50,6 +50,6 @@ translations
   "g \<circ> f" \<leftharpoondown> "g \<circ>\<^bsub>A\<^esub> f"
   "(p)\<inverse>" \<leftharpoondown> "CONST pathinv A x y p"
   "(p \<bullet> q)" \<leftharpoondown> "CONST pathcomp A x y z p q"
-  
+
 
 end
