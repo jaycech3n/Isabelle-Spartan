@@ -3,6 +3,7 @@ sig
 
 val implicit_defs: Proof.context -> (term * term) Symtab.table
 val implicit_defs_attr: attribute
+val make_holes: Proof.context -> term -> term
 
 end = struct
 
@@ -23,6 +24,32 @@ val implicit_defs_attr = Thm.declaration_attribute (fn th =>
   in
     Defs.map (Symtab.update (Term.term_name head, (head, def')))
   end)
+
+fun make_holes ctxt =
+  let
+    fun expand_iarg (Const (\<^const_name>\<open>iarg\<close>, _)) = \<^const>\<open>earg\<close>
+      | expand_iarg t = t
+
+    fun earg_to_var i (Const (\<^const_name>\<open>earg\<close>, T)) [] = Var (("*", i), T)
+      | earg_to_var _ t args = list_comb (t, args)
+
+    fun expand i head args =
+      let
+        fun betapplys (head', args) =
+          Term.betapplys (map_aterms expand_iarg head', args)
+      in
+        case head of
+          Abs (x, T, t) => list_comb (Abs (x, T, expand i t []), args)
+        | _ =>
+          case Symtab.lookup (implicit_defs ctxt) (Term.term_name head) of
+            SOME (t, def) => betapplys
+              (Envir.expand_atom (Term.fastype_of head) (Term.fastype_of t, def),
+              args)
+          | NONE => list_comb (head, args)
+      end
+  in
+    Lib.fold_aterms expand #> Lib.fold_aterms earg_to_var
+  end
 
 
 end

@@ -286,7 +286,7 @@ abbreviation (input) lam_to_lambda :: \<open>o \<Rightarrow> o \<Rightarrow> o\<
 declare [[coercion lam_to_lambda]] *)
 
 
-section \<open>Composition\<close>
+section \<open>Function composition\<close>
 
 definition "funcomp A g f \<equiv> \<lambda>x: A. g `(f `x)"
 
@@ -357,7 +357,7 @@ lemma id_right [comps]:
   by (subst eta[symmetric, of f], reduce+) (reduce add: eta)
 
 
-section \<open>Identity\<close>
+section \<open>Equality\<close>
 
 schematic_goal Id_symmetric_derivation:
   assumes "A: U i" "x: A" "y: A" "p: x =\<^bsub>A\<^esub> y"

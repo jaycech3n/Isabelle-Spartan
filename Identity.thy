@@ -74,20 +74,22 @@ section \<open>Functoriality of functions\<close>
 
 schematic_goal Id_transfer_derivation:
   assumes
-    "A: U i" "B: U i" "f: A \<rightarrow> B"
-    "x: A" "y: A" "p: x =\<^bsub>A\<^esub> y"
+    "A: U i" "B: U i"
+    "x: A" "y: A"
+    "f: A \<rightarrow> B"
+    "p: x =\<^bsub>A\<^esub> y"
   shows "?prf: f `x = f `y"
   apply (equality \<open>p: _\<close>)
     apply (intros; elims)
   done
 
-definition "ap A B f x y p \<equiv>
+definition "ap A B x y f p \<equiv>
   IdInd A (\<lambda>x y _. f `x =\<^bsub>B\<^esub> f `y) (\<lambda>x. refl (f `x)) x y p"
 
 definition ap_i ("_[_]" [1000, 0])
-  where [implicit]: "ap_i f p \<equiv> ap {A} {B} f {x} {y} p"
+  where [implicit]: "ap_i f p \<equiv> ap ? ? ? ? f p"
 
-translations "f[p]" \<leftharpoondown> "CONST ap A B f x y p"
+translations "f[p]" \<leftharpoondown> "CONST ap A B x y f p"
 
 schematic_goal Id_transfer [typechk]:
   assumes
@@ -104,8 +106,8 @@ schematic_goal ap_refl [comps]:
 schematic_goal ap_pathcomp_derivation:
   assumes
     "A: U i" "B: U i"
-    "f: A \<rightarrow> B"
     "x: A" "y: A" "z: A"
+    "f: A \<rightarrow> B"
     "p: x =\<^bsub>A\<^esub> y" "q: y =\<^bsub>A\<^esub> z"
   shows
     "?prf: f[p \<bullet> q] = f[p] \<bullet> f[q]"
@@ -118,56 +120,58 @@ schematic_goal ap_pathcomp_derivation:
     done
   done
 
-definition "ap_pathcomp A B f x y z p q \<equiv> IdInd A
+definition "ap_pathcomp A B x y z f p q \<equiv> IdInd A
   (\<lambda>a b c. \<Prod>x: b =\<^bsub>A\<^esub> z.
-    ap A B f a z (pathcomp A a b z c x) =\<^bsub>f `a =\<^bsub>B\<^esub> f `z\<^esub>
-      pathcomp B (f `a) (f `b) (f `z) (ap A B f a b c) (ap A B f b z x))
-  (\<lambda>x. \<lambda>xa: x =\<^bsub>A\<^esub> z. IdInd A
-    (\<lambda>a b c.
-      ap A B f a b (pathcomp A a a b (refl a) c) =\<^bsub>f `a =\<^bsub>B\<^esub> f `b\<^esub>
-        pathcomp B (f `a) (f `a) (f `b) (ap A B f a a (refl a)) (ap A B f a b c))
-    (\<lambda>a. refl (refl (f `a)))
-    x z xa)
+    ap A B a z f (pathcomp A a b z c x) =\<^bsub>f `a =\<^bsub>B\<^esub> f `z\<^esub>
+      pathcomp B (f `a) (f `b) (f `z) (ap A B a b f c) (ap A B b z f x))
+  (\<lambda>x. \<lambda>xa: x =\<^bsub>A\<^esub> z.
+    IdInd A
+      (\<lambda>a b c. ap A B a b f (pathcomp A a a b (refl a) c) =\<^bsub>f `a =\<^bsub>B\<^esub> f `b\<^esub>
+        pathcomp B (f `a) (f `a) (f `b) (ap A B a a f (refl a)) (ap A B a b f c))
+      (\<lambda>a. refl (refl (f `a)))
+      x z xa)
   x y p `q"
 
 schematic_goal ap_pathcomp [typechk]:
   assumes
     "A: U i" "B: U i"
-    "f: A \<rightarrow> B"
     "x: A" "y: A" "z: A"
+    "f: A \<rightarrow> B"
     "p: x =\<^bsub>A\<^esub> y" "q: y =\<^bsub>A\<^esub> z"
-  shows "ap_pathcomp A B f x y z p q: f[p \<bullet> q] = f[p] \<bullet> f[q]"
+  shows "ap_pathcomp A B x y z f p q: f[p \<bullet> q] = f[p] \<bullet> f[q]"
   unfolding ap_pathcomp_def by typechk reduce
 
 schematic_goal ap_pathinv_derivation:
   assumes
     "A: U i" "B: U i"
-    "f: A \<rightarrow> B"
     "x: A" "y: A"
+    "f: A \<rightarrow> B"
     "p: x =\<^bsub>A\<^esub> y"
   shows "?prf: f[p\<inverse>] = f[p]\<inverse>"
   by (equality \<open>p:_\<close>) (reduce, intros, typechk)
 
-definition "ap_pathinv A B f x y p \<equiv> IdInd A
-  (\<lambda>a b c. ap A B f b a (pathinv A a b c) =\<^bsub>f `b =\<^bsub>B\<^esub> f `a\<^esub>
-    pathinv B (f `a) (f `b) (ap A B f a b c))
+definition "ap_pathinv A B x y f p \<equiv> IdInd A
+  (\<lambda>a b c. ap A B b a f (pathinv A a b c) =\<^bsub>f `b =\<^bsub>B\<^esub> f `a\<^esub>
+    pathinv B (f `a) (f `b) (ap A B a b f c))
   (\<lambda>x. refl (refl (f `x)))
   x y p"
 
 schematic_goal ap_pathinv:
   assumes
     "A: U i" "B: U i"
-    "f: A \<rightarrow> B"
     "x: A" "y: A"
+    "f: A \<rightarrow> B"
     "p: x =\<^bsub>A\<^esub> y"
-  shows "ap_pathinv A B f x y p: f[p\<inverse>] = f[p]\<inverse>"
-  unfolding ap_pathinv_def by reduce+
+  shows "ap_pathinv A B x y f p: f[p\<inverse>] = f[p]\<inverse>"
+  unfolding ap_pathinv_def by typechk reduce
+
+text \<open>The next two proofs currently use some low-level rewriting.\<close>
 
 schematic_goal ap_funcomp_derivation:
   assumes
     "A: U i" "B: U i" "C: U i"
-    "f: A \<rightarrow> B" "g: B \<rightarrow> C"
     "x: A" "y: A" "z: A"
+    "f: A \<rightarrow> B" "g: B \<rightarrow> C"
     "p: x =\<^bsub>A\<^esub> y"
   shows "?prf: (g \<circ> f)[p] = g[f[p]]"
   apply (equality \<open>p:_\<close>)
@@ -176,8 +180,8 @@ schematic_goal ap_funcomp_derivation:
   done
 
 definition "ap_funcomp A B C x y z f g p \<equiv> IdInd A
-  (\<lambda>a b c. ap A C (g \<circ>\<^bsub>A\<^esub> f) a b c =\<^bsub>(g \<circ>\<^bsub>A\<^esub> f) `a =\<^bsub>C\<^esub> (g \<circ>\<^bsub>A\<^esub> f) `b\<^esub>
-    ap B C g (f `a) (f `b) (ap A B f a b c))
+  (\<lambda>a b c. ap A C a b (g \<circ>\<^bsub>A\<^esub> f) c =\<^bsub>g `(f `a) =\<^bsub>C\<^esub> g `(f `b)\<^esub>
+    ap B C (f `a) (f `b) g (ap A B a b f c))
   (\<lambda>x. refl (refl (g `(f `x))))
   x y p"
 
@@ -188,14 +192,7 @@ schematic_goal ap_funcomp [typechk]:
     "f: A \<rightarrow> B" "g: B \<rightarrow> C"
     "p: x =\<^bsub>A\<^esub> y"
   shows "ap_funcomp A B C x y z f g p: (g \<circ> f)[p] = g[f[p]]"
-  unfolding ap_funcomp_def by reduce+
-
-no_translations
-  "x = y" \<leftharpoondown> "x =\<^bsub>A\<^esub> y"
-  "g \<circ> f" \<leftharpoondown> "g \<circ>\<^bsub>A\<^esub> f"
-  "(p)\<inverse>" \<leftharpoondown> "CONST pathinv A x y p"
-  "(p \<bullet> q)" \<leftharpoondown> "CONST pathcomp A x y z p q"
-  "f[p]" \<leftharpoondown> "CONST ap A B f x y p"
+  unfolding ap_funcomp_def by (rule ap_funcomp_derivation assms)+
 
 schematic_goal ap_id_derivation:
   assumes "A: U i" "x: A" "y: A" "p: x =\<^bsub>A\<^esub> y"
@@ -208,7 +205,7 @@ schematic_goal ap_id_derivation:
   done
 
 definition "ap_id A x y p \<equiv> IdInd A
-  (\<lambda>a b c. ap A A (id A) a b c =\<^bsub>a =\<^bsub>A\<^esub> b\<^esub> c)
+  (\<lambda>a b c. ap A A a b (id A) c =\<^bsub>a =\<^bsub>A\<^esub> b\<^esub> c)
   (\<lambda>x. refl (refl x))
   x y p"
 
