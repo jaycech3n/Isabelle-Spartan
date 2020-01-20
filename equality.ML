@@ -45,6 +45,7 @@ fun equality_context_tac fact ctxt =
 
     val hyps =
       Facts.props (Proof_Context.facts_of ctxt)
+      |> filter (fn (th, _) => Lib.is_typing (Thm.prop_of th))
       |> map (Lib.dest_typing o Thm.prop_of o fst)
       |> filter_out (fn (t, _) =>
           Term.aconv (t, p) orelse Item_Net.member (Inserts.get ctxt) t)
