@@ -6,6 +6,7 @@ imports
   "HOL-Eisbach.Eisbach"
   "HOL-Eisbach.Eisbach_Tools"
 keywords
+  "print_coercions" :: thy_decl and
   "schematic_subgoal" :: prf_script_goal % "proof"
 
 begin
@@ -16,6 +17,9 @@ section \<open>Preamble\<close>
 declare [[names_short, eta_contract=false]]
 
 ML_file \<open>schematic_subgoal.ML\<close>
+
+ML_file \<open>$ISABELLE_HOME/src/Tools/subtyping.ML\<close>
+declare [[coercion_enabled]]
 
 named_theorems intros and elims and comps and typechk
 
@@ -277,13 +281,13 @@ method_setup equality = \<open>Scan.lift Parse.thm >> (fn (fact, _) => fn ctxt =
   CONTEXT_METHOD (K (Equality.equality_context_tac fact ctxt)))\<close>
 
 
-(* section \<open>Functions\<close>
+section \<open>Lambda coercion\<close>
 
-\<comment>\<open>Coerce object lambdas to meta-lambdas when needed.\<close>
-abbreviation (input) lam_to_lambda :: \<open>o \<Rightarrow> o \<Rightarrow> o\<close>
-  where "lam_to_lambda f \<equiv> \<lambda>x. f `x"
+\<comment>\<open>Coerce object lambdas to meta-lambdas when needed\<close>
+abbreviation (input) lambda :: \<open>o \<Rightarrow> o \<Rightarrow> o\<close>
+  where "lambda f \<equiv> \<lambda>x. f `x"
 
-declare [[coercion lam_to_lambda]] *)
+declare [[coercion lambda]]
 
 
 section \<open>Function composition\<close>
