@@ -73,7 +73,7 @@ abbreviation Fn (infixr "\<rightarrow>" 40) where "A \<rightarrow> B \<equiv> \<
 axiomatization where
   PiF [intros]: "\<lbrakk>A: U i; \<And>x. x: A \<Longrightarrow> B x: U i\<rbrakk> \<Longrightarrow> \<Prod>x: A. B x: U i" and
 
-  PiI [intros]: "\<lbrakk>\<And>x. x: A \<Longrightarrow> b x: B x; A: U i\<rbrakk> \<Longrightarrow> \<lambda>x: A. b x: \<Prod>x: A. B x" and
+  PiI [intros]: "\<lbrakk>A: U i; \<And>x. x: A \<Longrightarrow> b x: B x\<rbrakk> \<Longrightarrow> \<lambda>x: A. b x: \<Prod>x: A. B x" and
 
   PiE [elims]: "\<lbrakk>f: \<Prod>x: A. B x; a: A\<rbrakk> \<Longrightarrow> f `a: B a" and
 
@@ -109,7 +109,7 @@ abbreviation Prod (infixr "\<times>" 50)
 axiomatization where
   SigF [intros]: "\<lbrakk>A: U i; \<And>x. x: A \<Longrightarrow> B x: U i\<rbrakk> \<Longrightarrow> \<Sum>x: A. B x: U i" and
 
-  SigI [intros]: "\<lbrakk>a: A; b: B a; \<And>x. x : A \<Longrightarrow> B x: U i\<rbrakk> \<Longrightarrow> <a, b>: \<Sum>x: A. B x" and
+  SigI [intros]: "\<lbrakk>\<And>x. x : A \<Longrightarrow> B x: U i; a: A; b: B a\<rbrakk> \<Longrightarrow> <a, b>: \<Sum>x: A. B x" and
 
   SigE [elims]: "\<lbrakk>
     p: \<Sum>x: A. B x;
@@ -435,7 +435,7 @@ lemma fst_of_pair [comps]:
 lemma snd [typechk]:
   assumes "A: U i" "\<And>x. x: A \<Longrightarrow> B x: U i" "p: \<Sum>x: A. B x"
   shows "snd A B p: B (fst A B p)"
-  unfolding snd_def by typechk reduce
+  unfolding snd_def by reduce+
 
 lemma snd_of_pair [comps]:
   assumes "a: A" "b: B a" "A: U i" "\<And>x. x: A \<Longrightarrow> B x: U i"
