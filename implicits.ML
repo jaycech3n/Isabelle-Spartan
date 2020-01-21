@@ -27,16 +27,16 @@ val implicit_defs_attr = Thm.declaration_attribute (fn th =>
 
 fun make_holes ctxt =
   let
-    fun expand_iarg (Const (\<^const_name>\<open>iarg\<close>, _)) = \<^const>\<open>earg\<close>
-      | expand_iarg t = t
+    fun iarg_to_earg (Const (\<^const_name>\<open>iarg\<close>, T)) = Const (\<^const_name>\<open>earg\<close>, T)
+      | iarg_to_earg t = t
 
-    fun earg_to_var i (Const (\<^const_name>\<open>earg\<close>, T)) [] = Var (("*", i), T)
+    fun earg_to_var i (Const (\<^const_name>\<open>earg\<close>, T)) _ = Var (("*", i), T)
       | earg_to_var _ t args = list_comb (t, args)
 
     fun expand i head args =
       let
-        fun betapplys (head', args) =
-          Term.betapplys (map_aterms expand_iarg head', args)
+        fun betapplys (head', args') =
+          Term.betapplys (map_aterms iarg_to_earg head', args')
       in
         case head of
           Abs (x, T, t) => list_comb (Abs (x, T, expand i t []), args)
@@ -48,7 +48,7 @@ fun make_holes ctxt =
           | NONE => list_comb (head, args)
       end
   in
-    Lib.fold_aterms expand #> Lib.fold_aterms earg_to_var
+    Lib.fold_aterms expand 0 #> Lib.fold_aterms earg_to_var 0
   end
 
 

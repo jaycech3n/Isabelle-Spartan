@@ -26,8 +26,6 @@ named_theorems intros and elims and comps and typechk
 
 section \<open>Metatype setup\<close>
 
-class tt
-default_sort tt
 typedecl o
 
 
@@ -71,9 +69,9 @@ translations
 abbreviation Fn (infixr "\<rightarrow>" 40) where "A \<rightarrow> B \<equiv> \<Prod>_: A. B"
 
 axiomatization where
-  PiF [intros]: "\<lbrakk>A: U i; \<And>x. x: A \<Longrightarrow> B x: U i\<rbrakk> \<Longrightarrow> \<Prod>x: A. B x: U i" and
+  PiF [intros]: "\<lbrakk>\<And>x. x: A \<Longrightarrow> B x: U i; A: U i\<rbrakk> \<Longrightarrow> \<Prod>x: A. B x: U i" and
 
-  PiI [intros]: "\<lbrakk>A: U i; \<And>x. x: A \<Longrightarrow> b x: B x\<rbrakk> \<Longrightarrow> \<lambda>x: A. b x: \<Prod>x: A. B x" and
+  PiI [intros]: "\<lbrakk>\<And>x. x: A \<Longrightarrow> b x: B x; A: U i\<rbrakk> \<Longrightarrow> \<lambda>x: A. b x: \<Prod>x: A. B x" and
 
   PiE [elims]: "\<lbrakk>f: \<Prod>x: A. B x; a: A\<rbrakk> \<Longrightarrow> f `a: B a" and
 
@@ -107,7 +105,7 @@ abbreviation Prod (infixr "\<times>" 50)
   where "A \<times> B \<equiv> \<Sum>_: A. B"
 
 axiomatization where
-  SigF [intros]: "\<lbrakk>A: U i; \<And>x. x: A \<Longrightarrow> B x: U i\<rbrakk> \<Longrightarrow> \<Sum>x: A. B x: U i" and
+  SigF [intros]: "\<lbrakk>\<And>x. x: A \<Longrightarrow> B x: U i; A: U i\<rbrakk> \<Longrightarrow> \<Sum>x: A. B x: U i" and
 
   SigI [intros]: "\<lbrakk>\<And>x. x : A \<Longrightarrow> B x: U i; a: A; b: B a\<rbrakk> \<Longrightarrow> <a, b>: \<Sum>x: A. B x" and
 

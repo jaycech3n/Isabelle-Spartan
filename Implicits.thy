@@ -12,8 +12,8 @@ text \<open>
 \<close>
 
 consts
-  iarg :: \<open>o\<close> ("?")
-  earg :: \<open>o\<close> ("!")
+  iarg :: \<open>'a\<close> ("?")
+  earg :: \<open>'a\<close> ("!")
 
 ML_file \<open>implicits.ML\<close>
 

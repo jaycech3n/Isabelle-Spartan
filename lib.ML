@@ -19,7 +19,7 @@ val mk_Pi: term -> term -> term -> term
 
 (*Subterms*)
 val has_subterm: term list -> term -> bool
-val fold_aterms: (int -> term -> 'a list -> 'a) -> term -> 'a
+val fold_aterms: (int -> term -> 'a list -> 'a) -> int -> term -> 'a
 
 (*Orderings*)
 val subterm_order: term -> term -> order
@@ -76,7 +76,7 @@ fun has_subterm tms =
   f is additionally passed a unique index i and a list of the results of f at
   all children of n.
 *)
-fun fold_aterms f t =
+fun fold_aterms f i0 t =
   let
     fun map_aux t i =
       let
@@ -87,7 +87,7 @@ fun fold_aterms f t =
         (f i'' head args', i'')
       end
   in
-    #1 (map_aux t 0)
+    #1 (map_aux t i0)
   end
 
 

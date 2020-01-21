@@ -235,7 +235,7 @@ definition "transport A x y P p \<equiv>
 definition transport_i ("trans")
   where [implicit]: "trans P p \<equiv> transport ? ? ? P p"
 
-translations "trans P p" \<leftharpoondown> "transport A x y P p"
+translations "trans P p" \<leftharpoondown> "CONST transport A x y P p"
 
 schematic_goal transport [typechk]:
   assumes
@@ -248,8 +248,8 @@ schematic_goal transport [typechk]:
 
 schematic_goal transport_comp [comps]:
   assumes
-    "A: U i"
     "a: A"
+    "A: U i"
     "\<And>x. x: A \<Longrightarrow> P x: U i"
   shows "trans P (refl a) \<equiv> id (P a)"
   unfolding transport_def id_def by (subst comps) reduce
@@ -273,10 +273,10 @@ schematic_goal transport_right_inv [eqs]:
   by (equality \<open>p:_\<close>) (reduce, intros, typechk)
 
 no_translations
-  "trans P p" \<leftharpoondown> "transport A x y P p"
   "x = y" \<leftharpoondown> "x =\<^bsub>A\<^esub> y"
+  "trans P p" \<leftharpoondown> "CONST transport A x y P p"
 
-schematic_goal lift_derivation:
+schematic_goal pathlift_derivation:
   assumes
     "A: U i"
     "\<And>x. x: A \<Longrightarrow> P x: U i"
@@ -284,10 +284,54 @@ schematic_goal lift_derivation:
     "u: P x"
     "p: x =\<^bsub>A\<^esub> y"
   shows "?prf: <x, u> = <y, trans P p u>"
-  apply (equality \<open>p:_\<close>)
-    apply reduce
-      apply (intros+, known)
-  done
+  by (equality \<open>p:_\<close>) (reduce, intros, typechk)
+
+definition "pathlift A x y P p u \<equiv> IdInd A
+  (\<lambda>a b c. \<Prod>x: P a. <a, x> =\<^bsub>\<Sum>x: A. P x\<^esub> <b, transport A a b P c `x>)
+  (\<lambda>x. \<lambda>xa: P x. refl <x, xa>)
+  x y p `u"
+
+definition pathlift_i ("lift")
+  where [implicit]: "lift P p u \<equiv> pathlift ? ? ? P p u"
+
+schematic_goal pathlift [typechk]:
+  assumes
+    "A: U i"
+    "\<And>x. x: A \<Longrightarrow> P x: U i"
+    "x: A" "y: A"
+    "u: P x"
+    "p: x =\<^bsub>A\<^esub> y"
+  shows "lift P p u: <x, u> = <y, trans P p u>"
+  unfolding pathlift_def by reduce+
+
+ML \<open>
+fun ttac ctxt =
+  let val net = Tactic.build_net
+    ((Named_Theorems.get ctxt \<^named_theorems>\<open>typechk\<close>)
+    @(Named_Theorems.get ctxt \<^named_theorems>\<open>intros\<close>)
+    @(Named_Theorems.get ctxt \<^named_theorems>\<open>elims\<close>))
+  in
+    known_tac ctxt ORELSE' resolve_from_net_tac ctxt net
+  end
+\<close>
+
+schematic_goal pathlift_comp [comps]:
+  assumes
+    "u: P x"
+    "x: A"
+    "\<And>x. x: A \<Longrightarrow> P x: U i"
+    "A: U i"
+  shows "lift P (refl x) u \<equiv> refl <x, u>"
+  unfolding pathlift_def by (subst comps) reduce+
+
+schematic_goal pathlift_fst_derivation:
+  assumes
+    "A: U i"
+    "\<And>x. x: A \<Longrightarrow> P x: U i"
+    "x: A" "y: A"
+    "p: x =\<^bsub>A\<^esub> y"
+  shows "?prf: ?"
+oops
 
 
 end
