@@ -290,7 +290,7 @@ abbreviation (input) lambda :: \<open>o \<Rightarrow> o \<Rightarrow> o\<close>
 declare [[coercion lambda]]
 
 
-section \<open>Function composition\<close>
+section \<open>Functions\<close>
 
 definition "funcomp A g f \<equiv> \<lambda>x: A. g `(f `x)"
 
@@ -338,8 +338,6 @@ lemma funcomp_apply_comp [comps]:
   shows "(g \<circ>\<^bsub>A\<^esub> f) `x \<equiv> g `(f `x)"
   unfolding funcomp_def by reduce
 
-
-section \<open>Identity function\<close>
 
 definition id where "id A \<equiv> \<lambda>x: A. x"
 
@@ -420,7 +418,7 @@ section \<open>Pairs\<close>
 definition "fst A B p \<equiv> SigInd A B (\<lambda>_. A) (\<lambda>x y. x) p"
 definition "snd A B p \<equiv> SigInd A B (\<lambda>p. B (fst A B p)) (\<lambda>x y. y) p"
 
-lemma fst [elims]:
+lemma fst [typechk]:
   assumes "A: U i" "\<And>x. x: A \<Longrightarrow> B x: U i" "p: \<Sum>x: A. B x"
   shows "fst A B p: A"
   unfolding fst_def by typechk
@@ -434,7 +432,7 @@ lemma fst_of_pair [comps]:
   shows "fst A B <a, b> \<equiv> a"
   unfolding fst_def by reduce
 
-lemma snd [elims]:
+lemma snd [typechk]:
   assumes "A: U i" "\<And>x. x: A \<Longrightarrow> B x: U i" "p: \<Sum>x: A. B x"
   shows "snd A B p: B (fst A B p)"
   unfolding snd_def by typechk reduce

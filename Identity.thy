@@ -1,6 +1,9 @@
 chapter \<open>The identity type\<close>
 
-text \<open>More about the identity type; the higher groupoid structure of types.\<close>
+text \<open>
+  More about the identity type, the higher groupoid structure of types, and type
+  families as fibrations.
+\<close>
 
 theory Identity
 imports Implicits
@@ -28,8 +31,8 @@ schematic_goal pathcomp_right_refl [eqs]:
   done
 
 schematic_goal pathcomp_left_inv [eqs]:
-  assumes "A: U i" "x: A" "y: A" "p: y =\<^bsub>A\<^esub> x"
-  shows "?prf: p\<inverse> \<bullet> p = refl x"
+  assumes "A: U i" "x: A" "y: A" "p: x =\<^bsub>A\<^esub> y"
+  shows "?prf: p\<inverse> \<bullet> p = refl y"
   apply (equality \<open>p: _\<close>)
     apply (reduce; intros+)
   done
@@ -156,7 +159,7 @@ definition "ap_pathinv A B x y f p \<equiv> IdInd A
   (\<lambda>x. refl (refl (f `x)))
   x y p"
 
-schematic_goal ap_pathinv:
+schematic_goal ap_pathinv [typechk]:
   assumes
     "A: U i" "B: U i"
     "x: A" "y: A"
@@ -209,10 +212,78 @@ definition "ap_id A x y p \<equiv> IdInd A
   (\<lambda>x. refl (refl x))
   x y p"
 
-schematic_goal ap_id:
+schematic_goal ap_id [typechk]:
   assumes "A: U i" "x: A" "y: A" "p: x =\<^bsub>A\<^esub> y"
   shows "ap_id A x y p: (id A)[p] = p"
   unfolding ap_id_def by (rule ap_id_derivation)
+
+
+section \<open>Transport\<close>
+
+schematic_goal transport_derivation:
+  assumes
+    "A: U i"
+    "x: A" "y: A"
+    "\<And>x. x: A \<Longrightarrow> P x: U i"
+    "p: x =\<^bsub>A\<^esub> y"
+  shows "?prf: P x \<rightarrow> P y"
+  by (equality \<open>p:_\<close>) intros
+
+definition "transport A x y P p \<equiv>
+  IdInd A (\<lambda>a b _. P a \<rightarrow> P b) (\<lambda>x. \<lambda>u: P x. u) x y p"
+
+definition transport_i ("trans")
+  where [implicit]: "trans P p \<equiv> transport ? ? ? P p"
+
+(* translations "trans P p" \<leftharpoondown> "transport A x y P p" *)
+
+schematic_goal transport [typechk]:
+  assumes
+    "A: U i"
+    "x: A" "y: A"
+    "\<And>x. x: A \<Longrightarrow> P x: U i"
+    "p: x =\<^bsub>A\<^esub> y"
+  shows "trans P p: P x \<rightarrow> P y"
+  unfolding transport_def by typechk
+
+schematic_goal transport_comp [comps]:
+  assumes
+    "A: U i"
+    "a: A"
+    "\<And>x. x: A \<Longrightarrow> P x: U i"
+  shows "trans P (refl a) \<equiv> id (P a)"
+  unfolding transport_def id_def by (subst comps) reduce
+
+schematic_goal transport_left_inv [eqs]:
+  assumes
+    "A: U i"
+    "x: A" "y: A"
+    "\<And>x. x: A \<Longrightarrow> P x: U i"
+    "p: x =\<^bsub>A\<^esub> y"
+  shows "?prf: (trans P p\<inverse>) \<circ> (trans P p) = id (P x)"
+  by (equality \<open>p:_\<close>) (reduce, intros, typechk)
+
+schematic_goal transport_right_inv [eqs]:
+  assumes
+    "A: U i"
+    "x: A" "y: A"
+    "\<And>x. x: A \<Longrightarrow> P x: U i"
+    "p: x =\<^bsub>A\<^esub> y"
+  shows "?prf: (trans P p) \<circ> (trans P p\<inverse>) = id (P y)"
+  by (equality \<open>p:_\<close>) (reduce, intros, typechk)
+
+schematic_goal lift_derivation:
+  assumes
+    "A: U i"
+    "\<And>x. x: A \<Longrightarrow> P x: U i"
+    "x: A" "y: A"
+    "u: P x"
+    "p: x =\<^bsub>A\<^esub> y"
+  shows "?prf: <x, u> = <y, trans P p u>" thm PiE
+apply (Pure.rule PiE[where ?B="\<lambda>_. <x, u> = <y, trans P p u>"])
+
+supply [[simp_trace, simp_trace_depth_limit=4]]
+apply (equality \<open>p:_\<close>
 
 
 end
