@@ -1,6 +1,8 @@
 structure Equality:
 sig
 
+val push_hyp_tac: term -> Proof.context -> int -> tactic
+val induction_tac: term -> term -> term -> term -> Proof.context -> tactic
 val equality_context_tac: Facts.ref -> Proof.context -> context_tactic
 
 end = struct
@@ -15,8 +17,6 @@ structure Inserts = Proof_Data (
 fun subterm_count tms tm =
   length (filter I (map (fn t => Lib.has_subterm [t] tm) tms))
 
-local
-
 fun push_hyp_tac t = Subgoal.FOCUS_PARAMS (fn {context = ctxt, concl, ...} =>
   let
     val (_, C) = Lib.dest_typing (Thm.term_of concl)
@@ -25,8 +25,6 @@ fun push_hyp_tac t = Subgoal.FOCUS_PARAMS (fn {context = ctxt, concl, ...} =>
     (*The resolvent is PiE[where ?B=B and ?a=a]*)
     val resolvent =
       Drule.infer_instantiate' ctxt [NONE, NONE, SOME B, SOME a] @{thm PiE}
-
-val _ = @{print} resolvent
   in
     HEADGOAL (resolve_tac ctxt [resolvent])
     THEN SOMEGOAL (known_tac ctxt)
@@ -41,8 +39,6 @@ fun induction_tac p A x y ctxt =
   end
 
 val side_conds_tac = TRY oo typechk_tac
-
-in
 
 fun equality_context_tac fact ctxt =
   let
@@ -68,8 +64,8 @@ fun equality_context_tac fact ctxt =
       Inserts.map (fold (fn (t, _) => fn net => Item_Net.update t net) hyps)
 
     val tac =
-      fold (fn (t, _) => fn tac =>
-        tac THEN HEADGOAL (push_hyp_tac t ctxt)) hyps all_tac
+      fold (fn (t, _) => fn tac => tac THEN HEADGOAL (push_hyp_tac t ctxt))
+        hyps all_tac
       THEN (
         induction_tac p A x y ctxt
         THEN RANGE (replicate 3 (known_tac ctxt) @ [side_conds_tac ctxt]) 1
@@ -81,8 +77,6 @@ fun equality_context_tac fact ctxt =
   in
     fn (ctxt, st) => Method.CONTEXT (record_inserts ctxt) (tac st)
   end
-
-end
 
 
 end
