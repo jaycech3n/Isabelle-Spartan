@@ -235,7 +235,7 @@ definition "transport A x y P p \<equiv>
 definition transport_i ("trans")
   where [implicit]: "trans P p \<equiv> transport ? ? ? P p"
 
-(* translations "trans P p" \<leftharpoondown> "transport A x y P p" *)
+translations "trans P p" \<leftharpoondown> "transport A x y P p"
 
 schematic_goal transport [typechk]:
   assumes
@@ -272,6 +272,10 @@ schematic_goal transport_right_inv [eqs]:
   shows "?prf: (trans P p) \<circ> (trans P p\<inverse>) = id (P y)"
   by (equality \<open>p:_\<close>) (reduce, intros, typechk)
 
+no_translations
+  "trans P p" \<leftharpoondown> "transport A x y P p"
+  "x = y" \<leftharpoondown> "x =\<^bsub>A\<^esub> y"
+
 schematic_goal lift_derivation:
   assumes
     "A: U i"
@@ -279,11 +283,11 @@ schematic_goal lift_derivation:
     "x: A" "y: A"
     "u: P x"
     "p: x =\<^bsub>A\<^esub> y"
-  shows "?prf: <x, u> = <y, trans P p u>" thm PiE
-apply (Pure.rule PiE[where ?B="\<lambda>_. <x, u> = <y, trans P p u>"])
-
-supply [[simp_trace, simp_trace_depth_limit=4]]
-apply (equality \<open>p:_\<close>
+  shows "?prf: <x, u> = <y, trans P p u>"
+  apply (equality \<open>p:_\<close>)
+    apply reduce
+      apply (intros+, known)
+  done
 
 
 end
