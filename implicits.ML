@@ -31,6 +31,8 @@ fun make_holes ctxt =
       | iarg_to_earg t = t
 
     fun earg_to_var i (Const (\<^const_name>\<open>earg\<close>, T)) _ = Var (("*", i), T)
+      | earg_to_var i (Abs (x, T, t)) args =
+          list_comb (Abs (x, T, Lib.fold_aterms earg_to_var i t), args)
       | earg_to_var _ t args = list_comb (t, args)
 
     fun expand i head args =
