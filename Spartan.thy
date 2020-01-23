@@ -413,12 +413,12 @@ lemma pathcomp_comp [comps]:
 
 section \<open>Pairs\<close>
 
-definition "fst A B p \<equiv> SigInd A B (\<lambda>_. A) (\<lambda>x y. x) p"
-definition "snd A B p \<equiv> SigInd A B (\<lambda>p. B (fst A B p)) (\<lambda>x y. y) p"
+definition "fst A B \<equiv> \<lambda>p: \<Sum>x: A. B x. SigInd A B (\<lambda>_. A) (\<lambda>x y. x) p"
+definition "snd A B \<equiv> \<lambda>p: \<Sum>x: A. B x. SigInd A B (\<lambda>p. B (fst A B p)) (\<lambda>x y. y) p"
 
 lemma fst [typechk]:
-  assumes "A: U i" "\<And>x. x: A \<Longrightarrow> B x: U i" "p: \<Sum>x: A. B x"
-  shows "fst A B p: A"
+  assumes "A: U i" "\<And>x. x: A \<Longrightarrow> B x: U i"
+  shows "fst A B: (\<Sum>x: A. B x) \<rightarrow> A"
   unfolding fst_def by typechk
 
 lemma fst_of_pair [comps]:
@@ -431,8 +431,8 @@ lemma fst_of_pair [comps]:
   unfolding fst_def by reduce
 
 lemma snd [typechk]:
-  assumes "A: U i" "\<And>x. x: A \<Longrightarrow> B x: U i" "p: \<Sum>x: A. B x"
-  shows "snd A B p: B (fst A B p)"
+  assumes "A: U i" "\<And>x. x: A \<Longrightarrow> B x: U i"
+  shows "snd A B: \<Prod>p: \<Sum>x: A. B x. B (fst A B p)"
   unfolding snd_def by reduce+
 
 lemma snd_of_pair [comps]:

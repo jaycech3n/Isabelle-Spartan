@@ -37,13 +37,82 @@ fun param_bindings ctxt (param_suffix, raw_param_specs) st =
       | bindings _ ys = map Binding.name ys
   in bindings param_specs subgoal_params end
 
+local
+
+fun lift_import idx params th ctxt =
+  let
+    val ((_, [th']), ctxt') = Variable.importT [th] ctxt;
+
+    val Ts = map Thm.typ_of_cterm params;
+    val ts = map Thm.term_of params;
+
+    val prop = Thm.full_prop_of th';
+    val concl_vars = Term.add_vars (Logic.strip_imp_concl prop) [];
+    val vars = rev (Term.add_vars prop []);
+    val (ys, ctxt'') = Variable.variant_fixes (map (Name.clean o #1 o #1) vars) ctxt';
+
+    fun var_inst v y =
+      let
+        val ((x, i), T) = v;
+        val (U, args) =
+          if member (op =) concl_vars v then (T, [])
+          else (Ts ---> T, ts);
+        val u = Free (y, U);
+        in ((Var v, list_comb (u, args)), (u, Var ((x, i + idx), U))) end;
+    val (inst1, inst2) =
+      split_list (map (apply2 (apply2 (Thm.cterm_of ctxt))) (map2 var_inst vars ys));
+
+    val th'' = Thm.instantiate ([], map (apfst (Term.dest_Var o Thm.term_of)) inst1) th';
+  in ((inst2, th''), ctxt'') end
+
+fun lift_subgoals ctxt params asms th =
+  let
+    fun lift ct = fold_rev (Thm.all_name ctxt) params (Drule.list_implies (asms, ct));
+    val unlift =
+      fold (Thm.elim_implies o Thm.assume) asms o
+      Drule.forall_elim_list (map #2 params) o Thm.assume;
+    val subgoals = map lift (Drule.strip_imp_prems (Thm.cprop_of th));
+    val th' = fold (Thm.elim_implies o unlift) subgoals th;
+  in (subgoals, th') end;
+
+fun retrofit ctxt1 ctxt0 params asms i st1 st0 =
+  let
+    val idx = Thm.maxidx_of st0 + 1;
+    val ps = map #2 params;
+    val ((subgoal_inst, st2), ctxt2) = lift_import idx ps st1 ctxt1;
+    val (subgoals, st3) = lift_subgoals ctxt2 params asms st2;
+    val result = st3
+      |> Goal.conclude
+      |> Drule.implies_intr_list asms
+      |> Drule.forall_intr_list ps
+      |> Drule.implies_intr_list subgoals
+      |> fold_rev (Thm.forall_intr o #1) subgoal_inst
+      |> fold (Thm.forall_elim o #2) subgoal_inst
+      |> Thm.adjust_maxidx_thm idx
+      |> singleton (Variable.export ctxt2 ctxt0)
+
+val _ = tracing (@{make_string} result)
+val _ = tracing (@{make_string} (Thm.nprems_of st1))
+val _ = tracing (@{make_string} st1)
+val _ = tracing (@{make_string} st0)
+val _ = tracing (@{make_string}
+  (Seq.list_of(Thm.bicompose (SOME ctxt0) {flatten = true, match = false, incremented = false}
+      (false, result, Thm.nprems_of st1) i st0)))
+
+  in
+    Thm.bicompose (SOME ctxt0) {flatten = true, match = false, incremented = false}
+      (false, result, Thm.nprems_of st1) i st0
+  end
+
+in
+
 fun gen_schematic_subgoal prep_atts raw_result_binding raw_prems_binding param_specs state =
   let
     val _ = Proof.assert_backward state
 
     val state1 = state
-      |> Proof.refine_insert []
       |> Proof.map_context (Proof_Context.set_mode Proof_Context.mode_schematic)
+      |> Proof.refine_insert []
 
     val {context = ctxt, facts = facts, goal = st} = Proof.raw_goal state1
 
@@ -65,10 +134,15 @@ fun gen_schematic_subgoal prep_atts raw_result_binding raw_prems_binding param_s
             Proof_Context.export ctxt'' ctxt' (Conjunction.elim_conjunctions result)
         in
           state'
+          |> tap (K (@{print} "["))
           |> Proof.refine_primitive (fn _ => fn _ =>
-            Subgoal.retrofit ctxt'' ctxt' (#params subgoal_focus) (#asms subgoal_focus) 1
+            (* Subgoal. *)retrofit ctxt'' ctxt' (#params subgoal_focus) (#asms subgoal_focus) 1
               (Goal.protect 0 result) st
+            |> tap (fn ths => (
+              @{print} result;
+              @{print} (Seq.list_of ths)))
             |> Seq.hd)
+          |> tap (K (@{print} "]"))
           |> Proof.map_context
             (#2 o Proof_Context.note_thmss "" [(result_binding, [(results', [])])])
         end)
@@ -88,6 +162,8 @@ fun gen_schematic_subgoal prep_atts raw_result_binding raw_prems_binding param_s
     |> pair subgoal_focus
   end
 
+end
+
 val opt_fact_binding =
   Scan.optional (Parse.binding -- Parse.opt_attribs || Parse.attribs >> pair Binding.empty)
     Binding.empty_atts
@@ -106,7 +182,7 @@ in
 (** schematic_subgoal command **)
 val _ =
   Outer_Syntax.command \<^command_keyword>\<open>schematic_subgoal\<close>
-    "focus on first subgoal within backward refinement"
+    "focus on first subgoal within backward refinement, without instantiating schematic vars"
     (opt_fact_binding -- (Scan.option (\<^keyword>\<open>premises\<close> |-- Parse.!!! opt_fact_binding)) --
       for_params >> (fn ((a, b), c) =>
         Toplevel.proofs (Seq.make_results o Seq.single o #2 o schematic_subgoal_cmd a b c)))

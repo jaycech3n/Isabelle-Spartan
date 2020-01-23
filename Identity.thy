@@ -92,7 +92,7 @@ definition "ap A B x y f p \<equiv>
 definition ap_i ("_[_]" [1000, 0])
   where [implicit]: "ap_i f p \<equiv> ap ? ? ? ? f p"
 
-translations "f[p]" \<leftharpoondown> "CONST ap A B x y f p"
+(* translations "f[p]" \<leftharpoondown> "CONST ap A B x y f p" *)
 
 schematic_goal Id_transfer [typechk]:
   assumes
@@ -235,7 +235,7 @@ definition "transport A x y P p \<equiv>
 definition transport_i ("trans")
   where [implicit]: "trans P p \<equiv> transport ? ? ? P p"
 
-translations "trans P p" \<leftharpoondown> "CONST transport A x y P p"
+(* translations "trans P p" \<leftharpoondown> "CONST transport A x y P p" *)
 
 schematic_goal transport [typechk]:
   assumes
@@ -272,10 +272,6 @@ schematic_goal transport_right_inv [eqs]:
   shows "?prf: (trans P p) \<circ> (trans P p\<inverse>) = id (P y)"
   by (equality \<open>p:_\<close>) (reduce, intros, typechk)
 
-no_translations
-  "x = y" \<leftharpoondown> "x =\<^bsub>A\<^esub> y"
-  "trans P p" \<leftharpoondown> "CONST transport A x y P p"
-
 schematic_goal pathlift_derivation:
   assumes
     "A: U i"
@@ -294,6 +290,8 @@ definition "pathlift A x y P p u \<equiv> IdInd A
 definition pathlift_i ("lift")
   where [implicit]: "lift P p u \<equiv> pathlift ? ? ? P p u"
 
+(* translations "lift P p u" \<leftharpoondown> "CONST pathlift A x y P p u" *)
+
 schematic_goal pathlift [typechk]:
   assumes
     "A: U i"
@@ -303,17 +301,6 @@ schematic_goal pathlift [typechk]:
     "p: x =\<^bsub>A\<^esub> y"
   shows "lift P p u: <x, u> = <y, trans P p u>"
   unfolding pathlift_def by reduce+
-
-ML \<open>
-fun ttac ctxt =
-  let val net = Tactic.build_net
-    ((Named_Theorems.get ctxt \<^named_theorems>\<open>typechk\<close>)
-    @(Named_Theorems.get ctxt \<^named_theorems>\<open>intros\<close>)
-    @(Named_Theorems.get ctxt \<^named_theorems>\<open>elims\<close>))
-  in
-    known_tac ctxt ORELSE' resolve_from_net_tac ctxt net
-  end
-\<close>
 
 schematic_goal pathlift_comp [comps]:
   assumes
@@ -329,9 +316,24 @@ schematic_goal pathlift_fst_derivation:
     "A: U i"
     "\<And>x. x: A \<Longrightarrow> P x: U i"
     "x: A" "y: A"
+    "u: P x"
     "p: x =\<^bsub>A\<^esub> y"
-  shows "?prf: ?"
-oops
+  shows "?prf: (fst A P)[lift P p u] = p"
+  apply (equality \<open>p:_\<close>)
+    text \<open>Some rewriting needed here:\<close>
+    schematic_subgoal for x y p u
+      apply (subst fst_of_pair[where ?a=x, symmetric])
+        prefer 5
+        apply (subst fst_of_pair[where ?a=y, symmetric])
+          prefer 5
+          apply typechk+
+    done
+    (*Failure here has to do with `Thm.bicompose_aux` (called by `retrofit`
+      under the guise of `Thm.bicompose`) not unifying the proven statement with
+      the subgoal. I've traced this to <line 1808 in thm.ML>, where
+      `Unify.unifiers` returns the empty sequence. I suspect this might be an
+      eta-related issue. Needs further investigation.*)
+  oops
 
 
 end
