@@ -319,6 +319,10 @@ schematic_goal pathlift_fst_derivation:
     "u: P x"
     "p: x =\<^bsub>A\<^esub> y"
   shows "?prf: (fst A P)[lift P p u] = p"
+
+  (*The following proof should work; but there is a bug in the equality method
+    that needs to be fixed.
+
   apply (equality \<open>p:_\<close>)
     text \<open>Some rewriting needed here:\<close>
     schematic_subgoal for x y p u
@@ -328,12 +332,7 @@ schematic_goal pathlift_fst_derivation:
           prefer 5
           apply typechk+
     done
-    (*Failure here has to do with `Thm.bicompose_aux` (called by `retrofit`
-      under the guise of `Thm.bicompose`) not unifying the proven statement with
-      the subgoal. I've traced this to <line 1808 in thm.ML>, where
-      `Unify.unifiers` returns the empty sequence. I suspect this might be an
-      eta-related issue. Needs further investigation.*)
+  *)
   oops
-
 
 end

@@ -14,7 +14,7 @@ begin
 
 section \<open>Preamble\<close>
 
-declare [[names_short, eta_contract=false]]
+declare [[eta_contract=false]]
 
 ML_file \<open>schematic_subgoal.ML\<close>
 
