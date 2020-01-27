@@ -1,7 +1,7 @@
 structure Equality:
 sig
 
-val push_hyp_tac: term -> Proof.context -> int -> tactic
+val push_hyp_tac: term * term -> Proof.context -> int -> tactic
 val induction_tac: term -> term -> term -> term -> Proof.context -> tactic
 val equality_context_tac: Facts.ref -> Proof.context -> context_tactic
 
@@ -17,7 +17,7 @@ structure Inserts = Proof_Data (
 fun subterm_count tms tm =
   length (filter I (map (fn t => Lib.has_subterm [t] tm) tms))
 
-fun push_hyp_tac t = Subgoal.FOCUS_PARAMS (fn {context = ctxt, concl, ...} =>
+fun push_hyp_tac (t, T) = Subgoal.FOCUS_PARAMS (fn {context = ctxt, concl, ...} =>
   let
     val (_, C) = Lib.dest_typing (Thm.term_of concl)
     val B = Thm.cterm_of ctxt (lambda t C)
@@ -64,7 +64,7 @@ fun equality_context_tac fact ctxt =
       Inserts.map (fold (fn (t, _) => fn net => Item_Net.update t net) hyps)
 
     val tac =
-      fold (fn (t, _) => fn tac => tac THEN HEADGOAL (push_hyp_tac t ctxt))
+      fold (fn hyp => fn tac => tac THEN HEADGOAL (push_hyp_tac hyp ctxt))
         hyps all_tac
       THEN (
         induction_tac p A x y ctxt
