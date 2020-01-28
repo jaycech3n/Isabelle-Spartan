@@ -63,10 +63,10 @@ schematic_goal pathcomp_assoc:
     "p: x =\<^bsub>A\<^esub> y" "q: y =\<^bsub>A\<^esub> z" "r: z =\<^bsub>A\<^esub> w"
   shows "?prf: p \<bullet> (q \<bullet> r) = p \<bullet> q \<bullet> r"
   apply (equality \<open>p:_\<close>)
-    schematic_subgoal premises for x q
-      apply (equality \<open>q:_\<close>)
-        schematic_subgoal premises for x r
-          apply (equality \<open>r:_\<close>)
+    schematic_subgoal premises for x p
+      apply (equality \<open>p:_\<close>)
+        schematic_subgoal premises for x p
+          apply (equality \<open>p:_\<close>)
             apply (reduce; intros+)
         done
     done
@@ -115,8 +115,8 @@ schematic_goal ap_pathcomp_derivation:
   shows
     "?prf: f[p \<bullet> q] = f[p] \<bullet> f[q]"
   apply (equality \<open>p:_\<close>)
-    schematic_subgoal premises for x q
-      apply (equality \<open>q:_\<close>)
+    schematic_subgoal premises for x p
+      apply (equality \<open>p:_\<close>)
         apply reduce
           apply intros+
             apply elims
@@ -151,7 +151,7 @@ schematic_goal ap_pathinv_derivation:
     "f: A \<rightarrow> B"
     "p: x =\<^bsub>A\<^esub> y"
   shows "?prf: f[p\<inverse>] = f[p]\<inverse>"
-  by (equality \<open>p:_\<close>) (reduce, intros, typechk)
+  by (equality \<open>p:_\<close>) (reduce; intros; typechk)
 
 definition "ap_pathinv A B x y f p \<equiv> IdInd A
   (\<lambda>a b c. ap A B b a f (pathinv A a b c) =\<^bsub>f `b =\<^bsub>B\<^esub> f `a\<^esub>
@@ -179,7 +179,7 @@ schematic_goal ap_funcomp_derivation:
   shows "?prf: (g \<circ> f)[p] = g[f[p]]"
   apply (equality \<open>p:_\<close>)
     apply (simp only: funcomp_apply_comp[symmetric])
-    apply (reduce, intros, typechk)
+    apply (reduce; intros; typechk)
   done
 
 definition "ap_funcomp A B C x y z f g p \<equiv> IdInd A
@@ -201,9 +201,7 @@ schematic_goal ap_id_derivation:
   assumes "A: U i" "x: A" "y: A" "p: x =\<^bsub>A\<^esub> y"
   shows "?prf: (id A)[p] = p"
   apply (equality \<open>p:_\<close>)
-    schematic_subgoal for x y p
-      apply (subst (6 8) id_comp[symmetric]; typechk)
-    done
+    apply (subst (6 8) id_comp[symmetric]; typechk)
     apply (reduce; intros+)
   done
 
@@ -261,7 +259,7 @@ schematic_goal transport_left_inv [eqs]:
     "\<And>x. x: A \<Longrightarrow> P x: U i"
     "p: x =\<^bsub>A\<^esub> y"
   shows "?prf: (trans P p\<inverse>) \<circ> (trans P p) = id (P x)"
-  by (equality \<open>p:_\<close>) (reduce, intros, typechk)
+  by (equality \<open>p:_\<close>) (reduce; intros; typechk)
 
 schematic_goal transport_right_inv [eqs]:
   assumes
@@ -270,7 +268,7 @@ schematic_goal transport_right_inv [eqs]:
     "\<And>x. x: A \<Longrightarrow> P x: U i"
     "p: x =\<^bsub>A\<^esub> y"
   shows "?prf: (trans P p) \<circ> (trans P p\<inverse>) = id (P y)"
-  by (equality \<open>p:_\<close>) (reduce, intros, typechk)
+  by (equality \<open>p:_\<close>) (reduce; intros; typechk)
 
 schematic_goal pathlift_derivation:
   assumes
@@ -280,7 +278,7 @@ schematic_goal pathlift_derivation:
     "u: P x"
     "p: x =\<^bsub>A\<^esub> y"
   shows "?prf: <x, u> = <y, trans P p u>"
-  by (equality \<open>p:_\<close>) (reduce, intros, typechk)
+  by (equality \<open>p:_\<close>) (reduce; intros; typechk)
 
 definition "pathlift A x y P p u \<equiv> IdInd A
   (\<lambda>a b c. \<Prod>x: P a. <a, x> =\<^bsub>\<Sum>x: A. P x\<^esub> <b, transport A a b P c `x>)
@@ -319,20 +317,17 @@ schematic_goal pathlift_fst_derivation:
     "u: P x"
     "p: x =\<^bsub>A\<^esub> y"
   shows "?prf: (fst A P)[lift P p u] = p"
-
-  (*The following proof should work; but there is a bug in the equality method
-    that needs to be fixed.
-
   apply (equality \<open>p:_\<close>)
     text \<open>Some rewriting needed here:\<close>
-    schematic_subgoal for x y p u
+    schematic_subgoal for x y
       apply (subst fst_of_pair[where ?a=x, symmetric])
         prefer 5
         apply (subst fst_of_pair[where ?a=y, symmetric])
           prefer 5
           apply typechk+
     done
-  *)
-  oops
+    apply (reduce; intros; typechk)
+  done
+
 
 end

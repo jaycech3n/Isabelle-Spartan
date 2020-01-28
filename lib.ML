@@ -9,6 +9,7 @@ val maxint: int list -> int
 val is_rigid: term -> bool
 val dest_eq: term -> term * term
 val mk_Var: string -> int -> typ -> term
+val abstract_var: term -> term -> term
 
 val is_typing: term -> bool
 val dest_typing: term -> term * term
@@ -46,6 +47,15 @@ fun dest_eq (Const (\<^const_name>\<open>Pure.eq\<close>, _) $ t $ def) = (t, de
   | dest_eq _ = error "dest_eq"
 
 fun mk_Var name idx T = Var ((name, idx), T)
+
+fun abstract_var x tm =
+  let
+    fun var_args (Var (idx, T)) = Var (idx, Type (\<^type_name>\<open>o\<close>, []) --> T) $ x
+      | var_args t = t
+  in
+    tm |> map_aterms var_args
+       |> lambda x
+  end
 
 (* Object *)
 
