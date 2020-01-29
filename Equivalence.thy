@@ -52,7 +52,7 @@ schematic_goal homotopic_transitive_derivation:
     schematic_subgoal for H1 H2
       apply intros
         schematic_subgoal for x
-          apply (rule Id_transitive[where ?y="g `x"])
+          apply (rule Id_transitive[where ?y = "g `x"])
           prefer 5 apply (rule PiE[of H1 _ _ x])
           prefer 5 apply (rule PiE[of H2 _ _ x])
           defer apply typechk+

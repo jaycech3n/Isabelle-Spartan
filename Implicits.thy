@@ -13,7 +13,7 @@ text \<open>
 
 consts
   iarg :: \<open>'a\<close> ("?")
-  earg :: \<open>'a\<close> ("!")
+  earg :: \<open>'b\<close> ("!")
 
 ML_file \<open>implicits.ML\<close>
 
@@ -36,14 +36,14 @@ definition funcomp_i (infixr "\<circ>" 120)
 definition pathinv_i ("_\<inverse>" [1000])
   where [implicit]: "pathinv_i p \<equiv> pathinv ? ? ? p"
 
-definition pathcomp_i (infixl "\<bullet>" 120)
+definition pathcomp_i (infixl "\<bullet>" 121)
   where [implicit]: "pathcomp_i p q \<equiv> pathcomp ? ? ? ? p q"
 
 definition fst_i ("fst")
   where [implicit]: "fst \<equiv> Spartan.fst ? ?"
 
 definition snd_i ("snd")
-  where [implicit]: "snd \<equiv> Spartan.snd ? ?" 
+  where [implicit]: "snd \<equiv> Spartan.snd ? ?"
 
 translations
   "x = y" \<leftharpoondown> "x =\<^bsub>A\<^esub> y"
