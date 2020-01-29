@@ -14,8 +14,6 @@ section \<open>Basic propositional equalities\<close>
 
 (*TODO: Better integration of equality type directly into reasoning...*)
 
-named_theorems eqs \<comment>\<open>For propositional equalities\<close>
-
 schematic_goal pathcomp_left_refl_derivation:
   assumes "A: U i" "x: A" "y: A" "p: x =\<^bsub>A\<^esub> y"
   shows "?prf: (refl x) \<bullet> p = p"
@@ -23,28 +21,28 @@ schematic_goal pathcomp_left_refl_derivation:
     apply (reduce; intros+)
   done
 
-schematic_goal pathcomp_right_refl [eqs]:
+schematic_goal pathcomp_right_refl_derivation:
   assumes "A: U i" "x: A" "y: A" "p: x =\<^bsub>A\<^esub> y"
   shows "?prf: p \<bullet> (refl y) = p"
   apply (equality \<open>p: _\<close>)
     apply (reduce; intros+)
   done
 
-schematic_goal pathcomp_left_inv [eqs]:
+schematic_goal pathcomp_left_inv_derivation:
   assumes "A: U i" "x: A" "y: A" "p: x =\<^bsub>A\<^esub> y"
   shows "?prf: p\<inverse> \<bullet> p = refl y"
   apply (equality \<open>p: _\<close>)
     apply (reduce; intros+)
   done
 
-schematic_goal pathcomp_right_inv [eqs]:
+schematic_goal pathcomp_right_inv_derivation:
   assumes "A: U i" "x: A" "y: A" "p: x =\<^bsub>A\<^esub> y"
   shows "?prf: p \<bullet> p\<inverse> = refl x"
   apply (equality \<open>p: _\<close>)
     apply (reduce; intros+)
   done
 
-schematic_goal pathinv_pathinv [eqs]:
+schematic_goal pathinv_pathinv_derivation:
   assumes "A: U i" "x: A" "y: A" "p: x =\<^bsub>A\<^esub> y"
   shows "?prf: p\<inverse>\<inverse> = p"
   apply (equality \<open>p: _\<close>)
@@ -57,7 +55,7 @@ text \<open>
   functions, which we'll do later.
 \<close>
 
-schematic_goal pathcomp_assoc:
+schematic_goal pathcomp_assoc_derivation:
   assumes
     "A: U i" "x: A" "y: A" "z: A" "w: A"
     "p: x =\<^bsub>A\<^esub> y" "q: y =\<^bsub>A\<^esub> z" "r: z =\<^bsub>A\<^esub> w"
@@ -252,7 +250,7 @@ schematic_goal transport_comp [comps]:
   shows "trans P (refl a) \<equiv> id (P a)"
   unfolding transport_def id_def by (subst comps) reduce
 
-schematic_goal transport_left_inv [eqs]:
+schematic_goal transport_left_inv_derivation:
   assumes
     "A: U i"
     "x: A" "y: A"
@@ -261,7 +259,7 @@ schematic_goal transport_left_inv [eqs]:
   shows "?prf: (trans P p\<inverse>) \<circ> (trans P p) = id (P x)"
   by (equality \<open>p:_\<close>) (reduce; intros; typechk)
 
-schematic_goal transport_right_inv [eqs]:
+schematic_goal transport_right_inv_derivation:
   assumes
     "A: U i"
     "x: A" "y: A"
@@ -316,7 +314,7 @@ schematic_goal pathlift_fst_derivation:
     "x: A" "y: A"
     "u: P x"
     "p: x =\<^bsub>A\<^esub> y"
-  shows "?prf: (fst A P)[lift P p u] = p"
+  shows "?prf: fst[lift P p u] = p"
   apply (equality \<open>p:_\<close>)
     text \<open>Some rewriting needed here:\<close>
     schematic_subgoal for x y
