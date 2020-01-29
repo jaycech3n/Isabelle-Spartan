@@ -13,10 +13,6 @@ structure Inserts = Proof_Data (
   val init = K (Item_Net.init Term.aconv_untyped single)
 )
 
-(*Number of distinct subterms in `tms` that appear in `tm`*)
-fun subterm_count tms tm =
-  length (filter I (map (fn t => Lib.has_subterm [t] tm) tms))
-
 fun push_hyp_tac (t, _) = Subgoal.FOCUS_PARAMS (fn {context = ctxt, concl, ...} =>
   let
     val (_, C) = Lib.dest_typing (Thm.term_of concl)
@@ -51,7 +47,7 @@ fun equality_context_tac fact ctxt =
       |> map (Lib.dest_typing o Thm.prop_of o fst)
       |> filter_out (fn (t, _) =>
           Term.aconv (t, p) orelse Item_Net.member (Inserts.get ctxt) t)
-      |> map (fn (t, T) => ((t, T), subterm_count [p, x, y] T))
+      |> map (fn (t, T) => ((t, T), Lib.subterm_count_distinct [p, x, y] T))
       |> filter (fn (_, i) => i > 0)
       (*`t1: T1` comes before `t2: T2` if T1 contains t2 as subterm.
         If they are incomparable, then order by decreasing

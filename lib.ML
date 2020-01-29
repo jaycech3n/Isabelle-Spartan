@@ -20,7 +20,9 @@ val mk_Pi: term -> term -> term -> term
 
 (*Subterms*)
 val has_subterm: term list -> term -> bool
-val fold_aterms: (int -> term -> 'a list -> 'a) -> int -> term -> 'a
+val subterm_count: term -> term -> int
+val subterm_count_distinct: term list -> term -> int
+val fold_aterms: (term -> term list -> term) -> term -> term
 
 (*Orderings*)
 val subterm_order: term -> term -> order
@@ -81,23 +83,36 @@ fun has_subterm tms =
   Term.exists_subterm
     (foldl1 (op orf) (map (fn t => fn s => Term.aconv_untyped (s, t)) tms))
 
+fun subterm_count s t =
+  let
+    fun count (t1 $ t2) i = i + count t1 0 + count t2 0
+      | count (Abs (_, _, t)) i = i + count t 0
+      | count t i = if Term.aconv_untyped (s, t) then i + 1 else i
+  in
+    count t 0
+  end
+
+(*Number of distinct subterms in `tms` that appear in `tm`*)
+fun subterm_count_distinct tms tm =
+  length (filter I (map (fn t => has_subterm [t] tm) tms))
+
 (*
   Souped-up version of Term.fold_aterms, folding a function f over the term
-  structure of t. At each node n in the AST, f is additionally passed a unique
-  index i and a list of the results of f at all children of n.
+  structure of t. At each node n in the term syntax tree, f is additionally
+  passed a list of the results of f at all children of n.
 *)
-fun fold_aterms f i0 t =
+fun fold_aterms f t =
   let
-    fun map_aux t i =
-      let
-        val (head, args) = Term.strip_comb t
-        val (args', i') = fold_map map_aux args i
-        val i'' = maxint [i, i', maxidx_of_term head] + 1
-      in
-        (f i'' head args', i'')
-      end
+    fun map_aux (Abs (x, T, t)) = Abs (x, T, map_aux t)
+      | map_aux t =
+          let
+            val (head, args) = Term.strip_comb t
+            val args' = map map_aux args
+          in
+            f head args'
+          end
   in
-    #1 (map_aux t i0)
+    map_aux t
   end
 
 

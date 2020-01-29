@@ -30,14 +30,14 @@ fun make_holes ctxt =
     fun iarg_to_earg (Const (\<^const_name>\<open>iarg\<close>, T)) = Const (\<^const_name>\<open>earg\<close>, T)
       | iarg_to_earg t = t
 
-    fun expand _ head args =
+    fun expand head args =
       let
         fun betapplys (head', args') =
           Term.betapplys (map_aterms iarg_to_earg head', args')
       in
         case head of
           Abs (x, T, t) =>
-            list_comb (Abs (x, T, Lib.fold_aterms expand 0 t), args)
+            list_comb (Abs (x, T, Lib.fold_aterms expand t), args)
         | _ =>
             case Symtab.lookup (implicit_defs ctxt) (Term.term_name head) of
               SOME (t, def) => betapplys
@@ -46,12 +46,23 @@ fun make_holes ctxt =
             | NONE => list_comb (head, args)
       end
 
-    fun earg_to_var i (Const (\<^const_name>\<open>earg\<close>, T)) _ = Var (("*", i), T)
-      | earg_to_var i (Abs (x, T, t)) args =
-          list_comb (Abs (x, T, Lib.fold_aterms earg_to_var i t), args)
-      | earg_to_var _ t args = list_comb (t, args)
+    fun eargs_to_vars t =
+      let
+        val count = Lib.subterm_count (Const (\<^const_name>\<open>earg\<close>, dummyT))
+
+        fun subst (Const (\<^const_name>\<open>earg\<close>, T)) (Var (idx, _)::_) = Var (idx, T)
+          | subst (Abs (x, T, t)) vs = Abs (x, T, subst t vs)
+          | subst (t $ u) vs =
+              let val n = count t
+              in subst t (take n vs) $ subst u (drop n vs) end
+          | subst t _ = t
+
+        val vars = map (fn i => Var (("*", i), dummyT)) (1 upto count t)
+      in
+        subst t vars
+      end
   in
-    Lib.fold_aterms expand 0 #> Lib.fold_aterms earg_to_var 0
+    Lib.fold_aterms expand #> eargs_to_vars
   end
 
 
