@@ -41,13 +41,15 @@ fun make_holes ctxt =
           Term.betapplys (map_aterms iarg_to_earg head', args')
       in
         case head of
-          Abs (x, T, t) => list_comb (Abs (x, T, expand i t []), args)
+          Abs (x, T, t) =>
+            let val (h, xs) = strip_comb t
+            in list_comb (Abs (x, T, expand i h xs), args) end
         | _ =>
-          case Symtab.lookup (implicit_defs ctxt) (Term.term_name head) of
-            SOME (t, def) => betapplys
-              (Envir.expand_atom (Term.fastype_of head) (Term.fastype_of t, def),
-              args)
-          | NONE => list_comb (head, args)
+            case Symtab.lookup (implicit_defs ctxt) (Term.term_name head) of
+              SOME (t, def) => betapplys
+                (Envir.expand_atom (Term.fastype_of head) (Term.fastype_of t, def),
+                args)
+            | NONE => list_comb (head, args)
       end
   in
     Lib.fold_aterms expand 0 #> Lib.fold_aterms earg_to_var 0
