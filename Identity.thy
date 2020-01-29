@@ -90,7 +90,7 @@ definition "ap A B x y f p \<equiv>
 definition ap_i ("_[_]" [1000, 0])
   where [implicit]: "ap_i f p \<equiv> ap ? ? ? ? f p"
 
-(* translations "f[p]" \<leftharpoondown> "CONST ap A B x y f p" *)
+translations "f[p]" \<leftharpoondown> "CONST ap A B x y f p"
 
 schematic_goal Id_transfer [typechk]:
   assumes
@@ -231,7 +231,7 @@ definition "transport A x y P p \<equiv>
 definition transport_i ("trans")
   where [implicit]: "trans P p \<equiv> transport ? ? ? P p"
 
-(* translations "trans P p" \<leftharpoondown> "CONST transport A x y P p" *)
+translations "trans P p" \<leftharpoondown> "CONST transport A x y P p"
 
 schematic_goal transport [typechk]:
   assumes
@@ -286,7 +286,7 @@ definition "pathlift A x y P p u \<equiv> IdInd A
 definition pathlift_i ("lift")
   where [implicit]: "lift P p u \<equiv> pathlift ? ? ? P p u"
 
-(* translations "lift P p u" \<leftharpoondown> "CONST pathlift A x y P p u" *)
+translations "lift P p u" \<leftharpoondown> "CONST pathlift A x y P p u"
 
 schematic_goal pathlift [typechk]:
   assumes

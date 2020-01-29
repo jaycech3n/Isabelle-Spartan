@@ -45,13 +45,13 @@ definition fst_i ("fst")
 definition snd_i ("snd")
   where [implicit]: "snd \<equiv> Spartan.snd ? ?" 
 
-(* translations
+translations
   "x = y" \<leftharpoondown> "x =\<^bsub>A\<^esub> y"
   "g \<circ> f" \<leftharpoondown> "g \<circ>\<^bsub>A\<^esub> f"
   "p\<inverse>" \<leftharpoondown> "CONST pathinv A x y p"
   "p \<bullet> q" \<leftharpoondown> "CONST pathcomp A x y z p q"
   "fst" \<leftharpoondown> "CONST Spartan.fst A B"
-  "snd" \<leftharpoondown> "CONST Spartan.snd A B" *)
+  "snd" \<leftharpoondown> "CONST Spartan.snd A B"
 
 
 end
