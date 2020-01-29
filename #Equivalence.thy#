@@ -8,7 +8,7 @@ definition "homotopic A B f g \<equiv> \<Prod>x: A. f `x =\<^bsub>B x\<^esub> g 
 definition homotopic_i (infix "~" 100)
   where [implicit]: "f ~ g \<equiv> homotopic ? ? f g"
 
-translations "f ~ g" \<leftharpoondown> "CONST homotopic A B f g"
+(* translations "f ~ g" \<leftharpoondown> "CONST homotopic A B f g" *)
 
 schematic_goal homotopic_refl_derivation:
   assumes
@@ -62,5 +62,15 @@ schematic_goal homotopic_transitive_derivation:
     apply typechk+
   done
 
+term "\<lambda>H1: f ~ g. \<lambda>H2: g ~ h. \<lambda>x: A. (H1 `x) \<bullet> (H2 `x): f ~ g \<rightarrow> g ~ h \<rightarrow> f ~ h"
+
+schematic_goal
+  assumes
+    "A: U i"
+    "\<And>x. x: A \<Longrightarrow> B x: U i"
+    "f: \<Prod>x: A. B x"
+    "g: \<Prod>x: A. B x"
+    "h: \<Prod>x: A. B x"
+  shows "\<lambda>H1: f ~ g. \<lambda>H2: g ~ h. \<lambda>x: A. (H1 `x) \<bullet> (H2 `x): f ~ g \<rightarrow> g ~ h \<rightarrow> f ~ h"
 
 end

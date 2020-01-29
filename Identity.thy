@@ -81,7 +81,7 @@ schematic_goal Id_transfer_derivation:
     "p: x =\<^bsub>A\<^esub> y"
   shows "?prf: f `x = f `y"
   apply (equality \<open>p: _\<close>)
-    apply (intros; elims)
+    apply (intros; typechk)
   done
 
 definition "ap A B x y f p \<equiv>
@@ -115,9 +115,7 @@ schematic_goal ap_pathcomp_derivation:
   apply (equality \<open>p:_\<close>)
     schematic_subgoal premises for x p
       apply (equality \<open>p:_\<close>)
-        apply reduce
-          apply intros+
-            apply elims
+        apply (reduce; intros; typechk)
     done
   done
 

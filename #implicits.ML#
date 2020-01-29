@@ -48,7 +48,7 @@ fun make_holes ctxt =
 
     fun earg_to_var i (Const (\<^const_name>\<open>earg\<close>, T)) _ = Var (("*", i), T)
       | earg_to_var i (Abs (x, T, t)) args =
-          list_comb (Abs (x, T, Lib.fold_aterms earg_to_var i t), args)
+          list_comb (Abs (x, T, Lib.fold_aterms earg_to_var (i+2) t), args)
       | earg_to_var _ t args = list_comb (t, args)
   in
     Lib.fold_aterms expand 0 #> Lib.fold_aterms earg_to_var 0

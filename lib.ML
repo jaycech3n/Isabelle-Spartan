@@ -82,9 +82,9 @@ fun has_subterm tms =
     (foldl1 (op orf) (map (fn t => fn s => Term.aconv_untyped (s, t)) tms))
 
 (*
-  Souped-up version of Term.fold_aterms. At each node n in the AST, the function
-  f is additionally passed a unique index i and a list of the results of f at
-  all children of n.
+  Souped-up version of Term.fold_aterms, folding a function f over the term
+  structure of t. At each node n in the AST, f is additionally passed a unique
+  index i and a list of the results of f at all children of n.
 *)
 fun fold_aterms f i0 t =
   let
