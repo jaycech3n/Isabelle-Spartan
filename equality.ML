@@ -16,7 +16,7 @@ structure Inserts = Proof_Data (
 fun push_hyp_tac (t, _) = Subgoal.FOCUS_PARAMS (fn {context = ctxt, concl, ...} =>
   let
     val (_, C) = Lib.dest_typing (Thm.term_of concl)
-    val B = Thm.cterm_of ctxt (Lib.abstract_var t C)
+    val B = Thm.cterm_of ctxt (Lib.lambda_var t C)
     val a = Thm.cterm_of ctxt t
     (*The resolvent is PiE[where ?B=B and ?a=a]*)
     val resolvent =
