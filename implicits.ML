@@ -50,16 +50,22 @@ fun make_holes ctxt =
       let
         val count = Lib.subterm_count (Const (\<^const_name>\<open>earg\<close>, dummyT))
 
-        fun subst (Const (\<^const_name>\<open>earg\<close>, T)) (Var (idx, _)::_) = Var (idx, T)
-          | subst (Abs (x, T, t)) vs = Abs (x, T, subst t vs)
-          | subst (t $ u) vs =
+        fun subst (Const (\<^const_name>\<open>earg\<close>, T)) (Var (idx, _)::_) Ts =
+              let
+                val bounds = map Bound (0 upto (length Ts - 1))
+                val T' = foldr1 (op -->) (Ts @ [T])
+              in
+                foldl1 (op $) (Var (idx, T')::bounds)
+              end
+          | subst (Abs (x, T, t)) vs Ts = Abs (x, T, subst t vs (T::Ts))
+          | subst (t $ u) vs Ts =
               let val n = count t
-              in subst t (take n vs) $ subst u (drop n vs) end
-          | subst t _ = t
+              in subst t (take n vs) Ts $ subst u (drop n vs) Ts end
+          | subst t _ _ = t
 
         val vars = map (fn i => Var (("*", i), dummyT)) (1 upto count t)
       in
-        subst t vars
+        subst t vars []
       end
   in
     Lib.fold_aterms expand #> eargs_to_vars
