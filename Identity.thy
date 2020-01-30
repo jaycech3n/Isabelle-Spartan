@@ -49,12 +49,6 @@ schematic_goal pathinv_pathinv_derivation:
     apply (reduce; intros+)
   done
 
-text \<open>
-  Associativity of path composition can be proved by a triply-nested path
-  induction, which we do here. It can also be proved using functoriality of
-  functions, which we'll do later.
-\<close>
-
 schematic_goal pathcomp_assoc_derivation:
   assumes
     "A: U i" "x: A" "y: A" "z: A" "w: A"
@@ -217,25 +211,25 @@ section \<open>Transport\<close>
 schematic_goal transport_derivation:
   assumes
     "A: U i"
-    "x: A" "y: A"
     "\<And>x. x: A \<Longrightarrow> P x: U i"
+    "x: A" "y: A"
     "p: x =\<^bsub>A\<^esub> y"
   shows "?prf: P x \<rightarrow> P y"
   by (equality \<open>p:_\<close>) intros
 
-definition "transport A x y P p \<equiv>
+definition "transport A P x y p \<equiv>
   IdInd A (\<lambda>a b _. P a \<rightarrow> P b) (\<lambda>x. \<lambda>u: P x. u) x y p"
 
 definition transport_i ("trans")
-  where [implicit]: "trans P p \<equiv> transport ? ? ? P p"
+  where [implicit]: "trans P p \<equiv> transport ? P ? ? p"
 
-translations "trans P p" \<leftharpoondown> "CONST transport A x y P p"
+translations "trans P p" \<leftharpoondown> "CONST transport A P x y p"
 
 schematic_goal transport [typechk]:
   assumes
     "A: U i"
-    "x: A" "y: A"
     "\<And>x. x: A \<Longrightarrow> P x: U i"
+    "x: A" "y: A"
     "p: x =\<^bsub>A\<^esub> y"
   shows "trans P p: P x \<rightarrow> P y"
   unfolding transport_def by typechk
@@ -251,8 +245,8 @@ schematic_goal transport_comp [comps]:
 schematic_goal transport_left_inv_derivation:
   assumes
     "A: U i"
-    "x: A" "y: A"
     "\<And>x. x: A \<Longrightarrow> P x: U i"
+    "x: A" "y: A"
     "p: x =\<^bsub>A\<^esub> y"
   shows "?prf: (trans P p\<inverse>) \<circ> (trans P p) = id (P x)"
   by (equality \<open>p:_\<close>) (reduce; intros; typechk)
@@ -260,11 +254,34 @@ schematic_goal transport_left_inv_derivation:
 schematic_goal transport_right_inv_derivation:
   assumes
     "A: U i"
-    "x: A" "y: A"
     "\<And>x. x: A \<Longrightarrow> P x: U i"
+    "x: A" "y: A"
     "p: x =\<^bsub>A\<^esub> y"
   shows "?prf: (trans P p) \<circ> (trans P p\<inverse>) = id (P y)"
   by (equality \<open>p:_\<close>) (reduce; intros; typechk)
+
+schematic_goal transport_const_derivation:
+  assumes
+    "A: U i" "B: U i"
+    "x: A" "y: A"
+    "p: x =\<^bsub>A\<^esub> y"
+    "b: B"
+  shows "?prf: trans (\<lambda>_. B) p b = b"
+  by (equality \<open>p:_\<close>) (reduce; intros)
+
+definition "transport_const A B x y p \<equiv> \<lambda>b: B.
+  IdInd A (\<lambda>x y p. transport A (\<lambda>_. B) x y p `b =\<^bsub>B\<^esub> b) (\<lambda>x. refl b) x y p"
+
+definition transport_const_i ("transc")
+  where [implicit]: "transc B p \<equiv> transport_const ? B ? ? p"
+
+schematic_goal transport_const [typechk]:
+  assumes
+    "A: U i" "B: U i"
+    "x: A" "y: A"
+    "p: x =\<^bsub>A\<^esub> y"
+  shows "transc B p: \<Prod>b: B. trans (\<lambda>_. B) p b = b"
+  unfolding transport_const_def by intros (rule transport_const_derivation)
 
 schematic_goal pathlift_derivation:
   assumes
@@ -276,15 +293,15 @@ schematic_goal pathlift_derivation:
   shows "?prf: <x, u> = <y, trans P p u>"
   by (equality \<open>p:_\<close>) (reduce; intros; typechk)
 
-definition "pathlift A x y P p u \<equiv> IdInd A
-  (\<lambda>a b c. \<Prod>x: P a. <a, x> =\<^bsub>\<Sum>x: A. P x\<^esub> <b, transport A a b P c `x>)
+definition "pathlift A P x y p u \<equiv> IdInd A
+  (\<lambda>a b c. \<Prod>x: P a. <a, x> =\<^bsub>\<Sum>x: A. P x\<^esub> <b, transport A P a b c `x>)
   (\<lambda>x. \<lambda>xa: P x. refl <x, xa>)
   x y p `u"
 
 definition pathlift_i ("lift")
-  where [implicit]: "lift P p u \<equiv> pathlift ? ? ? P p u"
+  where [implicit]: "lift P p u \<equiv> pathlift ? P ? ? p u"
 
-translations "lift P p u" \<leftharpoondown> "CONST pathlift A x y P p u"
+translations "lift P p u" \<leftharpoondown> "CONST pathlift A P x y p u"
 
 schematic_goal pathlift [typechk]:
   assumes
@@ -324,6 +341,61 @@ schematic_goal pathlift_fst_derivation:
     done
     apply (reduce; intros; typechk)
   done
+
+
+section \<open>Dependent paths\<close>
+
+no_translations
+  "x = y" \<leftharpoondown> "x =\<^bsub>A\<^esub> y"
+  "g \<circ> f" \<leftharpoondown> "g \<circ>\<^bsub>A\<^esub> f"
+  "p\<inverse>" \<leftharpoondown> "CONST pathinv A x y p"
+  "p \<bullet> q" \<leftharpoondown> "CONST pathcomp A x y z p q"
+  "fst" \<leftharpoondown> "CONST Spartan.fst A B"
+  "snd" \<leftharpoondown> "CONST Spartan.snd A B"
+  "f[p]" \<leftharpoondown> "CONST ap A B x y f p"
+  "trans P p" \<leftharpoondown> "CONST transport A P x y p"
+  "lift P p u" \<leftharpoondown> "CONST pathlift A P x y p u"
+
+schematic_goal dependent_map_derivation:
+  assumes
+    "A: U i"
+    "\<And>x. x: A \<Longrightarrow> P x: U i"
+    "f: \<Prod>x: A. P x"
+    "x: A" "y: A"
+    "p: x =\<^bsub>A\<^esub> y"
+  shows "?prf: trans P p (f` x) = f `y"
+  by (equality \<open>p:_\<close>) (reduce; intros; typechk)
+
+definition "apd A P f x y p \<equiv> IdInd A
+  (\<lambda>x y p. transport A (\<lambda>x. P x) x y p `(f `x) =\<^bsub>P y\<^esub> f `y)
+  (\<lambda>x. refl (f `x))
+  x y p"
+
+definition apd_i ("apd")
+  where [implicit]: "apd f p \<equiv> Identity.apd ? ? f ? ? p"
+
+translations "apd f p" \<leftharpoondown> "CONST Identity.apd A P f x y p"
+
+schematic_goal dependent_map [typechk]:
+  assumes
+    "A: U i"
+    "\<And>x. x: A \<Longrightarrow> P x: U i"
+    "f: \<Prod>x: A. P x"
+    "x: A" "y: A"
+    "p: x =\<^bsub>A\<^esub> y"
+  shows "apd f p: trans P p (f` x) = f `y"
+  unfolding apd_def by typechk reduce
+
+schematic_goal apd_transc_derivation:
+  assumes
+    "A: U i" "B: U i"
+    "f: A \<rightarrow> B"
+    "x: A" "y: A"
+    "p: X =\<^bsub>A\<^esub> y"
+  shows "?prf: apd f p = transc B (f `x) \<bullet> f[p]"
+  (*Loops! Also in the proof of transport_const, above. Figure out why.*)
+  (*apply (equality \<open>p:_\<close>)*)
+oops
 
 
 end
