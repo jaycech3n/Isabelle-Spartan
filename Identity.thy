@@ -272,16 +272,18 @@ schematic_goal transport_const_derivation:
 definition "transport_const A B x y p \<equiv> \<lambda>b: B.
   IdInd A (\<lambda>x y p. transport A (\<lambda>_. B) x y p `b =\<^bsub>B\<^esub> b) (\<lambda>x. refl b) x y p"
 
-definition transport_const_i ("transc")
-  where [implicit]: "transc B p \<equiv> transport_const ? B ? ? p"
+definition transport_const_i ("trans'_const")
+  where [implicit]: "trans_const B p \<equiv> transport_const ? B ? ? p"
+
+translations "trans_const B p" \<leftharpoondown> "CONST transport_const A B x y p"
 
 schematic_goal transport_const [typechk]:
   assumes
     "A: U i" "B: U i"
     "x: A" "y: A"
     "p: x =\<^bsub>A\<^esub> y"
-  shows "transc B p: \<Prod>b: B. trans (\<lambda>_. B) p b = b"
-  unfolding transport_const_def by intros (rule transport_const_derivation)
+  shows "trans_const B p: \<Prod>b: B. trans (\<lambda>_. B) p b = b"
+  unfolding transport_const_def by reduce+
 
 schematic_goal pathlift_derivation:
   assumes
@@ -345,17 +347,6 @@ schematic_goal pathlift_fst_derivation:
 
 section \<open>Dependent paths\<close>
 
-no_translations
-  "x = y" \<leftharpoondown> "x =\<^bsub>A\<^esub> y"
-  "g \<circ> f" \<leftharpoondown> "g \<circ>\<^bsub>A\<^esub> f"
-  "p\<inverse>" \<leftharpoondown> "CONST pathinv A x y p"
-  "p \<bullet> q" \<leftharpoondown> "CONST pathcomp A x y z p q"
-  "fst" \<leftharpoondown> "CONST Spartan.fst A B"
-  "snd" \<leftharpoondown> "CONST Spartan.snd A B"
-  "f[p]" \<leftharpoondown> "CONST ap A B x y f p"
-  "trans P p" \<leftharpoondown> "CONST transport A P x y p"
-  "lift P p u" \<leftharpoondown> "CONST pathlift A P x y p u"
-
 schematic_goal dependent_map_derivation:
   assumes
     "A: U i"
@@ -386,15 +377,15 @@ schematic_goal dependent_map [typechk]:
   shows "apd f p: trans P p (f` x) = f `y"
   unfolding apd_def by typechk reduce
 
-schematic_goal apd_transc_derivation:
+schematic_goal apd_trans_const_derivation:
   assumes
     "A: U i" "B: U i"
     "f: A \<rightarrow> B"
     "x: A" "y: A"
-    "p: X =\<^bsub>A\<^esub> y"
-  shows "?prf: apd f p = transc B (f `x) \<bullet> f[p]"
-  (*Loops! Also in the proof of transport_const, above. Figure out why.*)
-  (*apply (equality \<open>p:_\<close>)*)
+    "p: x =\<^bsub>A\<^esub> y"
+  shows "?prf: apd f p = trans_const B p (f `x) \<bullet> f[p]"
+  apply (equality \<open>p:_\<close>)
+  (*A bunch of equalities to be proved here*)
 oops
 
 
