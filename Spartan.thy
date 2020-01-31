@@ -284,6 +284,27 @@ method_setup equality = \<open>Scan.lift Parse.thm >> (fn (fact, _) => fn ctxt =
   CONTEXT_METHOD (K (Equality.equality_context_tac fact ctxt)))\<close>
 
 
+section \<open>Implicit arguments\<close>
+
+text \<open>
+  \<open>?\<close> is used to mark implicit arguments in definitions, while \<open>!\<close> is expanded
+  immediately for elaboration in statements. 
+\<close>
+
+consts
+  iarg :: \<open>'a\<close> ("?")
+  earg :: \<open>'b\<close> ("!")
+
+ML_file \<open>implicits.ML\<close>
+
+attribute_setup implicit = \<open>Scan.succeed Implicits.implicit_defs_attr\<close>
+
+ML \<open>
+val _ = Context.>>
+  (Syntax_Phases.term_check 1 "" (fn ctxt => map (Implicits.make_holes ctxt)))
+\<close>
+
+
 section \<open>Lambda coercion\<close>
 
 \<comment>\<open>Coerce object lambdas to meta-lambdas when needed\<close>
@@ -444,6 +465,35 @@ lemma snd_of_pair [comps]:
   assumes "a: A" "b: B a" "A: U i" "\<And>x. x: A \<Longrightarrow> B x: U i"
   shows "snd A B <a, b> \<equiv> b"
   unfolding snd_def by reduce
+
+
+section \<open>Notation\<close>
+
+definition Id_i (infix "=" 110)
+  where [implicit]: "Id_i x y \<equiv> x =\<^bsub>?\<^esub> y"
+
+definition funcomp_i (infixr "\<circ>" 120)
+  where [implicit]: "funcomp_i g f \<equiv> g \<circ>\<^bsub>?\<^esub> f"
+
+definition pathinv_i ("_\<inverse>" [1000])
+  where [implicit]: "pathinv_i p \<equiv> pathinv ? ? ? p"
+
+definition pathcomp_i (infixl "\<bullet>" 121)
+  where [implicit]: "pathcomp_i p q \<equiv> pathcomp ? ? ? ? p q"
+
+definition fst_i ("fst")
+  where [implicit]: "fst \<equiv> Spartan.fst ? ?"
+
+definition snd_i ("snd")
+  where [implicit]: "snd \<equiv> Spartan.snd ? ?"
+
+(* translations
+  "x = y" \<leftharpoondown> "x =\<^bsub>A\<^esub> y"
+  "g \<circ> f" \<leftharpoondown> "g \<circ>\<^bsub>A\<^esub> f"
+  "p\<inverse>" \<leftharpoondown> "CONST pathinv A x y p"
+  "p \<bullet> q" \<leftharpoondown> "CONST pathcomp A x y z p q"
+  "fst" \<leftharpoondown> "CONST Spartan.fst A B"
+  "snd" \<leftharpoondown> "CONST Spartan.snd A B" *)
 
 
 end
