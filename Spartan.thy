@@ -219,17 +219,22 @@ fun elims_tac ctxt = SUBGOAL (fn (_, i) =>
 (*Typechecking: try to solve goals of the form "a: A" where a is rigid*)
 fun typechk_tac ctxt = SUBGOAL (fn (goal, i) =>
   let
-    val concl = Logic.strip_assums_concl goal
+    fun rigid_typing_concl t =
+      let val concl = Logic.strip_assums_concl t
+      in Lib.is_typing concl andalso Lib.is_rigid (Lib.term_of_typing concl) end
+
+    fun rtac ctxt = SUBGOAL (fn (goal, i) =>
+      if rigid_typing_concl goal
+      then
+        let val net = Tactic.build_net
+          ((Named_Theorems.get ctxt \<^named_theorems>\<open>typechk\<close>)
+          @(Named_Theorems.get ctxt \<^named_theorems>\<open>intros\<close>)
+          @(Named_Theorems.get ctxt \<^named_theorems>\<open>elims\<close>))
+        in (resolve_from_net_tac ctxt net) i end
+      else no_tac)
   in
-    if Lib.is_typing concl andalso Lib.is_rigid (Lib.term_of_typing concl)
-    then
-      let val net = Tactic.build_net
-        ((Named_Theorems.get ctxt \<^named_theorems>\<open>typechk\<close>)
-        @(Named_Theorems.get ctxt \<^named_theorems>\<open>intros\<close>)
-        @(Named_Theorems.get ctxt \<^named_theorems>\<open>elims\<close>))
-      in
-        (REPEAT_ALL_NEW (known_tac ctxt ORELSE' resolve_from_net_tac ctxt net)) i
-      end
+    if rigid_typing_concl goal
+    then (REPEAT_ALL_NEW (known_tac ctxt ORELSE' rtac ctxt)) i
     else no_tac
   end)
 \<close>
