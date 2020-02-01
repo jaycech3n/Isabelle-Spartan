@@ -21,12 +21,32 @@ schematic_goal pathcomp_left_refl_derivation:
     apply (reduce; intros+)
   done
 
+definition "pathcomp_left_refl A x y p \<equiv>  IdInd A
+  (\<lambda>x y p. pathcomp A x x y (refl x) p =\<^bsub>x =\<^bsub>A\<^esub> y\<^esub> p)
+  (\<lambda>x. refl (refl x))
+  x y p"
+
+schematic_goal pathcomp_left_refl [typechk]:
+  assumes "A: U i" "x: A" "y: A" "p: x =\<^bsub>A\<^esub> y"
+  shows "pathcomp_left_refl A x y p: (refl x) \<bullet> p = p"
+  unfolding pathcomp_left_refl_def by typechk reduce
+
 schematic_goal pathcomp_right_refl_derivation:
   assumes "A: U i" "x: A" "y: A" "p: x =\<^bsub>A\<^esub> y"
   shows "?prf: p \<bullet> (refl y) = p"
   apply (equality \<open>p: _\<close>)
     apply (reduce; intros+)
   done
+
+definition "pathcomp_right_refl A x y p \<equiv> IdInd A
+  (\<lambda>x y p. pathcomp A x y y p (refl y) =\<^bsub>x =\<^bsub>A\<^esub> y\<^esub> p)
+  (\<lambda>x. refl (refl x))
+  x y p"
+
+schematic_goal pathcomp_right_refl [typechk]:
+  assumes "A: U i" "x: A" "y: A" "p: x =\<^bsub>A\<^esub> y"
+  shows "pathcomp_right_refl A x y p: p \<bullet> (refl y) = p"
+  unfolding pathcomp_right_refl_def by typechk reduce
 
 schematic_goal pathcomp_left_inv_derivation:
   assumes "A: U i" "x: A" "y: A" "p: x =\<^bsub>A\<^esub> y"
@@ -35,6 +55,15 @@ schematic_goal pathcomp_left_inv_derivation:
     apply (reduce; intros+)
   done
 
+definition "pathcomp_left_inv A x y p \<equiv> IdInd A
+  (\<lambda>a b p. pathcomp A b a b (pathinv A a b p) p =\<^bsub>b =\<^bsub>A\<^esub> b\<^esub> refl b)
+  (\<lambda>x. refl (refl x)) x y p"
+
+schematic_goal pathcomp_left_inv [typechk]:
+  assumes "A: U i" "x: A" "y: A" "p: x =\<^bsub>A\<^esub> y"
+  shows "pathcomp_left_inv A x y p: p\<inverse> \<bullet> p = refl y"
+  unfolding pathcomp_left_inv_def by typechk reduce
+
 schematic_goal pathcomp_right_inv_derivation:
   assumes "A: U i" "x: A" "y: A" "p: x =\<^bsub>A\<^esub> y"
   shows "?prf: p \<bullet> p\<inverse> = refl x"
@@ -42,12 +71,30 @@ schematic_goal pathcomp_right_inv_derivation:
     apply (reduce; intros+)
   done
 
+definition "pathcomp_right_inv A x y p \<equiv> IdInd A
+  (\<lambda>a b p. pathcomp A a b a p (pathinv A a b p) =\<^bsub>a =\<^bsub>A\<^esub> a\<^esub> refl a)
+  (\<lambda>x. refl (refl x)) x y p"
+
+schematic_goal pathcomp_right_inv [typechk]:
+  assumes "A: U i" "x: A" "y: A" "p: x =\<^bsub>A\<^esub> y"
+  shows "pathcomp_right_inv A x y p: p \<bullet> p\<inverse> = refl x"
+  unfolding pathcomp_right_inv_def by typechk reduce
+
 schematic_goal pathinv_pathinv_derivation:
   assumes "A: U i" "x: A" "y: A" "p: x =\<^bsub>A\<^esub> y"
   shows "?prf: p\<inverse>\<inverse> = p"
   apply (equality \<open>p: _\<close>)
     apply (reduce; intros+)
   done
+
+definition "pathinv_pathinv A x y p \<equiv> IdInd A
+  (\<lambda>a b p. pathinv A b a (pathinv A a b p) =\<^bsub>a =\<^bsub>A\<^esub> b\<^esub> p)
+  (\<lambda>x. refl (refl x)) x y p"
+
+schematic_goal pathinv_pathinv [typechk]:
+  assumes "A: U i" "x: A" "y: A" "p: x =\<^bsub>A\<^esub> y"
+  shows "pathinv_pathinv A x y p: p\<inverse>\<inverse> = p"
+  unfolding pathinv_pathinv_def by typechk reduce
 
 schematic_goal pathcomp_assoc_derivation:
   assumes
@@ -63,6 +110,30 @@ schematic_goal pathcomp_assoc_derivation:
         done
     done
   done
+
+definition "pathcomp_assoc A x y z w p q r \<equiv>
+  (IdInd A
+    (\<lambda>a b c. \<Prod>x: b =\<^bsub>A\<^esub> z.
+      pathcomp A a b w c (pathcomp A b z w x r) =\<^bsub>a =\<^bsub>A\<^esub> w\<^esub>
+        pathcomp A a z w (pathcomp A a b z c x) r)
+    (\<lambda>x. \<lambda>xa: x =\<^bsub>A\<^esub> z.
+      (IdInd A
+        (\<lambda>a b c. \<Prod>x: b =\<^bsub>A\<^esub> w.
+          pathcomp A a a w (refl a) (pathcomp A a b w c x) =\<^bsub>a =\<^bsub>A\<^esub> w\<^esub>
+            pathcomp A a b w (pathcomp A a a b (refl a) c) x)
+        (\<lambda>a. \<lambda>x: a =\<^bsub>A\<^esub> w.
+          IdInd A
+            (\<lambda>a b c. pathcomp A a a b (refl a) (pathcomp A a a b (refl a) c)
+              =\<^bsub>a =\<^bsub>A\<^esub> b\<^esub> pathcomp A a a b (pathcomp A a a a (refl a) (refl a)) c)
+            (\<lambda>a. refl (refl a)) a w x)
+            x z xa) r) x y p) q"
+
+schematic_goal pathcomp_assoc [typechk]:
+  assumes
+    "A: U i" "x: A" "y: A" "z: A" "w: A"
+    "p: x =\<^bsub>A\<^esub> y" "q: y =\<^bsub>A\<^esub> z" "r: z =\<^bsub>A\<^esub> w"
+  shows "pathcomp_assoc A x y z w p q r: p \<bullet> (q \<bullet> r) = p \<bullet> q \<bullet> r"
+  unfolding pathcomp_assoc_def by typechk reduce
 
 
 section \<open>Functoriality of functions\<close>
@@ -84,7 +155,7 @@ definition "ap A B x y f p \<equiv>
 definition ap_i ("_[_]" [1000, 0])
   where [implicit]: "ap_i f p \<equiv> ap ? ? ? ? f p"
 
-(* translations "f[p]" \<leftharpoondown> "CONST ap A B x y f p" *)
+translations "f[p]" \<leftharpoondown> "CONST ap A B x y f p"
 
 schematic_goal Id_transfer [typechk]:
   assumes
@@ -223,7 +294,7 @@ definition "transport A P x y p \<equiv>
 definition transport_i ("trans")
   where [implicit]: "trans P p \<equiv> transport ? P ? ? p"
 
-(* translations "trans P p" \<leftharpoondown> "CONST transport A P x y p" *)
+translations "trans P p" \<leftharpoondown> "CONST transport A P x y p"
 
 schematic_goal transport [typechk]:
   assumes
@@ -241,6 +312,18 @@ schematic_goal transport_comp [comps]:
     "\<And>x. x: A \<Longrightarrow> P x: U i"
   shows "trans P (refl a) \<equiv> id (P a)"
   unfolding transport_def id_def by (subst comps) reduce
+
+schematic_goal use_transport:
+  assumes
+    "p: x =\<^bsub>A\<^esub> y"
+    "u: P y"
+    "x: A" "y: A"
+    "A: U i"
+    "\<And>x. x: A \<Longrightarrow> P x: U i"
+  shows "trans P p\<inverse> u: P x"
+  by typechk
+
+text \<open>TODO: Build transport automation!\<close>
 
 schematic_goal transport_left_inv_derivation:
   assumes
@@ -275,17 +358,28 @@ schematic_goal transport_pathcomp_derivation:
     done
   done
 
-schematic_goal transport_funcomp:
+schematic_goal transport_compose_typefam_derivation:
   assumes
     "A: U i" "B: U i"
     "\<And>x. x: B \<Longrightarrow> P x: U i"
     "f: A \<rightarrow> B"
     "x: A" "y: A"
     "p: x =\<^bsub>A\<^esub> y"
-    "u: P (f `x)"
-  shows "?prf: trans ((\<lambda>x: B. P x) \<circ> f) p u = trans P f[p] u"
-  apply (equality \<open>p:_\<close>)
-oops
+    "u: P (f x)"
+  shows "?prf: trans (\<lambda>x. P (f x)) p u = trans P f[p] u"
+  by (equality \<open>p:_\<close>) (reduce; intros)
+
+schematic_goal transport_function_family_derivation:
+  assumes
+    "A: U i"
+    "\<And>x. x: A \<Longrightarrow> P x: U i"
+    "\<And>x. x: A \<Longrightarrow> Q x: U i"
+    "f: \<Prod>x: A. P x \<rightarrow> Q x"
+    "x: A" "y: A"
+    "u: P x"
+    "p: x =\<^bsub>A\<^esub> y"
+  shows "?prf: trans Q p ((f x) u) = (f y) (trans P p u)"
+  by (equality \<open>p:_\<close>) (reduce; intros; typechk)
 
 schematic_goal transport_const_derivation:
   assumes
@@ -302,7 +396,7 @@ definition "transport_const A B x y p \<equiv> \<lambda>b: B.
 definition transport_const_i ("trans'_const")
   where [implicit]: "trans_const B p \<equiv> transport_const ? B ? ? p"
 
-(* translations "trans_const B p" \<leftharpoondown> "CONST transport_const A B x y p" *)
+translations "trans_const B p" \<leftharpoondown> "CONST transport_const A B x y p"
 
 schematic_goal transport_const [typechk]:
   assumes
@@ -337,7 +431,7 @@ definition "pathlift A P x y p u \<equiv> IdInd A
 definition pathlift_i ("lift")
   where [implicit]: "lift P p u \<equiv> pathlift ? P ? ? p u"
 
-(* translations "lift P p u" \<leftharpoondown> "CONST pathlift A P x y p u" *)
+translations "lift P p u" \<leftharpoondown> "CONST pathlift A P x y p u"
 
 schematic_goal pathlift [typechk]:
   assumes
