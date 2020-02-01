@@ -6,7 +6,7 @@ text \<open>
 \<close>
 
 theory Identity
-imports Implicits
+imports Spartan
 
 begin
 
@@ -84,7 +84,7 @@ definition "ap A B x y f p \<equiv>
 definition ap_i ("_[_]" [1000, 0])
   where [implicit]: "ap_i f p \<equiv> ap ? ? ? ? f p"
 
-translations "f[p]" \<leftharpoondown> "CONST ap A B x y f p"
+(* translations "f[p]" \<leftharpoondown> "CONST ap A B x y f p" *)
 
 schematic_goal Id_transfer [typechk]:
   assumes
@@ -223,7 +223,7 @@ definition "transport A P x y p \<equiv>
 definition transport_i ("trans")
   where [implicit]: "trans P p \<equiv> transport ? P ? ? p"
 
-translations "trans P p" \<leftharpoondown> "CONST transport A P x y p"
+(* translations "trans P p" \<leftharpoondown> "CONST transport A P x y p" *)
 
 schematic_goal transport [typechk]:
   assumes
@@ -260,6 +260,33 @@ schematic_goal transport_right_inv_derivation:
   shows "?prf: (trans P p) \<circ> (trans P p\<inverse>) = id (P y)"
   by (equality \<open>p:_\<close>) (reduce; intros; typechk)
 
+schematic_goal transport_pathcomp_derivation:
+  assumes
+    "A: U i"
+    "\<And>x. x: A \<Longrightarrow> P x: U i"
+    "x: A" "y: A" "z: A"
+    "u: P x"
+    "p: x =\<^bsub>A\<^esub> y" "q: y =\<^bsub>A\<^esub> z"
+  shows "?prf: trans P q (trans P p u) = trans P (p \<bullet> q) u"
+  apply (equality \<open>p:_\<close>)
+    schematic_subgoal premises for x p
+      apply (equality \<open>p:_\<close>)
+        apply (reduce; intros)
+    done
+  done
+
+schematic_goal transport_funcomp:
+  assumes
+    "A: U i" "B: U i"
+    "\<And>x. x: B \<Longrightarrow> P x: U i"
+    "f: A \<rightarrow> B"
+    "x: A" "y: A"
+    "p: x =\<^bsub>A\<^esub> y"
+    "u: P (f `x)"
+  shows "?prf: trans ((\<lambda>x: B. P x) \<circ> f) p u = trans P f[p] u"
+  apply (equality \<open>p:_\<close>)
+oops
+
 schematic_goal transport_const_derivation:
   assumes
     "A: U i" "B: U i"
@@ -275,7 +302,7 @@ definition "transport_const A B x y p \<equiv> \<lambda>b: B.
 definition transport_const_i ("trans'_const")
   where [implicit]: "trans_const B p \<equiv> transport_const ? B ? ? p"
 
-translations "trans_const B p" \<leftharpoondown> "CONST transport_const A B x y p"
+(* translations "trans_const B p" \<leftharpoondown> "CONST transport_const A B x y p" *)
 
 schematic_goal transport_const [typechk]:
   assumes
@@ -284,6 +311,13 @@ schematic_goal transport_const [typechk]:
     "p: x =\<^bsub>A\<^esub> y"
   shows "trans_const B p: \<Prod>b: B. trans (\<lambda>_. B) p b = b"
   unfolding transport_const_def by reduce+
+
+schematic_goal transport_const_comp [comps]:
+  assumes
+    "A: U i" "B: U i"
+    "x: A" "b: B"
+  shows "trans_const B (refl x) b\<equiv> refl b"
+  unfolding transport_const_def by (subst comps) reduce+
 
 schematic_goal pathlift_derivation:
   assumes
@@ -303,7 +337,7 @@ definition "pathlift A P x y p u \<equiv> IdInd A
 definition pathlift_i ("lift")
   where [implicit]: "lift P p u \<equiv> pathlift ? P ? ? p u"
 
-translations "lift P p u" \<leftharpoondown> "CONST pathlift A P x y p u"
+(* translations "lift P p u" \<leftharpoondown> "CONST pathlift A P x y p u" *)
 
 schematic_goal pathlift [typechk]:
   assumes
@@ -344,6 +378,22 @@ schematic_goal pathlift_fst_derivation:
     apply (reduce; intros; typechk)
   done
 
+definition "pathlift_fst A P x y p u \<equiv> IdInd A
+  (\<lambda>a b c. \<Prod>x: P a. ap (\<Sum>x: A. P x) A <a, x> <b, transport A (\<lambda>a. P a) a b c `x>
+    (Spartan.fst A (\<lambda>a. P a)) (pathlift A (\<lambda>a. P a) a b c x) =\<^bsub>a =\<^bsub>A\<^esub> b\<^esub> c)
+  (\<lambda>x. \<lambda>_: P x. refl (refl x))
+  x y p `u"
+
+schematic_goal pathlift_fst:
+  assumes
+    "A: U i"
+    "\<And>x. x: A \<Longrightarrow> P x: U i"
+    "x: A" "y: A"
+    "u: P x"
+    "p: x =\<^bsub>A\<^esub> y"
+  shows "pathlift_fst A P x y p u: fst[lift P p u] = p"
+  unfolding pathlift_fst_def by (rule pathlift_fst_derivation)
+
 
 section \<open>Dependent paths\<close>
 
@@ -377,16 +427,23 @@ schematic_goal dependent_map [typechk]:
   shows "apd f p: trans P p (f` x) = f `y"
   unfolding apd_def by typechk reduce
 
-schematic_goal apd_trans_const_derivation:
+schematic_goal dependent_map_comp [comps]:
+  assumes
+    "A: U i"
+    "\<And>x. x: A \<Longrightarrow> P x: U i"
+    "f: \<Prod>x: A. P x"
+    "x: A"
+  shows "apd f (refl x) \<equiv> refl (f x)"
+  unfolding apd_def by (subst comps) reduce+
+
+schematic_goal apd_ap_derivation:
   assumes
     "A: U i" "B: U i"
     "f: A \<rightarrow> B"
     "x: A" "y: A"
     "p: x =\<^bsub>A\<^esub> y"
   shows "?prf: apd f p = trans_const B p (f `x) \<bullet> f[p]"
-  apply (equality \<open>p:_\<close>)
-  (*A bunch of equalities to be proved here*)
-oops
+  by (equality \<open>p:_\<close>) (reduce; intros; typechk)
 
 
 end
