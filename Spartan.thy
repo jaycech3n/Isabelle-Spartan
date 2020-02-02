@@ -101,7 +101,7 @@ syntax
 translations
   "\<Sum>x: A. B" \<rightleftharpoons> "CONST Sig A (\<lambda>x. B)"
 
-abbreviation Prod (infixr "\<times>" 50)
+abbreviation Prod (infixl "\<times>" 50)
   where "A \<times> B \<equiv> \<Sum>_: A. B"
 
 axiomatization where
@@ -384,6 +384,23 @@ lemma id_right [comps]:
   unfolding id_def
   by (subst eta[symmetric, of f], reduce+) (reduce add: eta)
 
+text \<open>Notation:\<close>
+
+definition funcomp_i (infixr "\<circ>" 120)
+  where [implicit]: "funcomp_i g f \<equiv> g \<circ>\<^bsub>?\<^esub> f"
+
+translations "g \<circ> f" \<leftharpoondown> "g \<circ>\<^bsub>A\<^esub> f"
+
+text \<open>Modus ponens; used in proofs.\<close>
+
+lemma mp:
+  assumes
+    "A: U i" "B: U i"
+    "a: A"
+    "f: A \<rightarrow> B"
+  shows "f `a: B"
+  by typechk
+
 
 section \<open>Equality\<close>
 
@@ -467,35 +484,6 @@ lemma snd_of_pair [comps]:
   assumes "a: A" "b: B a" "A: U i" "\<And>x. x: A \<Longrightarrow> B x: U i"
   shows "snd A B <a, b> \<equiv> b"
   unfolding snd_def by reduce
-
-
-section \<open>Notation\<close>
-
-definition Id_i (infix "=" 110)
-  where [implicit]: "Id_i x y \<equiv> x =\<^bsub>?\<^esub> y"
-
-definition funcomp_i (infixr "\<circ>" 120)
-  where [implicit]: "funcomp_i g f \<equiv> g \<circ>\<^bsub>?\<^esub> f"
-
-definition pathinv_i ("_\<inverse>" [1000])
-  where [implicit]: "pathinv_i p \<equiv> pathinv ? ? ? p"
-
-definition pathcomp_i (infixl "\<bullet>" 121)
-  where [implicit]: "pathcomp_i p q \<equiv> pathcomp ? ? ? ? p q"
-
-definition fst_i ("fst")
-  where [implicit]: "fst \<equiv> Spartan.fst ? ?"
-
-definition snd_i ("snd")
-  where [implicit]: "snd \<equiv> Spartan.snd ? ?"
-
-translations
-  "x = y" \<leftharpoondown> "x =\<^bsub>A\<^esub> y"
-  "g \<circ> f" \<leftharpoondown> "g \<circ>\<^bsub>A\<^esub> f"
-  "p\<inverse>" \<leftharpoondown> "CONST pathinv A x y p"
-  "p \<bullet> q" \<leftharpoondown> "CONST pathcomp A x y z p q"
-  "fst" \<leftharpoondown> "CONST Spartan.fst A B"
-  "snd" \<leftharpoondown> "CONST Spartan.snd A B"
 
 
 end
