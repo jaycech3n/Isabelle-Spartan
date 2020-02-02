@@ -6,9 +6,26 @@ text \<open>
 \<close>
 
 theory Identity
-imports Spartan
+imports Spartan Pair
 
 begin
+
+section \<open>Notation\<close>
+
+definition Id_i (infix "=" 110)
+  where [implicit]: "Id_i x y \<equiv> x =\<^bsub>?\<^esub> y"
+
+definition pathinv_i ("_\<inverse>" [1000])
+  where [implicit]: "pathinv_i p \<equiv> pathinv ? ? ? p"
+
+definition pathcomp_i (infixl "\<bullet>" 121)
+  where [implicit]: "pathcomp_i p q \<equiv> pathcomp ? ? ? ? p q"
+
+translations
+  "x = y" \<leftharpoondown> "x =\<^bsub>A\<^esub> y"
+  "p\<inverse>" \<leftharpoondown> "CONST pathinv A x y p"
+  "p \<bullet> q" \<leftharpoondown> "CONST pathcomp A x y z p q"
+
 
 section \<open>Basic propositional equalities\<close>
 
