@@ -251,7 +251,7 @@ text \<open>The next two proofs currently use some low-level rewriting.\<close>
 schematic_goal ap_funcomp_derivation:
   assumes
     "A: U i" "B: U i" "C: U i"
-    "x: A" "y: A" "z: A"
+    "x: A" "y: A"
     "f: A \<rightarrow> B" "g: B \<rightarrow> C"
     "p: x =\<^bsub>A\<^esub> y"
   shows "?prf: (g \<circ> f)[p] = g[f[p]]"
@@ -490,8 +490,9 @@ schematic_goal pathlift_fst_derivation:
   done
 
 definition "pathlift_fst A P x y p u \<equiv> IdInd A
-  (\<lambda>a b c. \<Prod>x: P a. ap (\<Sum>x: A. P x) A <a, x> <b, transport A (\<lambda>a. P a) a b c `x>
-    (Spartan.fst A (\<lambda>a. P a)) (pathlift A (\<lambda>a. P a) a b c x) =\<^bsub>a =\<^bsub>A\<^esub> b\<^esub> c)
+  (\<lambda>a b c. \<Prod>x: P a.
+    ap (\<Sum>x: A. P x) A <a, x> <b, transport A (\<lambda>a. P a) a b c `x>
+      (Spartan.fst A (\<lambda>a. P a)) (pathlift A (\<lambda>a. P a) a b c x) =\<^bsub>a =\<^bsub>A\<^esub> b\<^esub> c)
   (\<lambda>x. \<lambda>_: P x. refl (refl x))
   x y p `u"
 
