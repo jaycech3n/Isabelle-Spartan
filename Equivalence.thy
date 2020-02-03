@@ -12,7 +12,7 @@ definition homotopy_i (infix "~" 100)
 
 translations "f ~ g" \<leftharpoondown> "CONST homotopy A B f g"
 
-lemma [typechk]:
+lemma homotopy_type [typechk]:
   assumes
     "A: U i"
     "\<And>x. x: A \<Longrightarrow> B x: U i"
@@ -50,11 +50,10 @@ schematic_goal homotopy_symmetric_derivation:
     schematic_subgoal for H
       apply intros
         apply (rule Id_symmetric) defer
-          apply typechk+
+          apply typechk
           schematic_subgoal for x
             apply (rule PiE[of H _ _ x])
           done
-          apply typechk+
     done
     apply typechk
   done
@@ -85,9 +84,8 @@ schematic_goal homotopy_transitive_derivation:
       apply intros
         schematic_subgoal for x
           apply (rule Id_transitive[where ?y = "g `x"])
-          prefer 5 apply (rule PiE[of H1 _ _ x])
-          prefer 5 apply (rule PiE[of H2 _ _ x])
-          defer apply typechk+
+            apply (rule PiE[of H1 _ _ x])
+            apply (rule PiE[of H2 _ _ x])
         done
         apply typechk
     done
@@ -117,7 +115,7 @@ schematic_goal commute_homotopy_derivation:
     "f: A \<rightarrow> B" "g: A \<rightarrow> B"
     "H: homotopy A (\<lambda>_. B) f g"
   shows "?prf: (H x) \<bullet> g[p] = f[p] \<bullet> (H y)"
-  \<comment>\<open>Need the unfolded version for typechecking:\<close>
+  \<comment>\<open>Need this assumption unfolded for typechecking:\<close>
   supply assms(8)[unfolded homotopy_def]
   apply (equality \<open>p:_\<close>)
     schematic_subgoal premises for x
@@ -140,21 +138,6 @@ schematic_goal commute_homotopy'_derivation:
   shows "?prf: H (f x) = f [H x]"
 oops
 
-no_translations
-  "f x" \<leftharpoondown> "f `x"
-  "x = y" \<leftharpoondown> "x =\<^bsub>A\<^esub> y"
-  "g \<circ> f" \<leftharpoondown> "g \<circ>\<^bsub>A\<^esub> f"
-  "p\<inverse>" \<leftharpoondown> "CONST pathinv A x y p"
-  "p \<bullet> q" \<leftharpoondown> "CONST pathcomp A x y z p q"
-  "fst" \<leftharpoondown> "CONST Spartan.fst A B"
-  "snd" \<leftharpoondown> "CONST Spartan.snd A B"
-  "f[p]" \<leftharpoondown> "CONST ap A B x y f p"
-  "trans P p" \<leftharpoondown> "CONST transport A P x y p"
-  "trans_const B p" \<leftharpoondown> "CONST transport_const A B x y p"
-  "lift P p u" \<leftharpoondown> "CONST pathlift A P x y p u"
-  "apd f p" \<leftharpoondown> "CONST Identity.apd A P f x y p"
-  "f ~ g" \<leftharpoondown> "CONST homotopy A B f g"
-
 schematic_goal homotopy_id_left [typechk]:
   assumes "A: U i" "B: U i" "f: A \<rightarrow> B"
   shows "homotopy_refl A B f: (id B) \<circ> f ~ f"
@@ -171,13 +154,15 @@ section \<open>Quasi-inverse\<close>
 definition "qinv A B f \<equiv> \<Sum> g: B \<rightarrow> A.
   homotopy A (\<lambda>_. A) (g \<circ>\<^bsub>A\<^esub> f) (id A) \<times> homotopy B (\<lambda>_. B) (f \<circ>\<^bsub>B\<^esub> g) (id B)"
 
-lemma [typechk]:
+lemma qinv_type [typechk]:
   assumes "A: U i" "B: U i" "f: A \<rightarrow> B"
   shows "qinv A B f: U i"
   unfolding qinv_def by typechk
 
 definition qinv_i ("qinv")
   where [implicit]: "qinv f \<equiv> Equivalence.qinv ? ? f"
+
+translations "qinv f" \<leftharpoondown> "CONST Equivalence.qinv A B f"
 
 schematic_goal qinv_id_derivation:
   assumes "A: U i"
@@ -210,13 +195,15 @@ definition "biinv A B f \<equiv>
   (\<Sum>g: B \<rightarrow> A. homotopy A (\<lambda>_. A) (g \<circ>\<^bsub>A\<^esub> f) (id A))
   \<times> (\<Sum>g: B \<rightarrow> A. homotopy B (\<lambda>_. B) (f \<circ>\<^bsub>B\<^esub> g) (id B))"
 
-lemma [typechk]:
+lemma biinv_type [typechk]:
   assumes "A: U i" "B: U i" "f: A \<rightarrow> B"
   shows "biinv A B f: U i"
   unfolding biinv_def by typechk
 
 definition biinv_i ("biinv")
   where [implicit]: "biinv f \<equiv> Equivalence.biinv ? ? f"
+
+translations "biinv f" \<leftharpoondown> "CONST Equivalence.biinv A B f"
 
 schematic_goal qinv_imp_biinv_derivation:
   assumes
@@ -245,17 +232,24 @@ schematic_goal qinv_imp_biinv [typechk]:
 definition equivalence (infix "\<simeq>" 110)
   where "A \<simeq> B \<equiv> \<Sum>f: A \<rightarrow> B. Equivalence.biinv A B f"
 
+lemma [typechk]:
+  assumes "A: U i" "B: U i"
+  shows "A \<simeq> B: U i"
+  unfolding equivalence_def by typechk
+
 schematic_goal equivalence_refl_derivation:
   assumes "A: U i"
   shows "?prf: A \<simeq> A"
   unfolding equivalence_def
   apply intros prefer 3
-    (*TODO: would like to just be able to write "rule qinv_imp_biinv" here.
-      The following is just tedious.*)
-    \<guillemotright> apply (rule mp[of "qinv (id A)"])
-        prefer 3 apply (rule qinv_id)
-        prefer 3 apply (rule qinv_imp_biinv)
-        apply typechk+
+    \<comment>\<open>
+      TODO: would like to just be able to write "rule qinv_imp_biinv" here. The
+      following is just tedious.
+    \<close>
+    \<guillemotright> apply (rule mp[of "qinv (id A)"]) defer
+        apply (rule qinv_id)
+        apply (rule qinv_imp_biinv)
+        apply typechk
       done
     apply typechk+
   done
@@ -273,12 +267,64 @@ schematic_goal equivalence_symmetric_derivation:
   unfolding equivalence_def
     \<guillemotright> for p
       \<comment>\<open>
-        The following is very low-level; we want to just eliminate and get
+        The following is very low-level; we'd like to just eliminate and get
           \<open>f \<equiv> fst p: A \<rightarrow> B\<close> and \<open>hyp \<equiv> snd p: biinv A B f\<close>
         usable in the context.
       \<close>
+      apply (erule elims)
+        apply typechk+
       sorry
     \<guillemotright> by typechk
+  done
+
+text \<open>
+  Equal types are equivalent. Again we follow the HoTT book and show that
+  transport is an equivalence, instead of using equality induction.
+
+  The following proof is a bit wordy because we don't yet have universe
+  automation.
+\<close>
+
+schematic_goal id_imp_equiv_derivation:
+  assumes
+    "A: U i" "B: U i" "p: A =\<^bsub>U i\<^esub> B"
+  shows "<trans (id (U i)) p, ?isequiv>: A \<simeq> B"
+  unfolding equivalence_def
+  apply intros prefer 3
+    \<guillemotright> apply (equality \<open>p:_\<close>)
+      \<guillemotright> premises for A B
+        supply [[auto_typechk=false]]
+          \<comment>\<open>Switch off auto-typechecking, which messes with universe levels\<close>
+        apply (subst id_comp[symmetric, of A]) defer
+          apply (subst id_comp[symmetric, of B]) defer
+            apply (rule transport)
+              apply (rule U_in_U)
+              apply (typechk, rule lift_universe_codomain, rule U_in_U)
+                apply (typechk, rule U_in_U)
+              apply typechk+
+        done
+      \<guillemotright> premises for A
+        apply (subst transport_comp)
+          apply typechk
+          apply (rule U_in_U, rule lift_universe)
+          apply (rule U_in_U)
+          apply reduce
+            apply (rule mp[of "qinv (id A)"])
+              apply (rule qinv_id)
+              apply (rule qinv_imp_biinv)
+        done
+      done
+    \<guillemotright> by typechk
+    \<guillemotright> supply [[auto_typechk=false]]
+      (*Note the resemblance to the first subgoal above*)
+      apply (subst (2) id_comp[symmetric, of A]) defer
+        apply (subst (2) id_comp[symmetric, of B]) defer
+          apply (rule transport)
+            apply (rule U_in_U)
+            apply (typechk, rule lift_universe_codomain, rule U_in_U)
+              apply (typechk, rule U_in_U)
+            apply typechk+
+      done
   done
 
 
