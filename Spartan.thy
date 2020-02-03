@@ -486,4 +486,21 @@ lemma snd_of_pair [comps]:
   unfolding snd_def by reduce
 
 
+section \<open>More universe-related lemmas\<close>
+
+lemma U_in_U:
+  "U i: U (S i)"
+  by (rule U_hierarchy, rule lt_S)
+
+lemma lift_universe:
+  "A: U i \<Longrightarrow> A: U (S i)"
+  by (erule U_cumulative, rule lt_S)
+
+lemma lift_codomain_universe:
+  assumes "A: U i" "f: A \<rightarrow> U i"
+  shows "f: A \<rightarrow> U (S i)"
+  apply (subst eta[symmetric], typechk)
+    apply intros
+
+
 end
