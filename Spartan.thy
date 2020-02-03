@@ -504,8 +504,8 @@ lemma snd_of_pair [comps]:
 section \<open>Types and universes\<close>
 
 lemma lift_universe_codomain:
-  assumes "A: U i" "f: A \<rightarrow> U i"
-  shows "f: A \<rightarrow> U (S i)"
+  assumes "A: U i" "f: A \<rightarrow> U j"
+  shows "f: A \<rightarrow> U (S j)"
   apply (subst eta[symmetric])
     apply typechk
     apply intros
