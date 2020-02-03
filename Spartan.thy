@@ -51,6 +51,14 @@ axiomatization U :: \<open>lvl \<Rightarrow> o\<close> where
   U_hierarchy: "i < j \<Longrightarrow> U i: U j" and
   U_cumulative: "A: U i \<Longrightarrow> i < j \<Longrightarrow> A: U j"
 
+lemma U_in_U:
+  "U i: U (S i)"
+  by (rule U_hierarchy, rule lt_S)
+
+lemma lift_universe:
+  "A: U i \<Longrightarrow> A: U (S i)"
+  by (erule U_cumulative, rule lt_S)
+
 
 section \<open>\<Prod>-type\<close>
 
@@ -237,6 +245,8 @@ fun typechk_tac ctxt = SUBGOAL (fn (goal, i) =>
     then (REPEAT_ALL_NEW (known_tac ctxt ORELSE' rtac ctxt)) i
     else no_tac
   end)
+
+val auto_typechk = Attrib.setup_config_bool \<^binding>\<open>auto_typechk\<close> (K true)
 \<close>
 
 method_setup assumptions =
@@ -258,9 +268,14 @@ method_setup typechk =
 
 method_setup rule =
   \<open>Attrib.thms >> (fn ths => fn ctxt =>
-    SIMPLE_METHOD (HEADGOAL (
-      resolve_tac ctxt ths
-      THEN_ALL_NEW (TRY o known_tac ctxt))))\<close>
+    let
+      val sidecond_tac =
+        if Config.get ctxt auto_typechk then typechk_tac else known_tac
+    in
+      SIMPLE_METHOD (HEADGOAL (
+        resolve_tac ctxt ths
+        THEN_ALL_NEW (TRY o sidecond_tac ctxt)))
+    end)\<close>
 
 \<comment>\<open>The Simplifier is used as a basis for some methods\<close>
 setup \<open>
@@ -486,21 +501,16 @@ lemma snd_of_pair [comps]:
   unfolding snd_def by reduce
 
 
-section \<open>More universe-related lemmas\<close>
+section \<open>Types and universes\<close>
 
-lemma U_in_U:
-  "U i: U (S i)"
-  by (rule U_hierarchy, rule lt_S)
-
-lemma lift_universe:
-  "A: U i \<Longrightarrow> A: U (S i)"
-  by (erule U_cumulative, rule lt_S)
-
-lemma lift_codomain_universe:
+lemma lift_universe_codomain:
   assumes "A: U i" "f: A \<rightarrow> U i"
   shows "f: A \<rightarrow> U (S i)"
-  apply (subst eta[symmetric], typechk)
+  apply (subst eta[symmetric])
+    apply typechk
     apply intros
+      apply (rule lift_universe)
+  done
 
 
 end
