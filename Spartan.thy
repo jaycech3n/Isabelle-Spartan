@@ -246,6 +246,8 @@ fun typechk_tac ctxt = SUBGOAL (fn (goal, i) =>
     else no_tac
   end)
 
+(*Some methods automatically discharge side conditions using either typechecking
+  or simple assumption. This flag switches between the two modes.*)
 val auto_typechk = Attrib.setup_config_bool \<^binding>\<open>auto_typechk\<close> (K true)
 \<close>
 

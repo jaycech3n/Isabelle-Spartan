@@ -26,7 +26,7 @@ schematic_goal Sig_dist_expand_derivation:
     "\<And>x. x: A \<Longrightarrow> C x: U i"
   shows "?prf: (\<Sum>x: A. B x) \<times> (\<Sum>x: A. C x)"
   (*This takes more work than it perhaps should...*)
-  apply (rule SigE[of p]) prefer 4
+  apply (rule SigE[of p]) prefer 3
     apply intros defer
     \<guillemotright> for x y
       apply intros prefer 3
