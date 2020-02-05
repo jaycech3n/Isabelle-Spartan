@@ -18,6 +18,9 @@ val type_of_typing: term -> term
 val dest_Id: term -> term * term * term
 val mk_Pi: term -> term -> term -> term
 
+(*Goals*)
+val rigid_typing_concl: term -> bool
+
 (*Subterms*)
 val has_subterm: term list -> term -> bool
 val subterm_count: term -> term -> int
@@ -75,6 +78,13 @@ fun dest_Id tm = case tm of
   | _ => error "dest_Id"
 
 fun mk_Pi v typ body = Const (\<^const_name>\<open>Pi\<close>, dummyT) $ typ $ lambda v body
+
+
+(** Goals **)
+
+fun rigid_typing_concl goal =
+  let val concl = Logic.strip_assums_concl goal
+  in is_typing concl andalso is_rigid (term_of_typing concl) end
 
 
 (** Subterms **)
