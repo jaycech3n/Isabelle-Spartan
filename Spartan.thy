@@ -233,15 +233,13 @@ fun typechk_tac ctxt = SUBGOAL (fn (_, i) =>
       o REPEAT_ALL_NEW (known_tac ctxt ORELSE' tac ctxt)) i
   end)
 
-(*Some methods automatically discharge side conditions using either typechecking
-  or simple assumption. This flag switches between the two modes.*)
+(*Many methods try to automatically discharge side conditions by typechecking.
+  Switch this flag off to discharge by non-unifying assumption instead.*)
 val auto_typechk = Attrib.setup_config_bool \<^binding>\<open>auto_typechk\<close> (K true)
 
 (*Helper tactic: discharges typing side conditions*)
 fun sidecond_tac ctxt =
-  if Config.get ctxt auto_typechk
-  then typechk_tac ctxt
-  else known_tac ctxt
+  if Config.get ctxt auto_typechk then typechk_tac ctxt else known_tac ctxt
 
 (*Resolves with a given rule, discharging as many side conditions as possible*)
 fun rule_tac ths ctxt =
@@ -290,7 +288,7 @@ method_setup rule =
 \<comment> \<open>The Simplifier is used as a basis for some methods\<close>
 setup \<open>
   map_theory_simpset (fn ctxt =>
-    ctxt addSolver (mk_solver "" sidecond_tac))
+    ctxt addSolver (mk_solver "" typechk_tac))
 \<close>
 
 \<comment> \<open>Reduces terms via judgmental equalities\<close>
