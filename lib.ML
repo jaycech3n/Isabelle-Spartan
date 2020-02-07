@@ -25,7 +25,7 @@ val rigid_typing_concl: term -> bool
 val has_subterm: term list -> term -> bool
 val subterm_count: term -> term -> int
 val subterm_count_distinct: term list -> term -> int
-val fold_aterms: (term -> term list -> term) -> term -> term
+val traverse_term: (term -> term list -> term) -> term -> term
 
 (*Orderings*)
 val subterm_order: term -> term -> order
@@ -107,11 +107,11 @@ fun subterm_count_distinct tms tm =
   length (filter I (map (fn t => has_subterm [t] tm) tms))
 
 (*
-  Souped-up version of Term.fold_aterms, folding a function f over the term
-  structure of t. At each node n in the term syntax tree, f is additionally
-  passed a list of the results of f at all children of n.
+  "Folds" a function f over the term structure of t by traversing t from child
+  nodes upwards through parents. At each node n in the term syntax tree, f is
+  additionally passed a list of the results of f at all children of n.
 *)
-fun fold_aterms f t =
+fun traverse_term f t =
   let
     fun map_aux (Abs (x, T, t)) = Abs (x, T, map_aux t)
       | map_aux t =

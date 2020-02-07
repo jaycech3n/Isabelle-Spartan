@@ -37,7 +37,7 @@ fun make_holes ctxt =
       in
         case head of
           Abs (x, T, t) =>
-            list_comb (Abs (x, T, Lib.fold_aterms expand t), args)
+            list_comb (Abs (x, T, Lib.traverse_term expand t), args)
         | _ =>
             case Symtab.lookup (implicit_defs ctxt) (Term.term_name head) of
               SOME (t, def) => betapplys
@@ -68,7 +68,7 @@ fun make_holes ctxt =
         subst t vars []
       end
   in
-    Lib.fold_aterms expand #> eargs_to_vars
+    Lib.traverse_term expand #> eargs_to_vars
   end
 
 
