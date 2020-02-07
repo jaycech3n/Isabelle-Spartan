@@ -49,11 +49,11 @@ schematic_goal homotopy_symmetric_derivation:
   unfolding homotopy_def
     schematic_subgoal for H
       apply intros
-        apply (rule Id_symmetric) defer
-          apply typechk
+        apply (rule Id_symmetric)
           schematic_subgoal for x
             apply (rule PiE[of H _ _ x])
           done
+          apply typechk
     done
     apply typechk
   done
@@ -151,7 +151,7 @@ schematic_goal homotopy_id_right [typechk]:
 
 section \<open>Quasi-inverse\<close>
 
-definition "qinv A B f \<equiv> \<Sum> g: B \<rightarrow> A.
+definition "qinv A B f \<equiv> \<Sum>g: B \<rightarrow> A.
   homotopy A (\<lambda>_. A) (g \<circ>\<^bsub>A\<^esub> f) (id A) \<times> homotopy B (\<lambda>_. B) (f \<circ>\<^bsub>B\<^esub> g) (id B)"
 
 lemma qinv_type [typechk]:
