@@ -18,7 +18,7 @@ lemma homotopy_type [typechk]:
     "\<And>x. x: A \<Longrightarrow> B x: U i"
     "f: \<Prod>x: A. B x" "g: \<Prod>x: A. B x"
   shows "homotopy A B f g: U i"
-  unfolding homotopy_def by typechk
+  unfolding homotopy_def by typechk           
 
 schematic_goal homotopy_refl_derivation:
   assumes
@@ -26,7 +26,7 @@ schematic_goal homotopy_refl_derivation:
     "\<And>x. x: A \<Longrightarrow> B x: U i"
     "f: \<Prod>x: A. B x"
   shows "?prf: f ~ f"
-  unfolding homotopy_def by intros+ typechk+
+  unfolding homotopy_def by intros typechk+
 
 definition "homotopy_refl A B f \<equiv> \<lambda>x: A. refl (f `x)"
 
@@ -78,7 +78,7 @@ schematic_goal homotopy_transitive_derivation:
     "g: \<Prod>x: A. B x"
     "h: \<Prod>x: A. B x"
   shows "?prf: f ~ g \<rightarrow> g ~ h \<rightarrow> f ~ h"
-  apply intros+
+  apply intros
   unfolding homotopy_def
     schematic_subgoal for H1 H2
       apply intros
@@ -168,8 +168,8 @@ schematic_goal qinv_id_derivation:
   assumes "A: U i"
   shows "?prf: qinv (id A)"
   unfolding qinv_def
-  apply intros prefer 3
-    apply intros defer
+  apply intro prefer 3
+    apply intro defer
       apply (rule homotopy_id_right; typechk)
       apply (rule homotopy_id_left; typechk)
       apply typechk+

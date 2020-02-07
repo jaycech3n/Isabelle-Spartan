@@ -185,7 +185,7 @@ ML_file "~~/src/Tools/IsaPlanner/zipper.ML"
 ML_file "~~/src/Tools/eqsubst.ML"
 
 ML \<open>
-(*An assumption tactic that only solves typing subgoals with rigid terms and
+(*An assumption tactic that only solves typing goals with rigid terms and
   judgmental equalities without schematic variables*)
 fun assumptions_tac ctxt = SUBGOAL (fn (goal, i) =>
   let
@@ -198,8 +198,8 @@ fun assumptions_tac ctxt = SUBGOAL (fn (goal, i) =>
     else no_tac
   end)
 
-(*Solves a typing subgoal with rigid term by unifying types and resolving with
-  context facts and simplifier premises, or by *non-unifying* assumption*)
+(*Solves typing goals with rigid term by resolving with context facts and
+  simplifier premises, or arbitrary goals by *non-unifying* assumption*)
 fun known_tac ctxt = SUBGOAL (fn (goal, i) =>
   let
     val concl = Logic.strip_assums_concl goal
@@ -212,27 +212,11 @@ fun known_tac ctxt = SUBGOAL (fn (goal, i) =>
     ORELSE' assumptions_tac ctxt) i
   end)
 
-(*Applies some introduction rule*)
-fun intros_tac ctxt = SUBGOAL (fn (_, i) =>
-  (resolve_tac ctxt (Named_Theorems.get ctxt \<^named_theorems>\<open>intros\<close>)
-  THEN_ALL_NEW (TRY o known_tac ctxt)) i)
-
-(*Applies an elimination rule and solves the first resulting subgoal,
-  which must be a typing judgment for the term being eliminated*)
-fun elims_tac ctxt = SUBGOAL (fn (_, i) =>
-  ((resolve_tac ctxt (Named_Theorems.get ctxt \<^named_theorems>\<open>elims\<close>)
-    THEN' known_tac ctxt)
-  THEN_ALL_NEW (TRY o known_tac ctxt)) i)
-
 (*Typechecking: try to solve goals of the form "a: A" where a is rigid*)
-fun typechk_tac ctxt = SUBGOAL (fn (goal, i) =>
+fun typechk_tac ctxt = SUBGOAL (fn (_, i) =>
   let
-    fun rigid_typing_concl t =
-      let val concl = Logic.strip_assums_concl t
-      in Lib.is_typing concl andalso Lib.is_rigid (Lib.term_of_typing concl) end
-
-    fun rtac ctxt = SUBGOAL (fn (goal, i) =>
-      if rigid_typing_concl goal
+    fun tac ctxt = SUBGOAL (fn (goal, i) =>
+      if Lib.rigid_typing_concl goal
       then
         let val net = Tactic.build_net
           ((Named_Theorems.get ctxt \<^named_theorems>\<open>typechk\<close>)
@@ -241,14 +225,27 @@ fun typechk_tac ctxt = SUBGOAL (fn (goal, i) =>
         in (resolve_from_net_tac ctxt net) i end
       else no_tac)
   in
-    if rigid_typing_concl goal
-    then (REPEAT_ALL_NEW (known_tac ctxt ORELSE' rtac ctxt)) i
-    else no_tac
+    (REPEAT_ALL_NEW (known_tac ctxt ORELSE' tac ctxt)) i
   end)
 
 (*Some methods automatically discharge side conditions using either typechecking
   or simple assumption. This flag switches between the two modes.*)
 val auto_typechk = Attrib.setup_config_bool \<^binding>\<open>auto_typechk\<close> (K true)
+
+(*Applies some introduction rule*)
+fun intro_tac ctxt = SUBGOAL (fn (_, i) =>
+  (resolve_tac ctxt (Named_Theorems.get ctxt \<^named_theorems>\<open>intros\<close>)
+  THEN_ALL_NEW (TRY o known_tac ctxt)) i)
+
+fun intros_tac ctxt = SUBGOAL (fn (_, i) =>
+  (CHANGED o REPEAT o CHANGED o intro_tac ctxt) i)
+
+(*Applies an elimination rule and solves the first resulting subgoal,
+  which must be a typing judgment for the term being eliminated*)
+fun elims_tac ctxt = SUBGOAL (fn (_, i) =>
+  ((resolve_tac ctxt (Named_Theorems.get ctxt \<^named_theorems>\<open>elims\<close>)
+    THEN' known_tac ctxt)
+  THEN_ALL_NEW (TRY o known_tac ctxt)) i)
 \<close>
 
 method_setup assumptions =
@@ -258,6 +255,9 @@ method_setup assumptions =
 method_setup known =
   \<open>Scan.succeed (fn ctxt => SIMPLE_METHOD (
     CHANGED (TRYALL (known_tac ctxt))))\<close>
+
+method_setup intro =
+  \<open>Scan.succeed (fn ctxt => SIMPLE_METHOD (HEADGOAL (intro_tac ctxt)))\<close>
 
 method_setup intros =
   \<open>Scan.succeed (fn ctxt => SIMPLE_METHOD (HEADGOAL (intros_tac ctxt)))\<close>
@@ -387,19 +387,19 @@ definition id where "id A \<equiv> \<lambda>x: A. x"
 lemma
   idI [typechk]: "A: U i \<Longrightarrow> id A: A \<rightarrow> A" and
   id_comp [comps]: "x: A \<Longrightarrow> (id A) `x \<equiv> x"
-  unfolding id_def by reduce+
+  unfolding id_def by reduce reduce
 
 lemma id_left [comps]:
   assumes "f: A \<rightarrow> B" "A: U i" "B: U i"
   shows "(id B) \<circ>\<^bsub>A\<^esub> f \<equiv> f"
   unfolding id_def
-  by (subst eta[symmetric, of f], reduce+) (reduce add: eta)
+  by (subst eta[symmetric, of f], typechk, reduce) (reduce add: eta)
 
 lemma id_right [comps]:
   assumes "f: A \<rightarrow> B" "A: U i" "B: U i"
   shows "f \<circ>\<^bsub>A\<^esub> (id A) \<equiv> f"
   unfolding id_def
-  by (subst eta[symmetric, of f], reduce+) (reduce add: eta)
+  by (subst eta[symmetric, of f], typechk, reduce) (reduce add: eta)
 
 text \<open>Notation:\<close>
 
@@ -424,7 +424,7 @@ section \<open>Equality\<close>
 schematic_goal Id_symmetric_derivation:
   assumes "A: U i" "x: A" "y: A" "p: x =\<^bsub>A\<^esub> y"
   shows "?prf: y =\<^bsub>A\<^esub> x"
-  by (equality \<open>p:_\<close>) intros
+  by (equality \<open>p:_\<close>) intro
 
 (*TODO: automatically generate definitions for the terms derived in the above manner*)
 
@@ -449,7 +449,7 @@ schematic_goal Id_transitive_derivation:
   apply (equality \<open>p: _\<close>)
     schematic_subgoal premises for x q
       apply (equality \<open>q: _\<close>)
-        apply intros
+        apply intro
     done
   done
 
@@ -495,7 +495,7 @@ lemma fst_of_pair [comps]:
 lemma snd [typechk]:
   assumes "A: U i" "\<And>x. x: A \<Longrightarrow> B x: U i"
   shows "snd A B: \<Prod>p: \<Sum>x: A. B x. B (fst A B p)"
-  unfolding snd_def by reduce+
+  unfolding snd_def by typechk reduce
 
 lemma snd_of_pair [comps]:
   assumes "a: A" "b: B a" "A: U i" "\<And>x. x: A \<Longrightarrow> B x: U i"
@@ -510,7 +510,7 @@ lemma lift_universe_codomain:
   shows "f: A \<rightarrow> U (S j)"
   apply (subst eta[symmetric])
     apply typechk
-    apply intros
+    apply intro
       apply (rule lift_universe)
   done
 

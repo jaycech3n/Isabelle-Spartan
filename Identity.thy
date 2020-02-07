@@ -35,7 +35,7 @@ schematic_goal pathcomp_left_refl_derivation:
   assumes "A: U i" "x: A" "y: A" "p: x =\<^bsub>A\<^esub> y"
   shows "?prf: (refl x) \<bullet> p = p"
   apply (equality \<open>p: _\<close>)
-    apply (reduce; intros+)
+    apply (reduce; intros)
   done
 
 definition "pathcomp_left_refl A x y p \<equiv>  IdInd A
@@ -52,7 +52,7 @@ schematic_goal pathcomp_right_refl_derivation:
   assumes "A: U i" "x: A" "y: A" "p: x =\<^bsub>A\<^esub> y"
   shows "?prf: p \<bullet> (refl y) = p"
   apply (equality \<open>p: _\<close>)
-    apply (reduce; intros+)
+    apply (reduce; intros)
   done
 
 definition "pathcomp_right_refl A x y p \<equiv> IdInd A
@@ -69,7 +69,7 @@ schematic_goal pathcomp_left_inv_derivation:
   assumes "A: U i" "x: A" "y: A" "p: x =\<^bsub>A\<^esub> y"
   shows "?prf: p\<inverse> \<bullet> p = refl y"
   apply (equality \<open>p: _\<close>)
-    apply (reduce; intros+)
+    apply (reduce; intros)
   done
 
 definition "pathcomp_left_inv A x y p \<equiv> IdInd A
@@ -85,7 +85,7 @@ schematic_goal pathcomp_right_inv_derivation:
   assumes "A: U i" "x: A" "y: A" "p: x =\<^bsub>A\<^esub> y"
   shows "?prf: p \<bullet> p\<inverse> = refl x"
   apply (equality \<open>p: _\<close>)
-    apply (reduce; intros+)
+    apply (reduce; intros)
   done
 
 definition "pathcomp_right_inv A x y p \<equiv> IdInd A
@@ -101,7 +101,7 @@ schematic_goal pathinv_pathinv_derivation:
   assumes "A: U i" "x: A" "y: A" "p: x =\<^bsub>A\<^esub> y"
   shows "?prf: p\<inverse>\<inverse> = p"
   apply (equality \<open>p: _\<close>)
-    apply (reduce; intros+)
+    apply (reduce; intros)
   done
 
 definition "pathinv_pathinv A x y p \<equiv> IdInd A
@@ -123,7 +123,7 @@ schematic_goal pathcomp_assoc_derivation:
       apply (equality \<open>p:_\<close>)
         schematic_subgoal premises for x p
           apply (equality \<open>p:_\<close>)
-            apply (reduce; intros+)
+            apply (reduce; intros)
         done
     done
   done
@@ -163,7 +163,7 @@ schematic_goal Id_transfer_derivation:
     "p: x =\<^bsub>A\<^esub> y"
   shows "?prf: f `x = f `y"
   apply (equality \<open>p: _\<close>)
-    apply (intros; typechk)
+    apply (intro; typechk)
   done
 
 definition "ap A B x y f p \<equiv>
@@ -197,7 +197,7 @@ schematic_goal ap_pathcomp_derivation:
   apply (equality \<open>p:_\<close>)
     schematic_subgoal premises for x p
       apply (equality \<open>p:_\<close>)
-        apply (reduce; intros; typechk)
+        apply (reduce; intro; typechk)
     done
   done
 
@@ -229,7 +229,7 @@ schematic_goal ap_pathinv_derivation:
     "f: A \<rightarrow> B"
     "p: x =\<^bsub>A\<^esub> y"
   shows "?prf: f[p\<inverse>] = f[p]\<inverse>"
-  by (equality \<open>p:_\<close>) (reduce; intros; typechk)
+  by (equality \<open>p:_\<close>) (reduce; intro; typechk)
 
 definition "ap_pathinv A B x y f p \<equiv> IdInd A
   (\<lambda>a b c. ap A B b a f (pathinv A a b c) =\<^bsub>f `b =\<^bsub>B\<^esub> f `a\<^esub>
@@ -257,7 +257,7 @@ schematic_goal ap_funcomp_derivation:
   shows "?prf: (g \<circ> f)[p] = g[f[p]]"
   apply (equality \<open>p:_\<close>)
     apply (simp only: funcomp_apply_comp[symmetric])
-    apply (reduce; intros; typechk)
+    apply (reduce; intro; typechk)
   done
 
 definition "ap_funcomp A B C x y z f g p \<equiv> IdInd A
@@ -273,14 +273,14 @@ schematic_goal ap_funcomp [typechk]:
     "f: A \<rightarrow> B" "g: B \<rightarrow> C"
     "p: x =\<^bsub>A\<^esub> y"
   shows "ap_funcomp A B C x y z f g p: (g \<circ> f)[p] = g[f[p]]"
-  unfolding ap_funcomp_def by (rule ap_funcomp_derivation assms)+
+  unfolding ap_funcomp_def by (rule ap_funcomp_derivation)
 
 schematic_goal ap_id_derivation:
   assumes "A: U i" "x: A" "y: A" "p: x =\<^bsub>A\<^esub> y"
   shows "?prf: (id A)[p] = p"
   apply (equality \<open>p:_\<close>)
     apply (subst (6 8) id_comp[symmetric]; typechk)
-    apply (reduce; intros+)
+    apply (reduce; intros)
   done
 
 definition "ap_id A x y p \<equiv> IdInd A
@@ -303,7 +303,7 @@ schematic_goal transport_derivation:
     "x: A" "y: A"
     "p: x =\<^bsub>A\<^esub> y"
   shows "?prf: P x \<rightarrow> P y"
-  by (equality \<open>p:_\<close>) intros
+  by (equality \<open>p:_\<close>) intro
 
 definition "transport A P x y p \<equiv>
   IdInd A (\<lambda>a b _. P a \<rightarrow> P b) (\<lambda>x. \<lambda>u: P x. u) x y p"
@@ -349,7 +349,7 @@ schematic_goal transport_left_inv_derivation:
     "x: A" "y: A"
     "p: x =\<^bsub>A\<^esub> y"
   shows "?prf: (trans P p\<inverse>) \<circ> (trans P p) = id (P x)"
-  by (equality \<open>p:_\<close>) (reduce; intros; typechk)
+  by (equality \<open>p:_\<close>) (reduce; intro; typechk)
 
 schematic_goal transport_right_inv_derivation:
   assumes
@@ -421,7 +421,7 @@ schematic_goal transport_const [typechk]:
     "x: A" "y: A"
     "p: x =\<^bsub>A\<^esub> y"
   shows "trans_const B p: \<Prod>b: B. trans (\<lambda>_. B) p b = b"
-  unfolding transport_const_def by reduce+
+  unfolding transport_const_def by typechk+ reduce
 
 schematic_goal transport_const_comp [comps]:
   assumes
