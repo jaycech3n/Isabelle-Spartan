@@ -36,7 +36,7 @@ axiomatization has_type :: \<open>o \<Rightarrow> o \<Rightarrow> prop\<close> (
 
 section \<open>Universes\<close>
 
-typedecl lvl \<comment>\<open>Universe levels\<close>
+typedecl lvl \<comment> \<open>Universe levels\<close>
 
 axiomatization
   O  :: \<open>lvl\<close> and
@@ -177,7 +177,7 @@ section \<open>Fundamental methods\<close>
 
 ML_file \<open>lib.ML\<close>
 
-\<comment>\<open>\<open>subst\<close> method\<close>
+\<comment> \<open>\<open>subst\<close> method\<close>
 ML_file "~~/src/Tools/misc_legacy.ML"
 ML_file "~~/src/Tools/IsaPlanner/isand.ML"
 ML_file "~~/src/Tools/IsaPlanner/rw_inst.ML"
@@ -287,13 +287,13 @@ method_setup rule =
   \<open>Attrib.thms >> (fn ths => fn ctxt =>
     SIMPLE_METHOD (HEADGOAL (rule_tac ths ctxt)))\<close>
 
-\<comment>\<open>The Simplifier is used as a basis for some methods\<close>
+\<comment> \<open>The Simplifier is used as a basis for some methods\<close>
 setup \<open>
   map_theory_simpset (fn ctxt =>
     ctxt addSolver (mk_solver "" sidecond_tac))
 \<close>
 
-\<comment>\<open>Reduces terms via judgmental equalities\<close>
+\<comment> \<open>Reduces terms via judgmental equalities\<close>
 method reduce uses add = (simp add: comps add)
 
 
@@ -328,7 +328,7 @@ val _ = Context.>>
 
 section \<open>Lambda coercion\<close>
 
-\<comment>\<open>Coerce object lambdas to meta-lambdas when needed\<close>
+\<comment> \<open>Coerce object lambdas to meta-lambdas when needed\<close>
 abbreviation (input) lambda :: \<open>o \<Rightarrow> o \<Rightarrow> o\<close>
   where "lambda f \<equiv> \<lambda>x. f `x"
 

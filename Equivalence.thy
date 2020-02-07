@@ -113,12 +113,12 @@ schematic_goal commute_homotopy_derivation:
     "f: A \<rightarrow> B" "g: A \<rightarrow> B"
     "H: homotopy A (\<lambda>_. B) f g"
   shows "?prf: (H x) \<bullet> g[p] = f[p] \<bullet> (H y)"
-  \<comment>\<open>Need this assumption unfolded for typechecking:\<close>
+  \<comment> \<open>Need this assumption unfolded for typechecking:\<close>
   supply assms(8)[unfolded homotopy_def]
   apply (equality \<open>p:_\<close>)
     schematic_subgoal premises for x
       apply reduce
-        \<comment>\<open>Here it would really be nice to have automation for transport and
+        \<comment> \<open>Here it would really be nice to have automation for transport and
           propositional equality.\<close>
         apply (rule use_transport[where ?x="H x \<bullet> refl (g x)"])
           apply (rule pathcomp_right_refl)
@@ -237,7 +237,7 @@ schematic_goal equivalence_refl_derivation:
   shows "?prf: A \<simeq> A"
   unfolding equivalence_def
   apply intro defer
-    \<comment>\<open>
+    \<comment> \<open>
       TODO: would like to just be able to write "rule qinv_imp_biinv" here. The
       following is just tedious.
     \<close>
@@ -252,13 +252,15 @@ lemma equivalence_refl [typechk]:
   "A: U i \<Longrightarrow> equivalence_refl A: A \<simeq> A"
   unfolding equivalence_refl_def equivalence_def by typechk
 
+declare [[quick_and_dirty]]
+
 schematic_goal equivalence_symmetric_derivation:
   assumes "A: U i" "B: U i"
   shows "?prf: A \<simeq> B \<rightarrow> B \<simeq> A"
   apply intros
   unfolding equivalence_def
     \<guillemotright> for p
-      \<comment>\<open>
+      \<comment> \<open>
         The following is very low-level; we'd like to just eliminate and get
           \<open>f \<equiv> fst p: A \<rightarrow> B\<close> and \<open>hyp \<equiv> snd p: biinv A B f\<close>
         usable in the context.
@@ -272,8 +274,8 @@ text \<open>
   Equal types are equivalent. Again we follow the HoTT book and show that
   transport is an equivalence, instead of using equality induction.
 
-  The following proof is a bit wordy because we don't yet have universe
-  automation.
+  The following proof is a bit wordy because (1) the typechecker doesn't
+  rewrite, and (2) we don't yet have universe automation.
 \<close>
 
 schematic_goal id_imp_equiv_derivation:
@@ -281,18 +283,19 @@ schematic_goal id_imp_equiv_derivation:
     "A: U i" "B: U i" "p: A =\<^bsub>U i\<^esub> B"
   shows "<trans (id (U i)) p, ?isequiv>: A \<simeq> B"
   unfolding equivalence_def
-  apply intros prefer 3
+  apply intros defer
     \<guillemotright> apply (equality \<open>p:_\<close>)
       \<guillemotright> premises for A B
-        supply [[auto_typechk=false]]
-          \<comment>\<open>Switch off auto-typechecking, which messes with universe levels\<close>
-        apply (subst id_comp[symmetric, of A]) defer
-          apply (subst id_comp[symmetric, of B]) defer
+
+        \<comment> \<open>Switch off auto-typechecking, which messes with universe levels\<close>
+        supply [[auto_typechk=false, greedy_typechk=false]]
+        
+        apply (subst id_comp[symmetric, of A], typechk)
+          apply (subst id_comp[symmetric, of B], typechk)
             apply (rule transport)
-              apply (rule U_in_U)
-              apply (typechk, rule lift_universe_codomain, rule U_in_U)
-                apply (typechk, rule U_in_U)
-              apply typechk+
+              apply (rule U_in_U, typechk)
+              supply [[auto_typechk, greedy_typechk]]
+              apply (rule lift_universe_codomain; rule U_in_U)
         done
       \<guillemotright> premises for A
         apply (subst transport_comp)
@@ -305,16 +308,14 @@ schematic_goal id_imp_equiv_derivation:
               apply (rule qinv_imp_biinv)
         done
       done
-    \<guillemotright> by typechk
-    \<guillemotright> supply [[auto_typechk=false]]
-      (*Note the resemblance to the first subgoal above*)
-      apply (subst (2) id_comp[symmetric, of A]) defer
-        apply (subst (2) id_comp[symmetric, of B]) defer
+    \<guillemotright> \<comment> \<open>Same proof as in the first subgoal above\<close>
+      supply [[auto_typechk=false, greedy_typechk=false]]
+      apply (subst (2) id_comp[symmetric, of A], typechk)
+        apply (subst (2) id_comp[symmetric, of B], typechk)
           apply (rule transport)
-            apply (rule U_in_U)
-            apply (typechk, rule lift_universe_codomain, rule U_in_U)
-              apply (typechk, rule U_in_U)
-            apply typechk+
+            apply (rule U_in_U, typechk)
+            supply [[auto_typechk, greedy_typechk]]
+            apply (rule lift_universe_codomain; rule U_in_U)
       done
   done
 
