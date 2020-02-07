@@ -26,7 +26,7 @@ schematic_goal homotopy_refl_derivation:
     "\<And>x. x: A \<Longrightarrow> B x: U i"
     "f: \<Prod>x: A. B x"
   shows "?prf: f ~ f"
-  unfolding homotopy_def by intros typechk+
+  unfolding homotopy_def by intros
 
 definition "homotopy_refl A B f \<equiv> \<lambda>x: A. refl (f `x)"
 
@@ -45,17 +45,16 @@ schematic_goal homotopy_symmetric_derivation:
     "f: \<Prod>x: A. B x"
     "g: \<Prod>x: A. B x"
   shows "?prf: f ~ g \<rightarrow> g ~ f"
-  apply intros
+  apply intro
   unfolding homotopy_def
-    schematic_subgoal for H
+    \<guillemotright> for H
       apply intros
         apply (rule Id_symmetric)
           schematic_subgoal for x
             apply (rule PiE[of H _ _ x])
           done
           apply typechk
-    done
-    apply typechk
+      done
   done
 
 definition "homotopy_symmetric A B f g \<equiv>
@@ -80,16 +79,15 @@ schematic_goal homotopy_transitive_derivation:
   shows "?prf: f ~ g \<rightarrow> g ~ h \<rightarrow> f ~ h"
   apply intros
   unfolding homotopy_def
-    schematic_subgoal for H1 H2
+    \<guillemotright> for H1 H2
       apply intros
-        schematic_subgoal for x
+        \<guillemotright> for x
           apply (rule Id_transitive[where ?y = "g `x"])
             apply (rule PiE[of H1 _ _ x])
             apply (rule PiE[of H2 _ _ x])
-        done
-        apply typechk
-    done
-    apply typechk+
+          done
+        \<guillemotright> by typechk
+      done
   done
 
 definition "homotopy_transitive A B f g h \<equiv>
@@ -123,9 +121,8 @@ schematic_goal commute_homotopy_derivation:
         \<comment>\<open>Here it would really be nice to have automation for transport and
           propositional equality.\<close>
         apply (rule use_transport[where ?x="H x \<bullet> refl (g x)"])
-          apply (rule pathcomp_right_refl; typechk)
-          apply (rule Id_symmetric[OF _ _ _ pathcomp_left_refl]; typechk)
-          apply typechk+
+          apply (rule pathcomp_right_refl)
+          apply (rule Id_symmetric[OF _ _ _ pathcomp_left_refl])
     done
   done
 
@@ -141,12 +138,12 @@ oops
 schematic_goal homotopy_id_left [typechk]:
   assumes "A: U i" "B: U i" "f: A \<rightarrow> B"
   shows "homotopy_refl A B f: (id B) \<circ> f ~ f"
-  unfolding homotopy_refl_def homotopy_def by (subst comps) typechk+
+  unfolding homotopy_refl_def homotopy_def by (subst comps) typechk
 
 schematic_goal homotopy_id_right [typechk]:
   assumes "A: U i" "B: U i" "f: A \<rightarrow> B"
   shows "homotopy_refl A B f: f \<circ> (id A) ~ f"
-  unfolding homotopy_refl_def homotopy_def by (subst comps) typechk+
+  unfolding homotopy_refl_def homotopy_def by (subst comps) typechk
 
 
 section \<open>Quasi-inverse\<close>
@@ -168,11 +165,10 @@ schematic_goal qinv_id_derivation:
   assumes "A: U i"
   shows "?prf: qinv (id A)"
   unfolding qinv_def
-  apply intro prefer 3
+  apply intro defer
     apply intro defer
-      apply (rule homotopy_id_right; typechk)
-      apply (rule homotopy_id_left; typechk)
-      apply typechk+
+      apply (rule homotopy_id_right)
+      apply (rule homotopy_id_left)
   done
 
 definition "qinv_id A \<equiv>
@@ -212,8 +208,7 @@ schematic_goal qinv_imp_biinv_derivation:
   shows "?prf: qinv f \<rightarrow> biinv f"
   apply intros
   unfolding qinv_def biinv_def
-    apply (erule Sig_dist_expand) defer
-      apply typechk+
+    apply (erule Sig_dist_expand; typechk)
   done
 
 definition "qinv_imp_biinv A B f \<equiv>
@@ -241,17 +236,14 @@ schematic_goal equivalence_refl_derivation:
   assumes "A: U i"
   shows "?prf: A \<simeq> A"
   unfolding equivalence_def
-  apply intros prefer 3
+  apply intro defer
     \<comment>\<open>
       TODO: would like to just be able to write "rule qinv_imp_biinv" here. The
       following is just tedious.
     \<close>
-    \<guillemotright> apply (rule mp[of "qinv (id A)"]) defer
-        apply (rule qinv_id)
-        apply (rule qinv_imp_biinv)
-        apply typechk
-      done
-    apply typechk+
+    apply (rule mp[of "qinv (id A)"]) defer
+      apply (rule qinv_id)
+      apply (rule qinv_imp_biinv)
   done
 
 definition "equivalence_refl A \<equiv> <id A, qinv_imp_biinv A A (id A) `qinv_id A>"
@@ -272,9 +264,8 @@ schematic_goal equivalence_symmetric_derivation:
         usable in the context.
       \<close>
       apply (erule elims)
-        apply typechk+
+        apply typechk
       sorry
-    \<guillemotright> by typechk
   done
 
 text \<open>

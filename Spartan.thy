@@ -212,6 +212,10 @@ fun known_tac ctxt = SUBGOAL (fn (goal, i) =>
     ORELSE' assumptions_tac ctxt) i
   end)
 
+(*Greedily typecheck across as many goals as possible. Switch off to restrict
+  the typechecker to the scope of the goal it's called on*)
+val greedy_typechk = Attrib.setup_config_bool \<^binding>\<open>greedy_typechk\<close> (K true)
+
 (*Typechecking: try to solve goals of the form "a: A" where a is rigid*)
 fun typechk_tac ctxt = SUBGOAL (fn (_, i) =>
   let
@@ -225,17 +229,28 @@ fun typechk_tac ctxt = SUBGOAL (fn (_, i) =>
         in (resolve_from_net_tac ctxt net) i end
       else no_tac)
   in
-    (REPEAT_ALL_NEW (known_tac ctxt ORELSE' tac ctxt)) i
+    ((if Config.get ctxt greedy_typechk then CHANGED o REPEAT else I)
+      o REPEAT_ALL_NEW (known_tac ctxt ORELSE' tac ctxt)) i
   end)
 
 (*Some methods automatically discharge side conditions using either typechecking
   or simple assumption. This flag switches between the two modes.*)
 val auto_typechk = Attrib.setup_config_bool \<^binding>\<open>auto_typechk\<close> (K true)
 
+(*Helper tactic: discharges typing side conditions*)
+fun sidecond_tac ctxt =
+  if Config.get ctxt auto_typechk
+  then typechk_tac ctxt
+  else known_tac ctxt
+
+(*Resolves with a given rule, discharging as many side conditions as possible*)
+fun rule_tac ths ctxt =
+  resolve_tac ctxt ths THEN_ALL_NEW (TRY o sidecond_tac ctxt)
+
 (*Applies some introduction rule*)
 fun intro_tac ctxt = SUBGOAL (fn (_, i) =>
   (resolve_tac ctxt (Named_Theorems.get ctxt \<^named_theorems>\<open>intros\<close>)
-  THEN_ALL_NEW (TRY o known_tac ctxt)) i)
+  THEN_ALL_NEW (TRY o sidecond_tac ctxt)) i)
 
 fun intros_tac ctxt = SUBGOAL (fn (_, i) =>
   (CHANGED o REPEAT o CHANGED o intro_tac ctxt) i)
@@ -245,7 +260,7 @@ fun intros_tac ctxt = SUBGOAL (fn (_, i) =>
 fun elims_tac ctxt = SUBGOAL (fn (_, i) =>
   ((resolve_tac ctxt (Named_Theorems.get ctxt \<^named_theorems>\<open>elims\<close>)
     THEN' known_tac ctxt)
-  THEN_ALL_NEW (TRY o known_tac ctxt)) i)
+  THEN_ALL_NEW (TRY o sidecond_tac ctxt)) i)
 \<close>
 
 method_setup assumptions =
@@ -270,23 +285,12 @@ method_setup typechk =
 
 method_setup rule =
   \<open>Attrib.thms >> (fn ths => fn ctxt =>
-    let
-      val sidecond_tac =
-        if Config.get ctxt auto_typechk then typechk_tac else known_tac
-    in
-      SIMPLE_METHOD (HEADGOAL (
-        resolve_tac ctxt ths
-        THEN_ALL_NEW (TRY o sidecond_tac ctxt)))
-    end)\<close>
+    SIMPLE_METHOD (HEADGOAL (rule_tac ths ctxt)))\<close>
 
 \<comment>\<open>The Simplifier is used as a basis for some methods\<close>
 setup \<open>
-let
-  fun solver_tac ctxt = REPEAT o CHANGED o typechk_tac ctxt
-in
   map_theory_simpset (fn ctxt =>
-    ctxt addSolver (mk_solver "" solver_tac))
-end
+    ctxt addSolver (mk_solver "" sidecond_tac))
 \<close>
 
 \<comment>\<open>Reduces terms via judgmental equalities\<close>
@@ -508,10 +512,10 @@ section \<open>Types and universes\<close>
 lemma lift_universe_codomain:
   assumes "A: U i" "f: A \<rightarrow> U j"
   shows "f: A \<rightarrow> U (S j)"
+  supply [[greedy_typechk=false, auto_typechk=false]]
   apply (subst eta[symmetric])
     apply typechk
-    apply intro
-      apply (rule lift_universe)
+    apply (intro; rule lift_universe; typechk)
   done
 
 
