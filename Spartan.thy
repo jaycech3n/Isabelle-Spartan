@@ -229,7 +229,7 @@ fun typechk_tac ctxt =
         in (resolve_from_net_tac ctxt net) i end
       else no_tac)
   in
-    (if Config.get ctxt greedy_typechk then REPEAT else I)
+    (if Config.get ctxt greedy_typechk then CHANGED o REPEAT else I)
       o REPEAT_ALL_NEW (known_tac ctxt ORELSE' tac)
   end
 
