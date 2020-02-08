@@ -480,10 +480,10 @@ schematic_goal pathlift_fst_derivation:
   apply (equality \<open>p:_\<close>)
     text \<open>Some rewriting needed here:\<close>
     \<guillemotright> for x y
+      (*Here an automatic reordering tactic would be helpful*)
       apply (subst fst_of_pair[where ?a=x, symmetric])
         prefer 5
         apply (subst fst_of_pair[where ?a=y, symmetric])
-          (*Here an automatic reordering tactic would be helpful*)
           prefer 5
           apply typechk
       done

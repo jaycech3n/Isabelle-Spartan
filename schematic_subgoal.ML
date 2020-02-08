@@ -115,9 +115,10 @@ val _ = Outer_Syntax.command \<^command_keyword>\<open>schematic_subgoal\<close>
   "focus on first subgoal within backward refinement, without instantiating schematic vars"
   parser
 
-val _ = Outer_Syntax.command \<^command_keyword>\<open>\<guillemotright>\<close>
- "short version of schematic_subgoal"
-  parser
+val _ = Outer_Syntax.command \<^command_keyword>\<open>\<guillemotright>\<close> "schematic_subgoal bullet" parser
+val _ = Outer_Syntax.command \<^command_keyword>\<open>\<^item>\<close> "schematic_subgoal bullet" parser
+val _ = Outer_Syntax.command \<^command_keyword>\<open>\<^enum>\<close> "schematic_subgoal bullet" parser
+val _ = Outer_Syntax.command \<^command_keyword>\<open>~\<close> "schematic_subgoal bullet" parser
 
 
 end

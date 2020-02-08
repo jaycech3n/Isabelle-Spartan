@@ -178,6 +178,15 @@ schematic_goal qinv_id [typechk]:
   shows "qinv_id A: qinv (id A)"
   unfolding qinv_id_def qinv_def by typechk
 
+schematic_goal qinv_inverse_derivation:
+  assumes
+    "A: U i" "B: U i"
+    "f: A \<rightarrow> B"
+    "prf: Equivalence.qinv A B f"
+  shows "?prf: qinv f\<inverse>"
+  unfolding qinv_def
+  
+
 
 section \<open>Equivalence\<close>
 
