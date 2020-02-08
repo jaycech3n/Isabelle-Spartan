@@ -7,7 +7,7 @@ imports
   "HOL-Eisbach.Eisbach_Tools"
 keywords
   "print_coercions" :: thy_decl and
-  "schematic_subgoal" "\<guillemotright>" "\<^item>" "~" :: prf_script_goal % "proof"
+  "schematic_subgoal" "\<guillemotright>" "\<^item>" "\<^enum>" "~" :: prf_script_goal % "proof"
 
 begin
 
@@ -274,7 +274,8 @@ method_setup elims =
   \<open>Scan.succeed (fn ctxt => SIMPLE_METHOD (HEADGOAL (elims_tac ctxt)))\<close>
 
 method_setup typechk =
-  \<open>Scan.succeed (fn ctxt => SIMPLE_METHOD (HEADGOAL (typechk_tac ctxt)))\<close>
+  \<open>Scan.succeed (fn ctxt => SIMPLE_METHOD (
+    CHANGED (ALLGOALS (TRY o typechk_tac ctxt))))\<close>
 
 method_setup rule =
   \<open>Attrib.thms >> (fn ths => fn ctxt =>
@@ -422,13 +423,13 @@ lemma id_left [comps]:
   assumes "f: A \<rightarrow> B" "A: U i" "B: U i"
   shows "(id B) \<circ>\<^bsub>A\<^esub> f \<equiv> f"
   unfolding id_def
-  by (subst eta[symmetric, of f], typechk, reduce) (reduce add: eta)
+  by (subst eta_exp[of f], typechk, reduce) (reduce add: eta)
 
 lemma id_right [comps]:
   assumes "f: A \<rightarrow> B" "A: U i" "B: U i"
   shows "f \<circ>\<^bsub>A\<^esub> (id A) \<equiv> f"
   unfolding id_def
-  by (subst eta[symmetric, of f], typechk, reduce) (reduce add: eta)
+  by (subst eta_exp[of f], typechk, reduce) (reduce add: eta)
 
 lemma id_U [typechk]:
   "id (U i): U i \<rightarrow> U i"
