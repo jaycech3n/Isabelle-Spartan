@@ -297,6 +297,7 @@ schematic_goal id_imp_equiv_derivation:
               supply [[auto_typechk, greedy_typechk]]
               apply (rule lift_universe_codomain; rule U_in_U)
         done
+
       \<guillemotright> premises for A
         apply (subst transport_comp)
           apply typechk
@@ -308,6 +309,7 @@ schematic_goal id_imp_equiv_derivation:
               apply (rule qinv_imp_biinv)
         done
       done
+
     \<guillemotright> \<comment> \<open>Same proof as in the first subgoal above\<close>
       supply [[auto_typechk=false, greedy_typechk=false]]
       apply (subst (2) id_comp[symmetric, of A], typechk)
