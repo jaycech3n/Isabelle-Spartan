@@ -63,7 +63,7 @@ fun make_holes ctxt =
               in subst t (take n vs) Ts $ subst u (drop n vs) Ts end
           | subst t _ _ = t
 
-        val vars = map (fn i => Var ((":", i), dummyT)) (1 upto count t)
+        val vars = map (fn i => Var (("*", i), dummyT)) (1 upto count t)
       in
         subst t vars []
       end

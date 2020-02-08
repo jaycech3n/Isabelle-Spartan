@@ -46,7 +46,7 @@ definition "pathcomp_left_refl A x y p \<equiv>  IdInd A
 schematic_goal pathcomp_left_refl [typechk]:
   assumes "A: U i" "x: A" "y: A" "p: x =\<^bsub>A\<^esub> y"
   shows "pathcomp_left_refl A x y p: (refl x) \<bullet> p = p"
-  unfolding pathcomp_left_refl_def by typechk reduce
+  unfolding pathcomp_left_refl_def by reduce+
 
 schematic_goal pathcomp_right_refl_derivation:
   assumes "A: U i" "x: A" "y: A" "p: x =\<^bsub>A\<^esub> y"
@@ -63,7 +63,7 @@ definition "pathcomp_right_refl A x y p \<equiv> IdInd A
 schematic_goal pathcomp_right_refl [typechk]:
   assumes "A: U i" "x: A" "y: A" "p: x =\<^bsub>A\<^esub> y"
   shows "pathcomp_right_refl A x y p: p \<bullet> (refl y) = p"
-  unfolding pathcomp_right_refl_def by typechk reduce
+  unfolding pathcomp_right_refl_def by reduce+
 
 schematic_goal pathcomp_left_inv_derivation:
   assumes "A: U i" "x: A" "y: A" "p: x =\<^bsub>A\<^esub> y"
@@ -79,7 +79,7 @@ definition "pathcomp_left_inv A x y p \<equiv> IdInd A
 schematic_goal pathcomp_left_inv [typechk]:
   assumes "A: U i" "x: A" "y: A" "p: x =\<^bsub>A\<^esub> y"
   shows "pathcomp_left_inv A x y p: p\<inverse> \<bullet> p = refl y"
-  unfolding pathcomp_left_inv_def by typechk reduce
+  unfolding pathcomp_left_inv_def by reduce+
 
 schematic_goal pathcomp_right_inv_derivation:
   assumes "A: U i" "x: A" "y: A" "p: x =\<^bsub>A\<^esub> y"
@@ -95,7 +95,7 @@ definition "pathcomp_right_inv A x y p \<equiv> IdInd A
 schematic_goal pathcomp_right_inv [typechk]:
   assumes "A: U i" "x: A" "y: A" "p: x =\<^bsub>A\<^esub> y"
   shows "pathcomp_right_inv A x y p: p \<bullet> p\<inverse> = refl x"
-  unfolding pathcomp_right_inv_def by typechk reduce
+  unfolding pathcomp_right_inv_def by reduce+
 
 schematic_goal pathinv_pathinv_derivation:
   assumes "A: U i" "x: A" "y: A" "p: x =\<^bsub>A\<^esub> y"
@@ -111,7 +111,7 @@ definition "pathinv_pathinv A x y p \<equiv> IdInd A
 schematic_goal pathinv_pathinv [typechk]:
   assumes "A: U i" "x: A" "y: A" "p: x =\<^bsub>A\<^esub> y"
   shows "pathinv_pathinv A x y p: p\<inverse>\<inverse> = p"
-  unfolding pathinv_pathinv_def by typechk reduce
+  unfolding pathinv_pathinv_def by reduce+
 
 schematic_goal pathcomp_assoc_derivation:
   assumes
@@ -150,7 +150,7 @@ schematic_goal pathcomp_assoc [typechk]:
     "A: U i" "x: A" "y: A" "z: A" "w: A"
     "p: x =\<^bsub>A\<^esub> y" "q: y =\<^bsub>A\<^esub> z" "r: z =\<^bsub>A\<^esub> w"
   shows "pathcomp_assoc A x y z w p q r: p \<bullet> (q \<bullet> r) = p \<bullet> q \<bullet> r"
-  unfolding pathcomp_assoc_def by typechk reduce
+  unfolding pathcomp_assoc_def by reduce+
 
 
 section \<open>Functoriality of functions\<close>
@@ -220,7 +220,7 @@ schematic_goal ap_pathcomp [typechk]:
     "f: A \<rightarrow> B"
     "p: x =\<^bsub>A\<^esub> y" "q: y =\<^bsub>A\<^esub> z"
   shows "ap_pathcomp A B x y z f p q: f[p \<bullet> q] = f[p] \<bullet> f[q]"
-  unfolding ap_pathcomp_def by typechk reduce
+  unfolding ap_pathcomp_def by reduce+
 
 schematic_goal ap_pathinv_derivation:
   assumes
@@ -244,7 +244,7 @@ schematic_goal ap_pathinv [typechk]:
     "f: A \<rightarrow> B"
     "p: x =\<^bsub>A\<^esub> y"
   shows "ap_pathinv A B x y f p: f[p\<inverse>] = f[p]\<inverse>"
-  unfolding ap_pathinv_def by typechk reduce
+  unfolding ap_pathinv_def by reduce+
 
 text \<open>The next two proofs currently use some low-level rewriting.\<close>
 
@@ -538,7 +538,7 @@ schematic_goal dependent_map [typechk]:
     "x: A" "y: A"
     "p: x =\<^bsub>A\<^esub> y"
   shows "apd f p: trans P p (f` x) = f `y"
-  unfolding apd_def by typechk reduce
+  unfolding apd_def by reduce+
 
 schematic_goal dependent_map_comp [comps]:
   assumes
