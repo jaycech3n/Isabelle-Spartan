@@ -7,7 +7,7 @@ imports
   "HOL-Eisbach.Eisbach_Tools"
 keywords
   "print_coercions" :: thy_decl and
-  "schematic_subgoal" "\<guillemotright>" :: prf_script_goal % "proof"
+  "schematic_subgoal" "\<guillemotright>" "\<^item>" "~" :: prf_script_goal % "proof"
 
 begin
 
@@ -212,10 +212,6 @@ fun known_tac ctxt = SUBGOAL (fn (goal, i) =>
     ORELSE' assumptions_tac ctxt) i
   end)
 
-(*Greedily typecheck across as many goals as possible. Switch off to restrict
-  the typechecker to the scope of the goal it's called on*)
-val greedy_typechk = Attrib.setup_config_bool \<^binding>\<open>greedy_typechk\<close> (K true)
-
 (*Typechecking: try to solve goals of the form "a: A" where a is rigid*)
 fun typechk_tac ctxt =
   let
@@ -229,8 +225,7 @@ fun typechk_tac ctxt =
         in (resolve_from_net_tac ctxt net) i end
       else no_tac)
   in
-    (if Config.get ctxt greedy_typechk then CHANGED o REPEAT else I)
-      o REPEAT_ALL_NEW (known_tac ctxt ORELSE' tac)
+    CHANGED o REPEAT o REPEAT_ALL_NEW (known_tac ctxt ORELSE' tac)
   end
 
 (*Many methods try to automatically discharge side conditions by typechecking.
@@ -337,6 +332,30 @@ translations "f x" \<leftharpoondown> "f `x"
 
 section \<open>Functions\<close>
 
+text \<open>Modus ponens; used in proofs.\<close>
+lemma mp:
+  assumes
+    "A: U i" "B: U i"
+    "a: A"
+    "f: A \<rightarrow> B"
+  shows "f `a: B"
+  by typechk
+
+lemma eta_exp:
+  assumes "f: \<Prod>x: A. B x"
+  shows "f \<equiv> \<lambda>x: A. f `x"
+  by (rule eta[symmetric])
+
+lemma lift_universe_codomain:
+  assumes "A: U i" "f: A \<rightarrow> U j"
+  shows "f: A \<rightarrow> U (S j)"
+  apply (subst eta_exp)
+    apply known
+    apply (Pure.rule intros; rule lift_universe)
+  done
+
+subsection \<open>Function composition\<close>
+
 definition "funcomp A g f \<equiv> \<lambda>x: A. g `(f `x)"
 
 syntax
@@ -383,6 +402,14 @@ lemma funcomp_apply_comp [comps]:
   shows "(g \<circ>\<^bsub>A\<^esub> f) `x \<equiv> g `(f `x)"
   unfolding funcomp_def by reduce
 
+text \<open>Notation:\<close>
+
+definition funcomp_i (infixr "\<circ>" 120)
+  where [implicit]: "funcomp_i g f \<equiv> g \<circ>\<^bsub>?\<^esub> f"
+
+translations "g \<circ> f" \<leftharpoondown> "g \<circ>\<^bsub>A\<^esub> f"
+
+subsection \<open>Identity function\<close>
 
 definition id where "id A \<equiv> \<lambda>x: A. x"
 
@@ -403,22 +430,9 @@ lemma id_right [comps]:
   unfolding id_def
   by (subst eta[symmetric, of f], typechk, reduce) (reduce add: eta)
 
-text \<open>Notation:\<close>
-
-definition funcomp_i (infixr "\<circ>" 120)
-  where [implicit]: "funcomp_i g f \<equiv> g \<circ>\<^bsub>?\<^esub> f"
-
-translations "g \<circ> f" \<leftharpoondown> "g \<circ>\<^bsub>A\<^esub> f"
-
-text \<open>Modus ponens; used in proofs.\<close>
-
-lemma mp:
-  assumes
-    "A: U i" "B: U i"
-    "a: A"
-    "f: A \<rightarrow> B"
-  shows "f `a: B"
-  by typechk
+lemma id_U [typechk]:
+  "id (U i): U i \<rightarrow> U i"
+  by typechk (fact U_in_U)
 
 
 section \<open>Equality\<close>
@@ -503,18 +517,6 @@ lemma snd_of_pair [comps]:
   assumes "a: A" "b: B a" "A: U i" "\<And>x. x: A \<Longrightarrow> B x: U i"
   shows "snd A B <a, b> \<equiv> b"
   unfolding snd_def by reduce
-
-
-section \<open>Types and universes\<close>
-
-lemma lift_universe_codomain:
-  assumes "A: U i" "f: A \<rightarrow> U j"
-  shows "f: A \<rightarrow> U (S j)"
-  supply [[greedy_typechk=false, auto_typechk=false]]
-  apply (subst eta[symmetric])
-    apply typechk
-    apply (intro; rule lift_universe; typechk)
-  done
 
 
 end
