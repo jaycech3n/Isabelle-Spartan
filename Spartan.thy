@@ -217,9 +217,9 @@ fun known_tac ctxt = SUBGOAL (fn (goal, i) =>
 val greedy_typechk = Attrib.setup_config_bool \<^binding>\<open>greedy_typechk\<close> (K true)
 
 (*Typechecking: try to solve goals of the form "a: A" where a is rigid*)
-fun typechk_tac ctxt = SUBGOAL (fn (_, i) =>
+fun typechk_tac ctxt =
   let
-    fun tac ctxt = SUBGOAL (fn (goal, i) =>
+    val tac = SUBGOAL (fn (goal, i) =>
       if Lib.rigid_typing_concl goal
       then
         let val net = Tactic.build_net
@@ -229,9 +229,9 @@ fun typechk_tac ctxt = SUBGOAL (fn (_, i) =>
         in (resolve_from_net_tac ctxt net) i end
       else no_tac)
   in
-    ((if Config.get ctxt greedy_typechk then CHANGED o REPEAT else I)
-      o REPEAT_ALL_NEW (known_tac ctxt ORELSE' tac ctxt)) i
-  end)
+    (if Config.get ctxt greedy_typechk then REPEAT else I)
+      o REPEAT_ALL_NEW (known_tac ctxt ORELSE' tac)
+  end
 
 (*Many methods try to automatically discharge side conditions by typechecking.
   Switch this flag off to discharge by non-unifying assumption instead.*)
