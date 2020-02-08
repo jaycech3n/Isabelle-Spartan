@@ -178,6 +178,42 @@ schematic_goal qinv_id [typechk]:
   shows "qinv_id A: qinv (id A)"
   unfolding qinv_id_def qinv_def by typechk
 
+(*Uncomment this to see all implicits.
+
+no_translations
+  "f x" \<leftharpoondown> "f `x"
+  "x = y" \<leftharpoondown> "x =\<^bsub>A\<^esub> y"
+  "g \<circ> f" \<leftharpoondown> "g \<circ>\<^bsub>A\<^esub> f"
+  "p\<inverse>" \<leftharpoondown> "CONST pathinv A x y p"
+  "p \<bullet> q" \<leftharpoondown> "CONST pathcomp A x y z p q"
+  "fst" \<leftharpoondown> "CONST Spartan.fst A B"
+  "snd" \<leftharpoondown> "CONST Spartan.snd A B"
+  "f[p]" \<leftharpoondown> "CONST ap A B x y f p"
+  "trans P p" \<leftharpoondown> "CONST transport A P x y p"
+  "trans_const B p" \<leftharpoondown> "CONST transport_const A B x y p"
+  "lift P p u" \<leftharpoondown> "CONST pathlift A P x y p u"
+  "apd f p" \<leftharpoondown> "CONST Identity.apd A P f x y p"
+  "f ~ g" \<leftharpoondown> "CONST homotopy A B f g"
+*)
+
+schematic_goal quasiinv_qinv_derivation:
+  assumes "A: U i" "B: U i" "f: A \<rightarrow> B"
+  shows "prf: qinv f \<Longrightarrow> ?prf: qinv (fst prf)"
+
+  supply [[auto_typechk=false]]
+
+  unfolding qinv_def
+  apply intro prefer 3
+    apply intro defer
+      \<guillemotright> apply (erule SigE, typechk)
+          \<^item> by (rule \<open>f:_\<close>)
+          \<^item> by typechk
+          \<^item> by (erule SigE, typechk) reduce
+        done
+      \<guillemotright> by (erule SigE, typechk)+ reduce
+      apply typechk
+  done
+
 
 section \<open>Equivalence\<close>
 
@@ -262,7 +298,7 @@ schematic_goal equivalence_symmetric_derivation:
           \<open>f \<equiv> fst p: A \<rightarrow> B\<close> and \<open>hyp \<equiv> snd p: biinv A B f\<close>
         usable in the context.
       \<close>
-      apply (erule elims; typechk)
+      apply (erule elims, typechk)
       sorry
   done
 
