@@ -333,15 +333,6 @@ translations "f x" \<leftharpoondown> "f `x"
 
 section \<open>Functions\<close>
 
-text \<open>Modus ponens; used in proofs.\<close>
-lemma mp:
-  assumes
-    "A: U i" "B: U i"
-    "a: A"
-    "f: A \<rightarrow> B"
-  shows "f `a: B"
-  by typechk
-
 lemma eta_exp:
   assumes "f: \<Prod>x: A. B x"
   shows "f \<equiv> \<lambda>x: A. f `x"
