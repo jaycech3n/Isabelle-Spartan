@@ -64,7 +64,7 @@ fun equality_context_tac fact ctxt =
         hyps all_tac
       THEN (
         induction_tac p A x y ctxt
-        THEN RANGE (replicate 3 (known_tac ctxt) @ [side_conds_tac ctxt]) 1
+        THEN RANGE (replicate 3 (typechk_tac ctxt) @ [side_conds_tac ctxt]) 1
       )
       THEN (
         REPEAT_DETERM_N (length hyps) (SOMEGOAL (resolve_tac ctxt @{thms PiI}))
