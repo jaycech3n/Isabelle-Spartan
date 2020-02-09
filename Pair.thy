@@ -26,17 +26,17 @@ schematic_goal Sig_dist_expand_derivation:
     "\<And>x. x: A \<Longrightarrow> C x: U i"
   shows "?prf: (\<Sum>x: A. B x) \<times> (\<Sum>x: A. C x)"
   apply (rule SigE[of p])
-    apply intro
-    \<guillemotright> for x y
-      apply intro defer
-        apply (rule PiE[where ?a=y])
-          apply (rule fst)
-      done
-    \<guillemotright> for x y
-      apply intro defer
-        apply (rule PiE[where ?a=y])
-          apply (rule snd)
-      done
+    schematic_subgoal for x y
+      apply intro
+        \<guillemotright> apply intro
+            apply assumption
+            apply (rule PiE[where ?a=y]; rule fst)
+          done
+        \<guillemotright> apply intro
+            apply assumption
+            apply (rule PiE[where ?a=y]; rule snd)
+          done
+    done
   done
 
 definition "Sig_dist_expand A B C p \<equiv> SigInd A

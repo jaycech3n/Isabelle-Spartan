@@ -179,7 +179,6 @@ schematic_goal qinv_id [typechk]:
   unfolding qinv_id_def qinv_def by typechk
 
 (*Uncomment this to see all implicits.
-
 no_translations
   "f x" \<leftharpoondown> "f `x"
   "x = y" \<leftharpoondown> "x =\<^bsub>A\<^esub> y"
@@ -199,20 +198,32 @@ no_translations
 schematic_goal quasiinv_qinv_derivation:
   assumes "A: U i" "B: U i" "f: A \<rightarrow> B"
   shows "prf: qinv f \<Longrightarrow> ?prf: qinv (fst prf)"
-
-  supply [[auto_typechk=false]]
-
   unfolding qinv_def
-  apply intro prefer 3
-    apply intro defer
-      \<guillemotright> apply (erule SigE, typechk)
-          \<^item> by (rule \<open>f:_\<close>)
-          \<^item> by typechk
-          \<^item> by (erule SigE, typechk) reduce
+  apply intro
+    \<guillemotright> by (rule \<open>f:_\<close>)
+    \<guillemotright> apply (erule SigE, typechk)
+        schematic_subgoal for g HH
+          apply intro
+            \<^item> by reduce (rule PiE[where ?a=HH]; rule snd)
+            \<^item> by reduce (rule PiE[where ?a=HH]; rule fst)
         done
-      \<guillemotright> by (erule SigE, typechk)+ reduce
-      apply typechk
+      done
   done
+
+definition "quasiinv_qinv A B f prf \<equiv>
+  <f, SigInd (B \<rightarrow> A) (\<lambda>g. homotopy A (\<lambda>_. A) (g \<circ>\<^bsub>A\<^esub> f) (id A) \<times> homotopy B
+  (\<lambda>_. B) (f \<circ>\<^bsub>B\<^esub> g) (id B)) (\<lambda>a. homotopy B (\<lambda>_. B) (f \<circ>\<^bsub>B\<^esub> Spartan.fst (B \<rightarrow> A)
+  (\<lambda>x. homotopy A (\<lambda>_. A) (x \<circ>\<^bsub>A\<^esub> f) (id A) \<times> homotopy B (\<lambda>_. B) (f \<circ>\<^bsub>B\<^esub> x)
+  (id B)) `a) (id B) \<times> homotopy A (\<lambda>_. A) (Spartan.fst (B \<rightarrow> A) (\<lambda>x. homotopy A
+  (\<lambda>_. A) (x \<circ>\<^bsub>A\<^esub> f) (id A) \<times> homotopy B (\<lambda>_. B) (f \<circ>\<^bsub>B\<^esub> x) (id B)) `a \<circ>\<^bsub>A\<^esub> f)
+  (id A)) (\<lambda>g HH. <Spartan.snd (homotopy A (\<lambda>_. A) (g \<circ>\<^bsub>A\<^esub> f) (id A)) (\<lambda>x.
+  homotopy B (\<lambda>_. B) (f \<circ>\<^bsub>B\<^esub> g) (id B)) `HH, Spartan.fst (homotopy A (\<lambda>_. A)
+  (g \<circ>\<^bsub>A\<^esub> f) (id A)) (\<lambda>x. homotopy B (\<lambda>_. B) (f \<circ>\<^bsub>B\<^esub> g) (id B)) `HH>) prf>"
+
+schematic_goal quasiinv_qinv [typechk]:
+  assumes "A: U i" "B: U i" "f: A \<rightarrow> B"
+  shows "prf: qinv f \<Longrightarrow> quasiinv_qinv A B f prf: qinv (fst prf)"
+  unfolding quasiinv_qinv_def by (rule quasiinv_qinv_derivation)
 
 
 section \<open>Equivalence\<close>
