@@ -302,13 +302,13 @@ method_setup equality = \<open>Scan.lift Parse.thm >> (fn (fact, _) => fn ctxt =
 section \<open>Implicit arguments\<close>
 
 text \<open>
-  \<open>?\<close> is used to mark implicit arguments in definitions, while \<open>!\<close> is expanded
+  \<open>?\<close> is used to mark implicit arguments in definitions, while \<open>{}\<close> is expanded
   immediately for elaboration in statements. 
 \<close>
 
 consts
   iarg :: \<open>'a\<close> ("?")
-  earg :: \<open>'b\<close> ("!")
+  earg :: \<open>'b\<close> ("{}")
 
 ML_file \<open>implicits.ML\<close>
 
