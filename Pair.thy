@@ -39,22 +39,12 @@ schematic_goal Sig_dist_expand_derivation:
     done
   done
 
-definition "Sig_dist_expand A B C p \<equiv> SigInd A
-  (\<lambda>x. B x \<times> C x)
-  (\<lambda>_. (\<Sum>x: A. B x) \<times> (\<Sum>x: A. C x))
-  (\<lambda>x y.
-    < <x, Spartan.fst (B x) (\<lambda>_. C x) `y>,
-      <x, Spartan.snd (B x) (\<lambda>_. C x) `y> >)
-  p"
+definition "Sig_dist_expand A B C p \<equiv>
+  SigInd A (\<lambda>x. B x \<times> C x) (\<lambda>_. (\<Sum>x: A. B x) \<times> (\<Sum>x: A. C x)) (\<lambda>x y. <<x,
+  Spartan.fst (B x) (\<lambda>_. C x) `y>, <x, Spartan.snd (B x) (\<lambda>_. C x) `y>>) p"
 
-lemma Sig_dist_expand [typechk]:
-  assumes
-    "p: \<Sum>x: A. B x \<times> C x"
-    "A: U i"
-    "\<And>x. x: A \<Longrightarrow> B x: U i"
-    "\<And>x. x: A \<Longrightarrow> C x: U i"
-  shows "Sig_dist_expand A B C p: (\<Sum>x: A. B x) \<times> (\<Sum>x: A. C x)"
-  unfolding Sig_dist_expand_def by typechk
+lemmas Sig_dist_expand [typechk] =
+  Sig_dist_expand_derivation [folded Sig_dist_expand_def]
 
 
 end

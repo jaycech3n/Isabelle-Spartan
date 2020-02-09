@@ -447,10 +447,7 @@ schematic_goal Id_symmetric_derivation:
 
 definition "pathinv A x y p \<equiv> IdInd A (\<lambda>x y _. y =\<^bsub>A\<^esub> x) (\<lambda>x. refl x) x y p"
 
-lemma Id_symmetric [typechk]:
-  assumes "A: U i" "x: A" "y: A" "p: x =\<^bsub>A\<^esub> y"
-  shows "pathinv A x y p: y =\<^bsub>A\<^esub> x"
-  unfolding pathinv_def by typechk
+lemmas Id_symmetric [typechk] = Id_symmetric_derivation [folded pathinv_def]
 
 lemma pathinv_comp [comps]:
   assumes "x: A" "A: U i"
@@ -476,13 +473,7 @@ definition "pathcomp A x y z p q \<equiv>
     (\<lambda>x. \<lambda>q: x =\<^bsub>A\<^esub> z. IdInd A (\<lambda>x z _. (x =\<^bsub>A\<^esub> z)) (\<lambda>x. refl x) x z q)
     x y p `q"
 
-lemma Id_transitive [typechk]:
-  assumes
-    "A: U i" "x: A" "y: A" "z: A"
-    "p: x =\<^bsub>A\<^esub> y" "q: y =\<^bsub>A\<^esub> z"
-  shows
-    "pathcomp A x y z p q: x =\<^bsub>A\<^esub> z"
-  unfolding pathcomp_def by typechk
+lemmas Id_transitive [typechk] = Id_transitive_derivation [folded pathcomp_def]
 
 lemma pathcomp_comp [comps]:
   assumes "a: A" "A: U i"

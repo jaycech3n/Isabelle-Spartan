@@ -23,20 +23,14 @@ lemma homotopy_type [typechk]:
 schematic_goal homotopy_refl_derivation:
   assumes
     "A: U i"
-    "\<And>x. x: A \<Longrightarrow> B x: U i"
     "f: \<Prod>x: A. B x"
   shows "?prf: f ~ f"
   unfolding homotopy_def by intros
 
-definition "homotopy_refl A B f \<equiv> \<lambda>x: A. refl (f `x)"
+definition "homotopy_refl A f \<equiv> \<lambda>x: A. refl (f `x)"
 
-schematic_goal homotopy_refl [typechk]:
-  assumes
-    "A: U i"
-    "\<And>x. x: A \<Longrightarrow> B x: U i"
-    "f: \<Prod>x: A. B x"
-  shows "homotopy_refl A B f: f ~ f"
-  unfolding homotopy_refl_def homotopy_def by typechk
+lemmas homotopy_refl [typechk] =
+  homotopy_refl_derivation [folded homotopy_refl_def]
 
 schematic_goal homotopy_symmetric_derivation:
   assumes
@@ -50,24 +44,18 @@ schematic_goal homotopy_symmetric_derivation:
     \<guillemotright> for H
       apply intros
         apply (rule Id_symmetric)
-          schematic_subgoal for x
+          \<^item> for x
             apply (rule PiE[of H _ _ x])
-          done
-          apply typechk
+            done
+          \<^item> by typechk
       done
   done
 
 definition "homotopy_symmetric A B f g \<equiv>
   \<lambda>H: homotopy A (\<lambda>x. B x) f g. \<lambda>x: A. pathinv (B x) (f `x) (g `x) (H `x)"
 
-schematic_goal homotopy_symmetric [typechk]:
-  assumes
-    "A: U i"
-    "\<And>x. x: A \<Longrightarrow> B x: U i"
-    "f: \<Prod>x: A. B x"
-    "g: \<Prod>x: A. B x"
-  shows "homotopy_symmetric A B f g: f ~ g \<rightarrow> g ~ f"
-  unfolding homotopy_symmetric_def homotopy_def by typechk
+lemmas homotopy_symmetric [typechk] =
+  homotopy_symmetric_derivation [folded homotopy_symmetric_def]
 
 schematic_goal homotopy_transitive_derivation:
   assumes
@@ -82,8 +70,8 @@ schematic_goal homotopy_transitive_derivation:
     \<guillemotright> for H1 H2 apply intro
       \<^item> for x
         apply (rule Id_transitive[where ?y = "g `x"])
-          ~ by (rule PiE[of H1 _ _ x])
-          ~ by (rule PiE[of H2 _ _ x])
+          \<^enum> by (rule PiE[of H1 _ _ x])
+          \<^enum> by (rule PiE[of H2 _ _ x])
         done
       \<^item> by typechk
       done
@@ -91,18 +79,11 @@ schematic_goal homotopy_transitive_derivation:
 
 definition "homotopy_transitive A B f g h \<equiv>
   \<lambda>H1: homotopy A (\<lambda>x. B x) f g.
-   \<lambda>H2: homotopy A (\<lambda>x. B x) g h.
-    \<lambda>x: A. pathcomp (B x) (f `x) (g `x) (h `x) (H1 `x) (H2 `x)"
+    \<lambda>H2: homotopy A (\<lambda>x. B x) g h.
+      \<lambda>x: A. pathcomp (B x) (f `x) (g `x) (h `x) (H1 `x) (H2 `x)"
 
-schematic_goal homotopy_transitive [typechk]:
-  assumes
-    "A: U i"
-    "\<And>x. x: A \<Longrightarrow> B x: U i"
-    "f: \<Prod>x: A. B x"
-    "g: \<Prod>x: A. B x"
-    "h: \<Prod>x: A. B x"
-  shows "homotopy_transitive A B f g h: f ~ g \<rightarrow> g ~ h \<rightarrow> f ~ h"
-  unfolding homotopy_transitive_def homotopy_def by typechk
+lemmas homotopy_transitive [typechk] =
+  homotopy_transitive_derivation [folded homotopy_transitive_def]
 
 schematic_goal commute_homotopy_derivation:
   assumes
@@ -136,12 +117,12 @@ oops
 
 schematic_goal homotopy_id_left [typechk]:
   assumes "A: U i" "B: U i" "f: A \<rightarrow> B"
-  shows "homotopy_refl A B f: (id B) \<circ> f ~ f"
+  shows "homotopy_refl A f: (id B) \<circ> f ~ f"
   unfolding homotopy_refl_def homotopy_def by (subst comps) typechk
 
 schematic_goal homotopy_id_right [typechk]:
   assumes "A: U i" "B: U i" "f: A \<rightarrow> B"
-  shows "homotopy_refl A B f: f \<circ> (id A) ~ f"
+  shows "homotopy_refl A f: f \<circ> (id A) ~ f"
   unfolding homotopy_refl_def homotopy_def by (subst comps) typechk
 
 
@@ -170,13 +151,9 @@ schematic_goal qinv_id_derivation:
       apply (rule homotopy_id_left)
   done
 
-definition "qinv_id A \<equiv>
-  <id A, <homotopy_refl A A (id A), homotopy_refl A A (id A)>>"
+definition "qinv_id A \<equiv> <id A, <homotopy_refl A (id A), homotopy_refl A (id A)>>"
 
-schematic_goal qinv_id [typechk]:
-  assumes "A: U i"
-  shows "qinv_id A: qinv (id A)"
-  unfolding qinv_id_def qinv_def by typechk
+lemmas qinv_id [typechk] = qinv_id_derivation [folded qinv_id_def]
 
 (*Uncomment this to see all implicits.
 no_translations
@@ -220,10 +197,7 @@ definition "quasiinv_qinv A B f prf \<equiv>
   homotopy B (\<lambda>_. B) (f \<circ>\<^bsub>B\<^esub> g) (id B)) `HH, Spartan.fst (homotopy A (\<lambda>_. A)
   (g \<circ>\<^bsub>A\<^esub> f) (id A)) (\<lambda>x. homotopy B (\<lambda>_. B) (f \<circ>\<^bsub>B\<^esub> g) (id B)) `HH>) prf>"
 
-schematic_goal quasiinv_qinv [typechk]:
-  assumes "A: U i" "B: U i" "f: A \<rightarrow> B"
-  shows "prf: qinv f \<Longrightarrow> quasiinv_qinv A B f prf: qinv (fst prf)"
-  unfolding quasiinv_qinv_def by (rule quasiinv_qinv_derivation)
+lemmas quasiinv_qinv = quasiinv_qinv_derivation [folded quasiinv_qinv_def]
 
 
 section \<open>Equivalence\<close>
@@ -258,22 +232,16 @@ schematic_goal qinv_imp_biinv_derivation:
   done
 
 definition "qinv_imp_biinv A B f \<equiv>
-  \<lambda>x: Equivalence.qinv A B f.
-    Sig_dist_expand (B \<rightarrow> A)
-      (\<lambda>x. homotopy A (\<lambda>_. A) (x \<circ>\<^bsub>A\<^esub> f) (id A))
-      (\<lambda>x. homotopy B (\<lambda>_. B) (f \<circ>\<^bsub>B\<^esub> x) (id B)) x"
+  \<lambda>x: Equivalence.qinv A B f. Sig_dist_expand (B \<rightarrow> A) (\<lambda>x. homotopy A (\<lambda>_. A)
+  (x \<circ>\<^bsub>A\<^esub> f) (id A)) (\<lambda>x. homotopy B (\<lambda>_. B) (f \<circ>\<^bsub>B\<^esub> x) (id B)) x"
 
-schematic_goal qinv_imp_biinv [typechk]:
-  assumes
-    "A: U i" "B: U i"
-    "f: A \<rightarrow> B"
-  shows "qinv_imp_biinv A B f: qinv f \<rightarrow> biinv f"
-  unfolding qinv_imp_biinv_def qinv_def biinv_def by typechk
+lemmas qinv_imp_biinv [typechk] =
+  qinv_imp_biinv_derivation [folded qinv_imp_biinv_def]
 
 definition equivalence (infix "\<simeq>" 110)
   where "A \<simeq> B \<equiv> \<Sum>f: A \<rightarrow> B. Equivalence.biinv A B f"
 
-lemma [typechk]:
+lemma equivalence_type [typechk]:
   assumes "A: U i" "B: U i"
   shows "A \<simeq> B: U i"
   unfolding equivalence_def by typechk
@@ -292,9 +260,8 @@ schematic_goal equivalence_refl_derivation:
 
 definition "equivalence_refl A \<equiv> <id A, qinv_imp_biinv A A (id A) `qinv_id A>"
 
-lemma equivalence_refl [typechk]:
-  "A: U i \<Longrightarrow> equivalence_refl A: A \<simeq> A"
-  unfolding equivalence_refl_def equivalence_def by typechk
+lemmas equivalence_refl [typechk] =
+  equivalence_refl_derivation [folded equivalence_refl_def]
 
 declare [[quick_and_dirty]]
 
@@ -319,7 +286,7 @@ text \<open>
   equivalence.
 \<close>
 
-schematic_goal id_imp_equiv_derivation1:
+schematic_goal id_imp_equiv_derivation':
   assumes
     "A: U i" "B: U i" "p: A =\<^bsub>U i\<^esub> B"
   shows "?prf: A \<simeq> B"
@@ -330,7 +297,7 @@ text \<open>
   rewrite, and (2) we don't yet have universe automation.
 \<close>
 
-schematic_goal id_imp_equiv_derivation2:
+schematic_goal id_imp_equiv_derivation:
   assumes
     "A: U i" "B: U i" "p: A =\<^bsub>U i\<^esub> B"
   shows "<trans (id (U i)) p, ?isequiv>: A \<simeq> B"
