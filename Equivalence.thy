@@ -177,23 +177,6 @@ definition "qinv_id A \<equiv> <id A, <homotopy_refl A (id A), homotopy_refl A (
 
 lemmas qinv_id [typechk] = qinv_id_derivation [folded qinv_id_def]
 
-(*Uncomment this to see all implicits.
-no_translations
-  "f x" \<leftharpoondown> "f `x"
-  "x = y" \<leftharpoondown> "x =\<^bsub>A\<^esub> y"
-  "g \<circ> f" \<leftharpoondown> "g \<circ>\<^bsub>A\<^esub> f"
-  "p\<inverse>" \<leftharpoondown> "CONST pathinv A x y p"
-  "p \<bullet> q" \<leftharpoondown> "CONST pathcomp A x y z p q"
-  "fst" \<leftharpoondown> "CONST Spartan.fst A B"
-  "snd" \<leftharpoondown> "CONST Spartan.snd A B"
-  "f[p]" \<leftharpoondown> "CONST ap A B x y f p"
-  "trans P p" \<leftharpoondown> "CONST transport A P x y p"
-  "trans_const B p" \<leftharpoondown> "CONST transport_const A B x y p"
-  "lift P p u" \<leftharpoondown> "CONST pathlift A P x y p u"
-  "apd f p" \<leftharpoondown> "CONST Identity.apd A P f x y p"
-  "f ~ g" \<leftharpoondown> "CONST homotopy A B f g"
-*)
-
 schematic_goal quasiinv_qinv_derivation:
   assumes "A: U i" "B: U i" "f: A \<rightarrow> B"
   shows "prf: qinv f \<Longrightarrow> ?prf: qinv (fst prf)"
@@ -258,23 +241,6 @@ text \<open>
   Show that bi-invertible maps are quasi-inverses, as a demonstration of how to
   work in this system.
 \<close>
-
-no_translations
-  "f x" \<leftharpoondown> "f `x"
-  "x = y" \<leftharpoondown> "x =\<^bsub>A\<^esub> y"
-  "g \<circ> f" \<leftharpoondown> "g \<circ>\<^bsub>A\<^esub> f"
-  "p\<inverse>" \<leftharpoondown> "CONST pathinv A x y p"
-  "p \<bullet> q" \<leftharpoondown> "CONST pathcomp A x y z p q"
-  "fst" \<leftharpoondown> "CONST Spartan.fst A B"
-  "snd" \<leftharpoondown> "CONST Spartan.snd A B"
-  "f[p]" \<leftharpoondown> "CONST ap A B x y f p"
-  "trans P p" \<leftharpoondown> "CONST transport A P x y p"
-  "trans_const B p" \<leftharpoondown> "CONST transport_const A B x y p"
-  "lift P p u" \<leftharpoondown> "CONST pathlift A P x y p u"
-  "apd f p" \<leftharpoondown> "CONST Identity.apd A P f x y p"
-  "f ~ g" \<leftharpoondown> "CONST homotopy A B f g"
-  "qinv f" \<leftharpoondown> "CONST Equivalence.qinv A B f"
-  "biinv f" \<leftharpoondown> "CONST Equivalence.biinv A B f"
 
 schematic_goal biinv_imp_qinv_derivation:
   assumes "A: U i" "B: U i" "f: A \<rightarrow> B"
@@ -372,10 +338,9 @@ schematic_goal equivalence_refl_derivation:
   unfolding equivalence_def
   apply intro defer
     (*TODO: would like to just be able to write "rule qinv_imp_biinv" here. The
-      following is just tedious.*)
-    apply (rule mp[of "qinv (id A)"]) defer
+      following is too low-level.*)
+    apply (rule qinv_imp_biinv[THEN PiE]) defer
       apply (rule qinv_id)
-      apply (rule qinv_imp_biinv)
   done
 
 definition "equivalence_refl A \<equiv> <id A, qinv_imp_biinv A A (id A) `qinv_id A>"
@@ -383,21 +348,26 @@ definition "equivalence_refl A \<equiv> <id A, qinv_imp_biinv A A (id A) `qinv_i
 lemmas equivalence_refl [typechk] =
   equivalence_refl_derivation [folded equivalence_refl_def]
 
-declare [[quick_and_dirty]]
+text \<open>
+  The following could perhaps be easier with transport (but then I think we need
+  univalence?)...
+\<close>
 
 schematic_goal equivalence_symmetric_derivation:
   assumes "A: U i" "B: U i"
   shows "?prf: A \<simeq> B \<rightarrow> B \<simeq> A"
   apply intros
   unfolding equivalence_def
-    \<guillemotright> for p
-      \<comment> \<open>
-        The following is very low-level; we'd like to just eliminate and get
-          \<open>f \<equiv> fst p: A \<rightarrow> B\<close> and \<open>hyp \<equiv> snd p: biinv A B f\<close>
-        usable in the context.
-      \<close>
-      apply (erule elims, typechk)
-      sorry
+  apply (erule elims, typechk)
+  \<guillemotright> for _ f "prf"
+    (*Definitely getting into the low-level here.*)
+    apply (drule biinv_imp_qinv[THEN PiE, rotated 3], typechk)
+    apply intro
+      \<^item> unfolding qinv_def
+        apply (rule fst[THEN PiE]) defer
+        by assumption typechk
+      \<^item> by (rule qinv_imp_biinv[THEN PiE]) (rule quasiinv_qinv)
+    done
   done
 
 text \<open>
@@ -440,9 +410,8 @@ schematic_goal id_imp_equiv_derivation:
           \<^enum> by (rule U_in_U)
           \<^enum> by (rule lift_universe)
           \<^enum> apply reduce
-              apply (rule mp[of "qinv (id A)"])
-                ~ by (rule qinv_id)
-                ~ by (rule qinv_imp_biinv)
+              apply (rule qinv_imp_biinv[THEN PiE])
+                apply (rule qinv_id)
             done
         done
       done
@@ -456,6 +425,25 @@ schematic_goal id_imp_equiv_derivation:
       apply (rule U_in_U)
       done
   done
+
+(*Uncomment this to see all implicits from here on.
+no_translations
+  "f x" \<leftharpoondown> "f `x"
+  "x = y" \<leftharpoondown> "x =\<^bsub>A\<^esub> y"
+  "g \<circ> f" \<leftharpoondown> "g \<circ>\<^bsub>A\<^esub> f"
+  "p\<inverse>" \<leftharpoondown> "CONST pathinv A x y p"
+  "p \<bullet> q" \<leftharpoondown> "CONST pathcomp A x y z p q"
+  "fst" \<leftharpoondown> "CONST Spartan.fst A B"
+  "snd" \<leftharpoondown> "CONST Spartan.snd A B"
+  "f[p]" \<leftharpoondown> "CONST ap A B x y f p"
+  "trans P p" \<leftharpoondown> "CONST transport A P x y p"
+  "trans_const B p" \<leftharpoondown> "CONST transport_const A B x y p"
+  "lift P p u" \<leftharpoondown> "CONST pathlift A P x y p u"
+  "apd f p" \<leftharpoondown> "CONST Identity.apd A P f x y p"
+  "f ~ g" \<leftharpoondown> "CONST homotopy A B f g"
+  "qinv f" \<leftharpoondown> "CONST Equivalence.qinv A B f"
+  "biinv f" \<leftharpoondown> "CONST Equivalence.biinv A B f"
+*)
 
 
 end
