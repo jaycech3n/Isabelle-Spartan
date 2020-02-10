@@ -120,5 +120,4 @@ val _ = Outer_Syntax.command \<^command_keyword>\<open>\<^item>\<close> "focus b
 val _ = Outer_Syntax.command \<^command_keyword>\<open>\<^enum>\<close> "focus bullet" parser
 val _ = Outer_Syntax.command \<^command_keyword>\<open>~\<close> "focus bullet" parser
 
-
 end
