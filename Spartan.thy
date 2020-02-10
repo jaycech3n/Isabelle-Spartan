@@ -56,9 +56,6 @@ end\<close>
 
 ML_file \<open>focus.ML\<close>
 
-ML_file \<open>$ISABELLE_HOME/src/Tools/subtyping.ML\<close>
-declare [[coercion_enabled]]
-
 named_theorems intros and elims and comps and typechk
 
 
@@ -373,11 +370,12 @@ val _ = Context.>>
 
 section \<open>Lambda coercion\<close>
 
-\<comment> \<open>Coerce object lambdas to meta-lambdas when needed\<close>
+\<comment> \<open>Coerce object lambdas to meta-lambdas\<close>
 abbreviation (input) lambda :: \<open>o \<Rightarrow> o \<Rightarrow> o\<close>
   where "lambda f \<equiv> \<lambda>x. f `x"
 
-declare [[coercion lambda]]
+ML_file \<open>$ISABELLE_HOME/src/Tools/subtyping.ML\<close>
+declare [[coercion_enabled, coercion lambda]]
 
 translations "f x" \<leftharpoondown> "f `x"
 
