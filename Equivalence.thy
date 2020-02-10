@@ -20,7 +20,7 @@ lemma homotopy_type [typechk]:
   shows "homotopy A B f g: U i"
   unfolding homotopy_def by typechk           
 
-schematic_goal homotopy_refl_derivation:
+lemma* homotopy_refl_derivation:
   assumes
     "A: U i"
     "f: \<Prod>x: A. B x"
@@ -32,7 +32,7 @@ definition "homotopy_refl A f \<equiv> \<lambda>x: A. refl (f `x)"
 lemmas homotopy_refl [typechk] =
   homotopy_refl_derivation [folded homotopy_refl_def]
 
-schematic_goal homotopy_symmetric_derivation:
+lemma* homotopy_symmetric_derivation:
   assumes
     "A: U i"
     "\<And>x. x: A \<Longrightarrow> B x: U i"
@@ -42,7 +42,7 @@ schematic_goal homotopy_symmetric_derivation:
   unfolding homotopy_def
   apply intros
     apply (rule Id_symmetric)
-      \<guillemotright> for x by (rule PiE[of H _ _ x])
+      \<guillemotright> vars x by (rule PiE[of H _ _ x])
       \<guillemotright> by typechk
   done
 
@@ -52,7 +52,7 @@ definition "homotopy_symmetric A B f g H \<equiv>
 lemmas homotopy_symmetric [typechk] =
   homotopy_symmetric_derivation [folded homotopy_symmetric_def]
 
-schematic_goal homotopy_transitive_derivation:
+lemma* homotopy_transitive_derivation:
   assumes
     "A: U i"
     "\<And>x. x: A \<Longrightarrow> B x: U i"
@@ -62,7 +62,7 @@ schematic_goal homotopy_transitive_derivation:
   shows "\<lbrakk>H1: f ~ g; H2: g ~ h\<rbrakk> \<Longrightarrow> ?prf: f ~ h"
   unfolding homotopy_def
   apply intro
-    \<guillemotright> for x
+    \<guillemotright> vars x
       apply (rule Id_transitive[where ?y = "g `x"])
         \<^item> by (rule PiE[of H1 _ _ x])
         \<^item> by (rule PiE[of H2 _ _ x])
@@ -76,7 +76,7 @@ definition "homotopy_transitive A B f g h H1 H2 \<equiv>
 lemmas homotopy_transitive [typechk] =
   homotopy_transitive_derivation [folded homotopy_transitive_def]
 
-schematic_goal commute_homotopy_derivation:
+lemma* commute_homotopy_derivation:
   assumes
     "A: U i" "B: U i"
     "x: A" "y: A"
@@ -87,7 +87,7 @@ schematic_goal commute_homotopy_derivation:
   \<comment> \<open>Need this assumption unfolded for typechecking:\<close>
   supply assms(8)[unfolded homotopy_def]
   apply (equality \<open>p:_\<close>)
-    schematic_subgoal premises for x
+    focus vars x
       apply reduce
         \<comment> \<open>Here it would really be nice to have automation for transport and
           propositional equality.\<close>
@@ -97,7 +97,7 @@ schematic_goal commute_homotopy_derivation:
     done
   done
 
-schematic_goal commute_homotopy'_derivation:
+corollary* commute_homotopy'_derivation:
   assumes
     "A: U i"
     "x: A"
@@ -106,17 +106,17 @@ schematic_goal commute_homotopy'_derivation:
   shows "?prf: H (f x) = f [H x]"
 oops
 
-schematic_goal homotopy_id_left [typechk]:
+lemma* homotopy_id_left [typechk]:
   assumes "A: U i" "B: U i" "f: A \<rightarrow> B"
   shows "homotopy_refl A f: (id B) \<circ> f ~ f"
   unfolding homotopy_refl_def homotopy_def by (subst comps) typechk
 
-schematic_goal homotopy_id_right [typechk]:
+lemma* homotopy_id_right [typechk]:
   assumes "A: U i" "B: U i" "f: A \<rightarrow> B"
   shows "homotopy_refl A f: f \<circ> (id A) ~ f"
   unfolding homotopy_refl_def homotopy_def by (subst comps) typechk
 
-schematic_goal homotopy_funcomp_left:
+lemma* homotopy_funcomp_left:
   assumes
     "A: U i" "B: U i"
     "\<And>x. x: B \<Longrightarrow> C x: U i"
@@ -131,7 +131,7 @@ schematic_goal homotopy_funcomp_left:
       apply (erule PiE[of H]; typechk)
   done
 
-schematic_goal homotopy_funcomp_right:
+lemma* homotopy_funcomp_right:
   assumes
     "A: U i" "B: U i" "C: U i"
     "f: A \<rightarrow> B"
@@ -163,7 +163,7 @@ definition qinv_i ("qinv")
 
 translations "qinv f" \<leftharpoondown> "CONST Equivalence.qinv A B f"
 
-schematic_goal qinv_id_derivation:
+lemma* qinv_id_derivation:
   assumes "A: U i"
   shows "?prf: qinv (id A)"
   unfolding qinv_def
@@ -177,14 +177,14 @@ definition "qinv_id A \<equiv> <id A, <homotopy_refl A (id A), homotopy_refl A (
 
 lemmas qinv_id [typechk] = qinv_id_derivation [folded qinv_id_def]
 
-schematic_goal quasiinv_qinv_derivation:
+lemma* quasiinv_qinv_derivation:
   assumes "A: U i" "B: U i" "f: A \<rightarrow> B"
   shows "prf: qinv f \<Longrightarrow> ?prf: qinv (fst prf)"
   unfolding qinv_def
   apply intro
     \<guillemotright> by (rule \<open>f:_\<close>)
     \<guillemotright> apply (erule SigE, typechk)
-        schematic_subgoal for g HH
+        focus vars g HH
           apply intro
             \<^item> by reduce (rule PiE[where ?a=HH]; rule snd)
             \<^item> by reduce (rule PiE[where ?a=HH]; rule fst)
@@ -221,7 +221,7 @@ definition biinv_i ("biinv")
 
 translations "biinv f" \<leftharpoondown> "CONST Equivalence.biinv A B f"
 
-schematic_goal qinv_imp_biinv_derivation:
+lemma* qinv_imp_biinv_derivation:
   assumes
     "A: U i" "B: U i"
     "f: A \<rightarrow> B"
@@ -243,7 +243,7 @@ text \<open>
   work in this system.
 \<close>
 
-schematic_goal biinv_imp_qinv_derivation:
+lemma* biinv_imp_qinv_derivation:
   assumes "A: U i" "B: U i" "f: A \<rightarrow> B"
   shows "?prf: biinv f \<rightarrow> qinv f"
 
@@ -253,7 +253,7 @@ schematic_goal biinv_imp_qinv_derivation:
   apply (erule SigE, typechk)+
 
   text \<open>Name the components:\<close>
-  \<guillemotright> premises for _ _ _ g H1 h H2
+  \<guillemotright> premises vars _ _ _ g H1 h H2
   thm \<open>g:_\<close> \<open>h:_\<close> \<open>H1:_\<close> \<open>H2:_\<close>
 
   text \<open>
@@ -317,7 +317,7 @@ definition "biinv_imp_qinv A B f \<equiv>
 lemmas biinv_imp_qinv [typechk] =
   biinv_imp_qinv_derivation [folded biinv_imp_qinv_def]
 
-schematic_goal biinv_id_derivation:
+lemma* biinv_id_derivation:
   "A: U i \<Longrightarrow> ?prf: biinv (id A)"
   by (rule qinv_imp_biinv) (rule qinv_id)
 
@@ -341,7 +341,7 @@ lemma equivalence_type [typechk]:
   shows "A \<simeq> B: U i"
   unfolding equivalence_def by typechk
 
-schematic_goal equivalence_refl_derivation:
+lemma* equivalence_refl_derivation:
   assumes "A: U i"
   shows "?prf: A \<simeq> A"
   unfolding equivalence_def
@@ -360,13 +360,13 @@ text \<open>
   univalence?)...
 \<close>
 
-schematic_goal equivalence_symmetric_derivation:
+lemma* equivalence_symmetric_derivation:
   assumes "A: U i" "B: U i"
   shows "?prf: A \<simeq> B \<rightarrow> B \<simeq> A"
   apply intros
   unfolding equivalence_def
   apply (erule elims, typechk)
-  \<guillemotright> for _ f "prf"
+  \<guillemotright> vars _ f "prf"
     (*Definitely getting into the low-level here.*)
     apply (drule biinv_imp_qinv[THEN PiE, rotated 3], typechk)
     apply intro
@@ -383,7 +383,7 @@ text \<open>
   equivalence.
 \<close>
 
-schematic_goal id_imp_equiv_derivation':
+lemma* id_imp_equiv_derivation':
   assumes
     "A: U i" "B: U i" "p: A =\<^bsub>U i\<^esub> B"
   shows "?prf: A \<simeq> B"
@@ -394,14 +394,14 @@ text \<open>
   rewrite, and (2) we don't yet have universe automation.
 \<close>
 
-schematic_goal id_imp_equiv_derivation:
+lemma* id_imp_equiv_derivation:
   assumes
     "A: U i" "B: U i" "p: A =\<^bsub>U i\<^esub> B"
   shows "<trans (id (U i)) p, ?isequiv>: A \<simeq> B"
   unfolding equivalence_def
   apply intros defer
     \<guillemotright> apply (equality \<open>p:_\<close>)
-      \<^item> premises for A B
+      \<^item> premises vars A B
         \<comment> \<open>Switch off auto-typechecking, which messes with universe levels\<close>
         supply [[auto_typechk=false]]
 
@@ -411,7 +411,7 @@ schematic_goal id_imp_equiv_derivation:
         apply (rule lift_universe_codomain, rule U_in_U, typechk)
         apply (rule U_in_U)
         done
-      \<^item> premises for A
+      \<^item> premises vars A
         apply (subst transport_comp)
           \<^enum> by typechk
           \<^enum> by (rule U_in_U)

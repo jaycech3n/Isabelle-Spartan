@@ -18,7 +18,7 @@ translations
 
 section \<open>Some more results\<close>
 
-schematic_goal Sig_dist_expand_derivation:
+lemma* Sig_dist_expand_derivation:
   assumes
     "p: \<Sum>x: A. B x \<times> C x"
     "A: U i"
@@ -26,7 +26,7 @@ schematic_goal Sig_dist_expand_derivation:
     "\<And>x. x: A \<Longrightarrow> C x: U i"
   shows "?prf: (\<Sum>x: A. B x) \<times> (\<Sum>x: A. C x)"
   apply (rule SigE[of p])
-    schematic_subgoal for x y
+    focus vars x y
       apply intro
         \<guillemotright> apply intro
             apply assumption

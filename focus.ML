@@ -1,4 +1,4 @@
-(*  Title:      schematic_subgoal.ML
+(*  Title:      focus.ML
     Author:     Joshua Chen
 
 A modified version of the Isar `subgoal` command that keeps
@@ -94,7 +94,7 @@ val opt_fact_binding =
 
 val for_params =
   Scan.optional
-    (\<^keyword>\<open>for\<close> |--
+    (\<^keyword>\<open>vars\<close> |--
       Parse.!!! ((Scan.option Parse.dots >> is_some) --
         (Scan.repeat1 (Parse.maybe_position Parse.name_position))))
     (false, [])
@@ -109,16 +109,16 @@ val parser =
 
 in
 
-(** schematic_subgoal commands **)
+(** Outer syntax commands **)
 
-val _ = Outer_Syntax.command \<^command_keyword>\<open>schematic_subgoal\<close>
+val _ = Outer_Syntax.command \<^command_keyword>\<open>focus\<close>
   "focus on first subgoal within backward refinement, without instantiating schematic vars"
   parser
 
-val _ = Outer_Syntax.command \<^command_keyword>\<open>\<guillemotright>\<close> "schematic_subgoal bullet" parser
-val _ = Outer_Syntax.command \<^command_keyword>\<open>\<^item>\<close> "schematic_subgoal bullet" parser
-val _ = Outer_Syntax.command \<^command_keyword>\<open>\<^enum>\<close> "schematic_subgoal bullet" parser
-val _ = Outer_Syntax.command \<^command_keyword>\<open>~\<close> "schematic_subgoal bullet" parser
+val _ = Outer_Syntax.command \<^command_keyword>\<open>\<guillemotright>\<close> "focus bullet" parser
+val _ = Outer_Syntax.command \<^command_keyword>\<open>\<^item>\<close> "focus bullet" parser
+val _ = Outer_Syntax.command \<^command_keyword>\<open>\<^enum>\<close> "focus bullet" parser
+val _ = Outer_Syntax.command \<^command_keyword>\<open>~\<close> "focus bullet" parser
 
 
 end

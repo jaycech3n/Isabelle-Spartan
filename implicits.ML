@@ -27,7 +27,8 @@ val implicit_defs_attr = Thm.declaration_attribute (fn th =>
 
 fun make_holes ctxt =
   let
-    fun iarg_to_earg (Const (\<^const_name>\<open>iarg\<close>, T)) = Const (\<^const_name>\<open>earg\<close>, T)
+    fun iarg_to_earg (Const (\<^const_name>\<open>iarg\<close>, T)) =
+          Const (\<^const_name>\<open>earg\<close>, T)
       | iarg_to_earg t = t
 
     fun expand head args =
@@ -41,7 +42,9 @@ fun make_holes ctxt =
         | _ =>
             case Symtab.lookup (implicit_defs ctxt) (Term.term_name head) of
               SOME (t, def) => betapplys
-                (Envir.expand_atom (Term.fastype_of head) (Term.fastype_of t, def),
+                (Envir.expand_atom
+                  (Term.fastype_of head)
+                  (Term.fastype_of t, def),
                 args)
             | NONE => list_comb (head, args)
       end

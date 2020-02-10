@@ -31,7 +31,7 @@ section \<open>Basic propositional equalities\<close>
 
 (*TODO: Better integration of equality type directly into reasoning...*)
 
-schematic_goal pathcomp_left_refl_derivation:
+lemma* pathcomp_left_refl_derivation:
   assumes "A: U i" "x: A" "y: A" "p: x =\<^bsub>A\<^esub> y"
   shows "?prf: (refl x) \<bullet> p = p"
   apply (equality \<open>p: _\<close>)
@@ -45,7 +45,7 @@ definition "pathcomp_left_refl A x y p \<equiv>
 lemmas pathcomp_left_refl [typechk] =
   pathcomp_left_refl_derivation [folded pathcomp_left_refl_def]
 
-schematic_goal pathcomp_right_refl_derivation:
+lemma* pathcomp_right_refl_derivation:
   assumes "A: U i" "x: A" "y: A" "p: x =\<^bsub>A\<^esub> y"
   shows "?prf: p \<bullet> (refl y) = p"
   apply (equality \<open>p: _\<close>)
@@ -59,7 +59,7 @@ definition "pathcomp_right_refl A x y p \<equiv>
 lemmas pathcomp_right_refl [typechk] =
   pathcomp_right_refl_derivation [folded pathcomp_right_refl_def]
 
-schematic_goal pathcomp_left_inv_derivation:
+lemma* pathcomp_left_inv_derivation:
   assumes "A: U i" "x: A" "y: A" "p: x =\<^bsub>A\<^esub> y"
   shows "?prf: p\<inverse> \<bullet> p = refl y"
   apply (equality \<open>p: _\<close>)
@@ -73,7 +73,7 @@ definition "pathcomp_left_inv A x y p \<equiv>
 lemmas pathcomp_left_inv [typechk] =
   pathcomp_left_inv_derivation [folded pathcomp_left_inv_def]
 
-schematic_goal pathcomp_right_inv_derivation:
+lemma* pathcomp_right_inv_derivation:
   assumes "A: U i" "x: A" "y: A" "p: x =\<^bsub>A\<^esub> y"
   shows "?prf: p \<bullet> p\<inverse> = refl x"
   apply (equality \<open>p: _\<close>)
@@ -87,7 +87,7 @@ definition "pathcomp_right_inv A x y p \<equiv>
 lemmas pathcomp_right_inv [typechk] =
   pathcomp_right_inv_derivation [folded pathcomp_right_inv_def]
 
-schematic_goal pathinv_pathinv_derivation:
+lemma* pathinv_pathinv_derivation:
   assumes "A: U i" "x: A" "y: A" "p: x =\<^bsub>A\<^esub> y"
   shows "?prf: p\<inverse>\<inverse> = p"
   apply (equality \<open>p: _\<close>)
@@ -101,15 +101,15 @@ definition "pathinv_pathinv A x y p \<equiv>
 lemmas pathinv_pathinv [typechk] =
   pathinv_pathinv_derivation [folded pathinv_pathinv_def]
 
-schematic_goal pathcomp_assoc_derivation:
+lemma* pathcomp_assoc_derivation:
   assumes
     "A: U i" "x: A" "y: A" "z: A" "w: A"
     "p: x =\<^bsub>A\<^esub> y" "q: y =\<^bsub>A\<^esub> z" "r: z =\<^bsub>A\<^esub> w"
   shows "?prf: p \<bullet> (q \<bullet> r) = p \<bullet> q \<bullet> r"
   apply (equality \<open>p:_\<close>)
-    schematic_subgoal premises for x p
+    focus premises vars x p
       apply (equality \<open>p:_\<close>)
-        schematic_subgoal premises for x p
+        focus premises vars x p
           apply (equality \<open>p:_\<close>)
             apply (reduce; intros)
         done
@@ -131,7 +131,7 @@ lemmas pathcomp_assoc [typechk] =
 
 section \<open>Functoriality of functions\<close>
 
-schematic_goal Id_transfer_derivation:
+lemma* Id_transfer_derivation:
   assumes
     "A: U i" "B: U i"
     "x: A" "y: A"
@@ -153,12 +153,12 @@ translations "f[p]" \<leftharpoondown> "CONST ap A B x y f p"
 lemmas Id_transfer [typechk] =
   Id_transfer_derivation [folded ap_def]
 
-schematic_goal ap_refl [comps]:
+lemma* ap_refl [comps]:
   assumes "f: A \<rightarrow> B" "x: A" "A: U i" "B: U i"
   shows "f[refl x] \<equiv> refl (f `x)"
   unfolding ap_def by (subst comps) reduce
 
-schematic_goal ap_pathcomp_derivation:
+lemma* ap_pathcomp_derivation:
   assumes
     "A: U i" "B: U i"
     "x: A" "y: A" "z: A"
@@ -167,7 +167,7 @@ schematic_goal ap_pathcomp_derivation:
   shows
     "?prf: f[p \<bullet> q] = f[p] \<bullet> f[q]"
   apply (equality \<open>p:_\<close>)
-    schematic_subgoal premises for x p
+    focus premises vars x p
       apply (equality \<open>p:_\<close>)
         apply (reduce; intro)
     done
@@ -183,7 +183,7 @@ definition "ap_pathcomp A B x y z f p q \<equiv>
 lemmas ap_pathcomp [typechk] =
   ap_pathcomp_derivation [folded ap_pathcomp_def]
 
-schematic_goal ap_pathinv_derivation:
+lemma* ap_pathinv_derivation:
   assumes
     "A: U i" "B: U i"
     "x: A" "y: A"
@@ -200,7 +200,7 @@ lemmas ap_pathinv [typechk] = ap_pathinv_derivation [folded ap_pathinv_def]
 
 text \<open>The next two proofs currently use some low-level rewriting.\<close>
 
-schematic_goal ap_funcomp_derivation:
+lemma* ap_funcomp_derivation:
   assumes
     "A: U i" "B: U i" "C: U i"
     "x: A" "y: A"
@@ -218,7 +218,7 @@ definition "ap_funcomp A B C x y f g p \<equiv>
 
 lemmas ap_funcomp [typechk] = ap_funcomp_derivation [folded ap_funcomp_def]
 
-schematic_goal ap_id_derivation:
+lemma* ap_id_derivation:
   assumes "A: U i" "x: A" "y: A" "p: x =\<^bsub>A\<^esub> y"
   shows "?prf: (id A)[p] = p"
   apply (equality \<open>p:_\<close>)
@@ -234,7 +234,7 @@ lemmas ap_id [typechk] = ap_id_derivation [folded ap_id_def]
 
 section \<open>Transport\<close>
 
-schematic_goal transport_derivation:
+lemma* transport_derivation:
   assumes
     "A: U i"
     "\<And>x. x: A \<Longrightarrow> P x: U i"
@@ -253,7 +253,7 @@ translations "trans P p" \<leftharpoondown> "CONST transport A P x y p"
 
 lemmas transport [typechk] = transport_derivation [folded transport_def]
 
-schematic_goal transport_comp [comps]:
+lemma* transport_comp [comps]:
   assumes
     "a: A"
     "A: U i"
@@ -263,7 +263,7 @@ schematic_goal transport_comp [comps]:
 
 \<comment> \<open>TODO: Build transport automation!\<close>
 
-schematic_goal use_transport:
+lemma* use_transport:
   assumes
     "p: x =\<^bsub>A\<^esub> y"
     "u: P y"
@@ -273,7 +273,7 @@ schematic_goal use_transport:
   shows "trans P p\<inverse> u: P x"
   by typechk
 
-schematic_goal transport_left_inv_derivation:
+lemma* transport_left_inv_derivation:
   assumes
     "A: U i"
     "\<And>x. x: A \<Longrightarrow> P x: U i"
@@ -282,7 +282,7 @@ schematic_goal transport_left_inv_derivation:
   shows "?prf: (trans P p\<inverse>) \<circ> (trans P p) = id (P x)"
   by (equality \<open>p:_\<close>) (reduce; intro)
 
-schematic_goal transport_right_inv_derivation:
+lemma* transport_right_inv_derivation:
   assumes
     "A: U i"
     "\<And>x. x: A \<Longrightarrow> P x: U i"
@@ -291,7 +291,7 @@ schematic_goal transport_right_inv_derivation:
   shows "?prf: (trans P p) \<circ> (trans P p\<inverse>) = id (P y)"
   by (equality \<open>p:_\<close>) (reduce; intros)
 
-schematic_goal transport_pathcomp_derivation:
+lemma* transport_pathcomp_derivation:
   assumes
     "A: U i"
     "\<And>x. x: A \<Longrightarrow> P x: U i"
@@ -300,13 +300,13 @@ schematic_goal transport_pathcomp_derivation:
     "p: x =\<^bsub>A\<^esub> y" "q: y =\<^bsub>A\<^esub> z"
   shows "?prf: trans P q (trans P p u) = trans P (p \<bullet> q) u"
   apply (equality \<open>p:_\<close>)
-    schematic_subgoal premises for x p
+    focus premises vars x p
       apply (equality \<open>p:_\<close>)
         apply (reduce; intros)
     done
   done
 
-schematic_goal transport_compose_typefam_derivation:
+lemma* transport_compose_typefam_derivation:
   assumes
     "A: U i" "B: U i"
     "\<And>x. x: B \<Longrightarrow> P x: U i"
@@ -317,7 +317,7 @@ schematic_goal transport_compose_typefam_derivation:
   shows "?prf: trans (\<lambda>x. P (f x)) p u = trans P f[p] u"
   by (equality \<open>p:_\<close>) (reduce; intros)
 
-schematic_goal transport_function_family_derivation:
+lemma* transport_function_family_derivation:
   assumes
     "A: U i"
     "\<And>x. x: A \<Longrightarrow> P x: U i"
@@ -329,7 +329,7 @@ schematic_goal transport_function_family_derivation:
   shows "?prf: trans Q p ((f x) u) = (f y) (trans P p u)"
   by (equality \<open>p:_\<close>) (reduce; intros)
 
-schematic_goal transport_const_derivation:
+lemma* transport_const_derivation:
   assumes
     "A: U i" "B: U i"
     "x: A" "y: A"
@@ -346,7 +346,7 @@ definition transport_const_i ("trans'_const")
 
 translations "trans_const B p" \<leftharpoondown> "CONST transport_const A B x y p"
 
-schematic_goal transport_const [typechk]:
+lemma* transport_const [typechk]:
   assumes
     "A: U i" "B: U i"
     "x: A" "y: A"
@@ -354,14 +354,14 @@ schematic_goal transport_const [typechk]:
   shows "trans_const B p: \<Prod>b: B. trans (\<lambda>_. B) p b = b"
   unfolding transport_const_def by reduce+
 
-schematic_goal transport_const_comp [comps]:
+lemma* transport_const_comp [comps]:
   assumes
     "A: U i" "B: U i"
     "x: A" "b: B"
   shows "trans_const B (refl x) b\<equiv> refl b"
   unfolding transport_const_def by (subst comps) reduce+
 
-schematic_goal pathlift_derivation:
+lemma* pathlift_derivation:
   assumes
     "A: U i"
     "\<And>x. x: A \<Longrightarrow> P x: U i"
@@ -382,7 +382,7 @@ translations "lift P p u" \<leftharpoondown> "CONST pathlift A P x y p u"
 
 lemmas pathlift [typechk] = pathlift_derivation [folded pathlift_def]
 
-schematic_goal pathlift_comp [comps]:
+lemma* pathlift_comp [comps]:
   assumes
     "u: P x"
     "x: A"
@@ -391,7 +391,7 @@ schematic_goal pathlift_comp [comps]:
   shows "lift P (refl x) u \<equiv> refl <x, u>"
   unfolding pathlift_def by (subst comps) reduce+
 
-schematic_goal pathlift_fst_derivation:
+lemma* pathlift_fst_derivation:
   assumes
     "A: U i"
     "\<And>x. x: A \<Longrightarrow> P x: U i"
@@ -401,7 +401,7 @@ schematic_goal pathlift_fst_derivation:
   shows "?prf: fst[lift P p u] = p"
   apply (equality \<open>p:_\<close>)
     text \<open>Some rewriting needed here:\<close>
-    \<guillemotright> for x y
+    \<guillemotright> vars x y
       (*Here an automatic reordering tactic would be helpful*)
       apply (subst fst_of_pair[where ?a=x, symmetric])
         prefer 5
@@ -422,7 +422,7 @@ lemmas pathlift_fst [typechk] = pathlift_fst_derivation [folded pathlift_fst_def
 
 section \<open>Dependent paths\<close>
 
-schematic_goal dependent_map_derivation:
+lemma* dependent_map_derivation:
   assumes
     "A: U i"
     "\<And>x. x: A \<Longrightarrow> P x: U i"
@@ -443,7 +443,7 @@ translations "apd f p" \<leftharpoondown> "CONST Identity.apd A P f x y p"
 
 lemmas dependent_map [typechk] = dependent_map_derivation [folded apd_def]
 
-schematic_goal dependent_map_comp [comps]:
+lemma* dependent_map_comp [comps]:
   assumes
     "A: U i"
     "\<And>x. x: A \<Longrightarrow> P x: U i"
@@ -452,7 +452,7 @@ schematic_goal dependent_map_comp [comps]:
   shows "apd f (refl x) \<equiv> refl (f x)"
   unfolding apd_def by (subst comps) reduce+
 
-schematic_goal apd_ap_derivation:
+lemma* apd_ap_derivation:
   assumes
     "A: U i" "B: U i"
     "f: A \<rightarrow> B"
