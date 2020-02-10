@@ -192,7 +192,7 @@ schematic_goal quasiinv_qinv_derivation:
       done
   done
 
-definition "quasiinv_qinv A B f prf \<equiv>
+definition "quasiinverse_qinv A B f prf \<equiv>
   <f, SigInd (B \<rightarrow> A) (\<lambda>g. homotopy A (\<lambda>_. A) (g \<circ>\<^bsub>A\<^esub> f) (id A) \<times> homotopy B
   (\<lambda>_. B) (f \<circ>\<^bsub>B\<^esub> g) (id B)) (\<lambda>a. homotopy B (\<lambda>_. B) (f \<circ>\<^bsub>B\<^esub> Spartan.fst (B \<rightarrow> A)
   (\<lambda>x. homotopy A (\<lambda>_. A) (x \<circ>\<^bsub>A\<^esub> f) (id A) \<times> homotopy B (\<lambda>_. B) (f \<circ>\<^bsub>B\<^esub> x)
@@ -202,7 +202,8 @@ definition "quasiinv_qinv A B f prf \<equiv>
   homotopy B (\<lambda>_. B) (f \<circ>\<^bsub>B\<^esub> g) (id B)) `HH, Spartan.fst (homotopy A (\<lambda>_. A)
   (g \<circ>\<^bsub>A\<^esub> f) (id A)) (\<lambda>x. homotopy B (\<lambda>_. B) (f \<circ>\<^bsub>B\<^esub> g) (id B)) `HH>) prf>"
 
-lemmas quasiinv_qinv = quasiinv_qinv_derivation [folded quasiinv_qinv_def]
+lemmas quasiinverse_qinv =
+  quasiinv_qinv_derivation [folded quasiinverse_qinv_def]
 
 subsection \<open>Bi-invertible maps\<close>
 
@@ -278,7 +279,7 @@ schematic_goal biinv_imp_qinv_derivation:
           apply (rule homotopy_symmetric)
           text \<open>Now we are done since this is known.\<close>
           by fact
-  
+
         moreover
         have "?\<beta>: g \<circ> f \<circ> h ~ h"
           apply (subst (2) id_left[symmetric, of h], typechk)
@@ -316,6 +317,14 @@ definition "biinv_imp_qinv A B f \<equiv>
 lemmas biinv_imp_qinv [typechk] =
   biinv_imp_qinv_derivation [folded biinv_imp_qinv_def]
 
+schematic_goal biinv_id_derivation:
+  "A: U i \<Longrightarrow> ?prf: biinv (id A)"
+  by (rule qinv_imp_biinv) (rule qinv_id)
+
+definition "biinv_id A \<equiv> qinv_imp_biinv A A (id A) (qinv_id A)"
+
+lemmas biinv_id [typechk] = biinv_id_derivation [folded biinv_id_def]
+
 
 section \<open>Equivalence\<close>
 
@@ -337,9 +346,7 @@ schematic_goal equivalence_refl_derivation:
   shows "?prf: A \<simeq> A"
   unfolding equivalence_def
   apply intro defer
-    (*TODO: would like to just be able to write "rule qinv_imp_biinv" here. The
-      following is too low-level.*)
-    apply (rule qinv_imp_biinv[THEN PiE]) defer
+    apply (rule qinv_imp_biinv) defer
       apply (rule qinv_id)
   done
 
@@ -364,9 +371,9 @@ schematic_goal equivalence_symmetric_derivation:
     apply (drule biinv_imp_qinv[THEN PiE, rotated 3], typechk)
     apply intro
       \<^item> unfolding qinv_def
-        apply (rule fst[THEN PiE]) defer
+        apply (rule fst) defer
         by assumption typechk
-      \<^item> by (rule qinv_imp_biinv[THEN PiE]) (rule quasiinv_qinv)
+      \<^item> by (rule qinv_imp_biinv) (rule quasiinverse_qinv)
     done
   done
 
@@ -410,7 +417,7 @@ schematic_goal id_imp_equiv_derivation:
           \<^enum> by (rule U_in_U)
           \<^enum> by (rule lift_universe)
           \<^enum> apply reduce
-              apply (rule qinv_imp_biinv[THEN PiE])
+              apply (rule qinv_imp_biinv)
                 apply (rule qinv_id)
             done
         done

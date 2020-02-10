@@ -232,28 +232,41 @@ fun typechk_tac ctxt =
   Switch this flag off to discharge by non-unifying assumption instead.*)
 val auto_typechk = Attrib.setup_config_bool \<^binding>\<open>auto_typechk\<close> (K true)
 
-(*Helper tactic: discharges typing side conditions*)
-fun sidecond_tac ctxt =
-  if Config.get ctxt auto_typechk then typechk_tac ctxt else known_tac ctxt
+(*Combinator runs tactic and tries to discharge all new typing side conditions*)
+fun SIDE_CONDS tac ctxt =
+  let
+    val side_cond_tac =
+      if Config.get ctxt auto_typechk then typechk_tac ctxt else known_tac ctxt
+  in
+    tac THEN_ALL_NEW (TRY o side_cond_tac)
+  end
 
-(*Resolves with a given rule, discharging as many side conditions as possible*)
+(*Resolves with given rules, discharging as many side conditions as possible*)
 fun rule_tac ths ctxt =
-  resolve_tac ctxt ths THEN_ALL_NEW (TRY o sidecond_tac ctxt)
+  let
+    fun mk_rules ths [] = ths
+      | mk_rules ths ths' =
+          let val ths'' = foldr1 (op @)
+            (map (fn th => [th RS @{thm PiE}] handle THM _ => []) ths')
+          in
+            mk_rules (ths @ ths') ths''
+          end
+  in
+    SIDE_CONDS (resolve_tac ctxt (mk_rules [] ths)) ctxt
+  end
 
 (*Applies some introduction rule*)
-fun intro_tac ctxt = SUBGOAL (fn (_, i) =>
-  (resolve_tac ctxt (Named_Theorems.get ctxt \<^named_theorems>\<open>intros\<close>)
-  THEN_ALL_NEW (TRY o sidecond_tac ctxt)) i)
+fun intro_tac ctxt = SUBGOAL (fn (_, i) => SIDE_CONDS
+  (resolve_tac ctxt (Named_Theorems.get ctxt \<^named_theorems>\<open>intros\<close>)) ctxt i)
 
 fun intros_tac ctxt = SUBGOAL (fn (_, i) =>
   (CHANGED o REPEAT o CHANGED o intro_tac ctxt) i)
 
 (*Applies an elimination rule and solves the first resulting subgoal,
   which must be a typing judgment for the term being eliminated*)
-fun elims_tac ctxt = SUBGOAL (fn (_, i) =>
-  ((resolve_tac ctxt (Named_Theorems.get ctxt \<^named_theorems>\<open>elims\<close>)
-    THEN' known_tac ctxt)
-  THEN_ALL_NEW (TRY o sidecond_tac ctxt)) i)
+fun elims_tac ctxt = SUBGOAL (fn (_, i) => SIDE_CONDS
+  (resolve_tac ctxt (Named_Theorems.get ctxt \<^named_theorems>\<open>elims\<close>)
+    THEN' known_tac ctxt) ctxt i)
 \<close>
 
 method_setup assumptions =
