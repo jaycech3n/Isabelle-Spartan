@@ -74,5 +74,4 @@ fun make_holes ctxt =
     Lib.traverse_term expand #> eargs_to_vars
   end
 
-
 end

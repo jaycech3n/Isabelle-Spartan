@@ -1,3 +1,9 @@
+(*  Title:      equality.ML
+    Author:     Joshua Chen
+
+Equality reasoning with identity types.
+*)
+
 structure Equality:
 sig
 
