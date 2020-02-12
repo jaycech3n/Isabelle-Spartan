@@ -137,7 +137,7 @@ lemma* Id_transfer_derivation:
     "x: A" "y: A"
     "f: A \<rightarrow> B"
     "p: x =\<^bsub>A\<^esub> y"
-  shows "?prf: f `x = f `y"
+  shows "?prf: f x = f y"
   apply (equality \<open>p: _\<close>)
     apply intro
   done
@@ -155,7 +155,7 @@ lemmas Id_transfer [typechk] =
 
 lemma* ap_refl [comps]:
   assumes "f: A \<rightarrow> B" "x: A" "A: U i" "B: U i"
-  shows "f[refl x] \<equiv> refl (f `x)"
+  shows "f[refl x] \<equiv> refl (f x)"
   unfolding ap_def by (subst comps) reduce
 
 lemma* ap_pathcomp_derivation:
@@ -414,10 +414,11 @@ lemma* pathlift_fst_derivation:
 
 definition "pathlift_fst A P x y p u \<equiv>
   IdInd A (\<lambda>a b c. \<Prod>x: P a. ap (\<Sum>x: A. P x) A <a, x> <b, transport A (\<lambda>a. P a) a
-  b c `x> (Spartan.fst A (\<lambda>a. P a)) (pathlift A (\<lambda>a. P a) a b c x) =\<^bsub>a =\<^bsub>A\<^esub> b\<^esub> c)
-  (\<lambda>x. \<lambda>_: P x. refl (refl x)) x y p `u"
+  b c `x> (Spartan.fst A (\<lambda>a. P a)) (pathlift A (\<lambda>a. P a) a b c x) =\<^bsub>a =\<^bsub>A\<^esub> b\<^esub>
+  c) (\<lambda>x. \<lambda>_: P x. refl (refl x)) x y p `u"
 
-lemmas pathlift_fst [typechk] = pathlift_fst_derivation [folded pathlift_fst_def]
+lemmas pathlift_fst [typechk] =
+  pathlift_fst_derivation [folded pathlift_fst_def]
 
 
 section \<open>Dependent paths\<close>
@@ -429,7 +430,7 @@ lemma* dependent_map_derivation:
     "f: \<Prod>x: A. P x"
     "x: A" "y: A"
     "p: x =\<^bsub>A\<^esub> y"
-  shows "?prf: trans P p (f` x) = f `y"
+  shows "?prf: trans P p (f x) = f y"
   by (equality \<open>p:_\<close>) (reduce; intros; typechk)
 
 definition "apd A P f x y p \<equiv>
@@ -458,7 +459,7 @@ lemma* apd_ap_derivation:
     "f: A \<rightarrow> B"
     "x: A" "y: A"
     "p: x =\<^bsub>A\<^esub> y"
-  shows "?prf: apd f p = trans_const B p (f `x) \<bullet> f[p]"
+  shows "?prf: apd f p = trans_const B p (f x) \<bullet> f[p]"
   by (equality \<open>p:_\<close>) (reduce; intro)
 
 

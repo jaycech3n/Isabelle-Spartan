@@ -31,7 +31,7 @@ typedecl o
 
 section \<open>Judgments\<close>
 
-axiomatization has_type :: \<open>o \<Rightarrow> o \<Rightarrow> prop\<close> ("(2_:/ _)")
+judgment has_type :: \<open>o \<Rightarrow> o \<Rightarrow> prop\<close> ("(2_:/ _)")
 
 
 section \<open>Universes\<close>
@@ -349,7 +349,7 @@ section \<open>Functions\<close>
 
 lemma eta_exp:
   assumes "f: \<Prod>x: A. B x"
-  shows "f \<equiv> \<lambda>x: A. f `x"
+  shows "f \<equiv> \<lambda>x: A. f x"
   by (rule eta[symmetric])
 
 lemma lift_universe_codomain:
@@ -377,7 +377,7 @@ lemma funcompI [typechk]:
     "f: A \<rightarrow> B"
     "g: \<Prod>x: B. C x"
   shows
-    "g \<circ>\<^bsub>A\<^esub> f: \<Prod>x: A. C (f `x)"
+    "g \<circ>\<^bsub>A\<^esub> f: \<Prod>x: A. C (f x)"
   unfolding funcomp_def by typechk
 
 lemma funcomp_assoc [comps]:
@@ -405,7 +405,7 @@ lemma funcomp_apply_comp [comps]:
     "x: A"
     "A: U i" "B: U i"
     "\<And>x y. x: B \<Longrightarrow> C x: U i"
-  shows "(g \<circ>\<^bsub>A\<^esub> f) `x \<equiv> g `(f `x)"
+  shows "(g \<circ>\<^bsub>A\<^esub> f) x \<equiv> g (f x)"
   unfolding funcomp_def by reduce
 
 text \<open>Notation:\<close>
@@ -421,7 +421,7 @@ definition id where "id A \<equiv> \<lambda>x: A. x"
 
 lemma
   idI [typechk]: "A: U i \<Longrightarrow> id A: A \<rightarrow> A" and
-  id_comp [comps]: "x: A \<Longrightarrow> (id A) `x \<equiv> x"
+  id_comp [comps]: "x: A \<Longrightarrow> (id A) x \<equiv> x"
   unfolding id_def by reduce reduce
 
 lemma id_left [comps]:
@@ -476,7 +476,7 @@ definition "pathcomp A x y z p q \<equiv>
   IdInd A
     (\<lambda>x y _. y =\<^bsub>A\<^esub> z \<rightarrow> x =\<^bsub>A\<^esub> z)
     (\<lambda>x. \<lambda>q: x =\<^bsub>A\<^esub> z. IdInd A (\<lambda>x z _. (x =\<^bsub>A\<^esub> z)) (\<lambda>x. refl x) x z q)
-    x y p `q"
+    x y p q"
 
 lemmas Id_transitive [typechk] = Id_transitive_derivation [folded pathcomp_def]
 

@@ -12,13 +12,13 @@ definition homotopy_i (infix "~" 100)
 
 translations "f ~ g" \<leftharpoondown> "CONST homotopy A B f g"
 
-lemma homotopy_type [typechk]:
+lemma* homotopy_type [typechk]:
   assumes
     "A: U i"
     "\<And>x. x: A \<Longrightarrow> B x: U i"
     "f: \<Prod>x: A. B x" "g: \<Prod>x: A. B x"
-  shows "homotopy A B f g: U i"
-  unfolding homotopy_def by typechk           
+  shows "f ~ g: U i"
+  unfolding homotopy_def by typechk
 
 lemma* homotopy_refl_derivation:
   assumes
@@ -42,7 +42,7 @@ lemma* homotopy_symmetric_derivation:
   unfolding homotopy_def
   apply intros
     apply (rule Id_symmetric)
-      \<guillemotright> vars x by (rule PiE[of H _ _ x])
+      \<guillemotright> by (rule PiE[of H])
       \<guillemotright> by typechk
   done
 
@@ -63,9 +63,9 @@ lemma* homotopy_transitive_derivation:
   unfolding homotopy_def
   apply intro
     \<guillemotright> vars x
-      apply (rule Id_transitive[where ?y = "g `x"])
-        \<^item> by (rule PiE[of H1 _ _ x])
-        \<^item> by (rule PiE[of H2 _ _ x])
+      apply (rule Id_transitive[where ?y="g x"])
+        \<^item> by (rule PiE[of H1])
+        \<^item> by (rule PiE[of H2])
       done
     \<guillemotright> by typechk
   done
@@ -92,8 +92,9 @@ lemma* commute_homotopy_derivation:
         \<comment> \<open>Here it would really be nice to have automation for transport and
           propositional equality.\<close>
         apply (rule use_transport[where ?x="H x \<bullet> refl (g x)"])
-          apply (rule pathcomp_right_refl)
-          apply (rule Id_symmetric[OF _ _ _ pathcomp_left_refl])
+          \<guillemotright> by (rule pathcomp_right_refl)
+          \<guillemotright> by (rule Id_symmetric) (rule pathcomp_left_refl)
+          \<guillemotright> by typechk
     done
   done
 
@@ -310,9 +311,9 @@ definition "biinv_imp_qinv A B f \<equiv>
   \<circ>\<^bsub>A\<^esub> f) (id A)) (\<lambda>a. Equivalence.qinv A B f) (\<lambda>g ya. SigInd (B \<rightarrow> A) (\<lambda>g.
   homotopy B (\<lambda>_. B) (f \<circ>\<^bsub>B\<^esub> g) (id B)) (\<lambda>a. Equivalence.qinv A B f) (\<lambda>h H2. <g,
   <ya, homotopy_transitive B (\<lambda>x. B) (f \<circ>\<^bsub>B\<^esub> g) (f \<circ>\<^bsub>B\<^esub> h) (id B) (\<lambda>x: B. ap A B
-  (g `x) (h `x) f (homotopy_transitive B (\<lambda>x. A) g (g \<circ>\<^bsub>B\<^esub> f \<circ>\<^bsub>B\<^esub> h) h (\<lambda>x: B. ap
-  B A (id B `x) ((f \<circ>\<^bsub>B\<^esub> h) `x) g (homotopy_symmetric B (\<lambda>x. B) (f \<circ>\<^bsub>B\<^esub> h) (id B)
-  H2 `x)) (\<lambda>x: B. ya `(h `x)) `x)) H2>>) y) uua) x"
+  (g `x) (h `x) f (homotopy_transitive B (\<lambda>x. A) g (g \<circ>\<^bsub>B\<^esub> f \<circ>\<^bsub>B\<^esub> h) h (\<lambda>x: B.
+  ap B A (id B `x) ((f \<circ>\<^bsub>B\<^esub> h) `x) g (homotopy_symmetric B (\<lambda>x. B) (f \<circ>\<^bsub>B\<^esub> h)
+  (id B) H2 `x)) (\<lambda>x: B. ya `(h `x)) `x)) H2>>) y) uua) x"
 
 lemmas biinv_imp_qinv [typechk] =
   biinv_imp_qinv_derivation [folded biinv_imp_qinv_def]
