@@ -1,7 +1,9 @@
 (*  Title:      theorem_keywords.ML
-    Author:     Joshua Chen
+    Author:     Makarius Wenzel, Joshua Chen
 
-Schematic theorem commands, to enable implicit statements.
+Schematic theorem commands, to enable statements with implicits.
+
+Modified from code originally written by Makarius Wenzel.
 *)
 
 local

@@ -235,7 +235,7 @@ text \<open>
 
 consts
   iarg :: \<open>'a\<close> ("?")
-  earg :: \<open>'b\<close> ("{}")
+  hole :: \<open>'b\<close> ("{}")
 
 ML_file \<open>implicits.ML\<close>
 
@@ -359,7 +359,7 @@ section \<open>Equality\<close>
 
 lemma* Id_symmetric_derivation:
   assumes "A: U i" "x: A" "y: A" "p: x =\<^bsub>A\<^esub> y"
-  shows "?prf: y =\<^bsub>A\<^esub> x"
+  shows "{}: y =\<^bsub>A\<^esub> x"
   by (equality \<open>p:_\<close>) intro
 
 (*TODO: automatically generate definitions for the terms derived in the above manner*)
@@ -378,7 +378,7 @@ lemma* Id_transitive_derivation:
     "A: U i" "x: A" "y: A" "z: A"
     "p: x =\<^bsub>A\<^esub> y" "q: y =\<^bsub>A\<^esub> z"
   shows
-    "?prf: x =\<^bsub>A\<^esub> z"
+    "{}: x =\<^bsub>A\<^esub> z"
   apply (equality \<open>p: _\<close>)
     focus premises vars x p
       apply (equality \<open>p: _\<close>)

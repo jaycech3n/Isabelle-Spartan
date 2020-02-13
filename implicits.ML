@@ -27,14 +27,14 @@ val implicit_defs_attr = Thm.declaration_attribute (fn th =>
 
 fun make_holes ctxt =
   let
-    fun iarg_to_earg (Const (\<^const_name>\<open>iarg\<close>, T)) =
-          Const (\<^const_name>\<open>earg\<close>, T)
-      | iarg_to_earg t = t
+    fun iarg_to_hole (Const (\<^const_name>\<open>iarg\<close>, T)) =
+          Const (\<^const_name>\<open>hole\<close>, T)
+      | iarg_to_hole t = t
 
     fun expand head args =
       let
         fun betapplys (head', args') =
-          Term.betapplys (map_aterms iarg_to_earg head', args')
+          Term.betapplys (map_aterms iarg_to_hole head', args')
       in
         case head of
           Abs (x, T, t) =>
@@ -49,11 +49,11 @@ fun make_holes ctxt =
             | NONE => list_comb (head, args)
       end
 
-    fun eargs_to_vars t =
+    fun holes_to_vars t =
       let
-        val count = Lib.subterm_count (Const (\<^const_name>\<open>earg\<close>, dummyT))
+        val count = Lib.subterm_count (Const (\<^const_name>\<open>hole\<close>, dummyT))
 
-        fun subst (Const (\<^const_name>\<open>earg\<close>, T)) (Var (idx, _)::_) Ts =
+        fun subst (Const (\<^const_name>\<open>hole\<close>, T)) (Var (idx, _)::_) Ts =
               let
                 val bounds = map Bound (0 upto (length Ts - 1))
                 val T' = foldr1 (op -->) (Ts @ [T])
@@ -71,7 +71,7 @@ fun make_holes ctxt =
         subst t vars []
       end
   in
-    Lib.traverse_term expand #> eargs_to_vars
+    Lib.traverse_term expand #> holes_to_vars
   end
 
 end

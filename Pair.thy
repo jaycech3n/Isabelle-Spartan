@@ -24,7 +24,7 @@ lemma* Sig_dist_expand_derivation:
     "A: U i"
     "\<And>x. x: A \<Longrightarrow> B x: U i"
     "\<And>x. x: A \<Longrightarrow> C x: U i"
-  shows "?prf: (\<Sum>x: A. B x) \<times> (\<Sum>x: A. C x)"
+  shows "{}: (\<Sum>x: A. B x) \<times> (\<Sum>x: A. C x)"
   apply (rule SigE[of p])
     focus vars x y
       apply intro
