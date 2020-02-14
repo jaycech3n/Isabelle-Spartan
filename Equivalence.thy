@@ -254,7 +254,7 @@ lemma* biinv_imp_qinv_derivation:
   apply (erule SigE, typechk)+
 
   text \<open>Name the components:\<close>
-  \<guillemotright> premises vars _ _ _ g H1 h H2
+  focus premises vars _ _ _ g H1 h H2
   thm \<open>g:_\<close> \<open>h:_\<close> \<open>H1:_\<close> \<open>H2:_\<close>
 
   text \<open>

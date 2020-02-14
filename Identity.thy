@@ -122,8 +122,8 @@ definition "pathcomp_assoc A x y z w p q r \<equiv>
   (IdInd A (\<lambda>a b c. \<Prod>x: b =\<^bsub>A\<^esub> w. pathcomp A a a w (refl a) (pathcomp A a b w c
   x) =\<^bsub>a =\<^bsub>A\<^esub> w\<^esub> pathcomp A a b w (pathcomp A a a b (refl a) c) x) (\<lambda>a. \<lambda>x:
   a =\<^bsub>A\<^esub> w. IdInd A (\<lambda>a b c. pathcomp A a a b (refl a) (pathcomp A a a b (refl
-  a) c) =\<^bsub>a =\<^bsub>A\<^esub> b\<^esub> pathcomp A a a b (pathcomp A a a a (refl a) (refl a)) c) (\<lambda>a.
-  refl (refl a)) a w x) x z xa) r) x y p) q"
+  a) c) =\<^bsub>a =\<^bsub>A\<^esub> b\<^esub> pathcomp A a a b (pathcomp A a a a (refl a) (refl a)) c)
+  (\<lambda>a. refl (refl a)) a w x) x z xa) r) x y p) q"
 
 lemmas pathcomp_assoc [typechk] =
   pathcomp_assoc_derivation [folded pathcomp_assoc_def]
@@ -339,7 +339,8 @@ lemma* transport_const_derivation:
   by (equality \<open>p:_\<close>) (reduce; intros)
 
 definition "transport_const A B x y p \<equiv>
-  \<lambda>b: B. IdInd A (\<lambda>x y p. transport A (\<lambda>_. B) x y p `b =\<^bsub>B\<^esub> b) (\<lambda>x. refl b) x y p"
+  \<lambda>b: B. IdInd A (\<lambda>x y p. transport A (\<lambda>_. B) x y p `b =\<^bsub>B\<^esub> b) (\<lambda>x. refl b) x y
+  p"
 
 definition transport_const_i ("trans'_const")
   where [implicit]: "trans_const B p \<equiv> transport_const ? B ? ? p"
