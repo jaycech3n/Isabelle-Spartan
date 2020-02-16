@@ -19,18 +19,19 @@ structure Inserts = Proof_Data (
   val init = K (Item_Net.init Term.aconv_untyped single)
 )
 
-fun push_hyp_tac (t, _) = Subgoal.FOCUS_PARAMS (fn {context = ctxt, concl, ...} =>
-  let
-    val (_, C) = Lib.dest_typing (Thm.term_of concl)
-    val B = Thm.cterm_of ctxt (Lib.lambda_var t C)
-    val a = Thm.cterm_of ctxt t
-    (*The resolvent is PiE[where ?B=B and ?a=a]*)
-    val resolvent =
-      Drule.infer_instantiate' ctxt [NONE, NONE, SOME B, SOME a] @{thm PiE}
-  in
-    HEADGOAL (resolve_tac ctxt [resolvent])
-    THEN SOMEGOAL (known_tac ctxt)
-  end)
+fun push_hyp_tac (t, _) =
+  Subgoal.FOCUS_PARAMS (fn {context = ctxt, concl, ...} =>
+    let
+      val (_, C) = Lib.dest_typing (Thm.term_of concl)
+      val B = Thm.cterm_of ctxt (Lib.lambda_var t C)
+      val a = Thm.cterm_of ctxt t
+      (*The resolvent is PiE[where ?B=B and ?a=a]*)
+      val resolvent =
+        Drule.infer_instantiate' ctxt [NONE, NONE, SOME B, SOME a] @{thm PiE}
+    in
+      HEADGOAL (resolve_tac ctxt [resolvent])
+      THEN SOMEGOAL (known_tac ctxt)
+    end)
 
 fun induction_tac p A x y ctxt =
   let
@@ -79,6 +80,5 @@ fun equality_context_tac fact ctxt =
   in
     fn (ctxt, st) => Method.CONTEXT (record_inserts ctxt) (tac st)
   end
-
 
 end

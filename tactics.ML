@@ -4,6 +4,20 @@
 General tactics for dependent type theory.
 *)
 
+structure Tactics:
+sig
+
+val assumptions_tac: Proof.context -> int -> tactic
+val known_tac: Proof.context -> int -> tactic
+val typechk_tac: Proof.context -> int -> tactic
+val rule_tac: thm list -> Proof.context -> int -> tactic
+val intro_tac: Proof.context -> int -> tactic
+val intros_tac: Proof.context -> int -> tactic
+val SIDE_CONDS: (int -> tactic) -> Proof.context -> int -> tactic
+val auto_typechk: bool Config.T
+
+end = struct
+
 (*An assumption tactic that only solves typing goals with rigid terms and
   judgmental equalities without schematic variables*)
 fun assumptions_tac ctxt = SUBGOAL (fn (goal, i) =>
@@ -40,7 +54,7 @@ fun typechk_tac ctxt =
         let val net = Tactic.build_net
           ((Named_Theorems.get ctxt \<^named_theorems>\<open>typechk\<close>)
           @(Named_Theorems.get ctxt \<^named_theorems>\<open>intros\<close>)
-          @(Named_Theorems.get ctxt \<^named_theorems>\<open>elims\<close>))
+          @(Elim.rules (Context.Proof ctxt)))
         in (resolve_from_net_tac ctxt net) i end
       else no_tac)
   in
@@ -83,6 +97,10 @@ fun intros_tac ctxt = SUBGOAL (fn (_, i) =>
 
 (*Applies an elimination rule and solves the first resulting subgoal,
   which must be a typing judgment for the term being eliminated*)
-fun elims_tac ctxt = SUBGOAL (fn (_, i) => SIDE_CONDS
+(* fun elims_tac ctxt = SUBGOAL (fn (_, i) => SIDE_CONDS
   (resolve_tac ctxt (Named_Theorems.get ctxt \<^named_theorems>\<open>elims\<close>)
-    THEN' known_tac ctxt) ctxt i)
+    THEN' known_tac ctxt) ctxt i) *)
+
+end
+
+open Tactics

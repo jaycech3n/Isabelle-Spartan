@@ -21,8 +21,6 @@ declare [[eta_contract=false]]
 ML_file \<open>theorem_keywords.ML\<close>
 ML_file \<open>focus.ML\<close>
 
-named_theorems intros and elims and comps and typechk
-
 
 section \<open>Metatype setup\<close>
 
@@ -77,24 +75,24 @@ translations
 abbreviation Fn (infixr "\<rightarrow>" 40) where "A \<rightarrow> B \<equiv> \<Prod>_: A. B"
 
 axiomatization where
-  PiF [intros]: "\<lbrakk>\<And>x. x: A \<Longrightarrow> B x: U i; A: U i\<rbrakk> \<Longrightarrow> \<Prod>x: A. B x: U i" and
+  PiF: "\<lbrakk>\<And>x. x: A \<Longrightarrow> B x: U i; A: U i\<rbrakk> \<Longrightarrow> \<Prod>x: A. B x: U i" and
 
-  PiI [intros]: "\<lbrakk>\<And>x. x: A \<Longrightarrow> b x: B x; A: U i\<rbrakk> \<Longrightarrow> \<lambda>x: A. b x: \<Prod>x: A. B x" and
+  PiI: "\<lbrakk>\<And>x. x: A \<Longrightarrow> b x: B x; A: U i\<rbrakk> \<Longrightarrow> \<lambda>x: A. b x: \<Prod>x: A. B x" and
 
-  PiE [elims]: "\<lbrakk>f: \<Prod>x: A. B x; a: A\<rbrakk> \<Longrightarrow> f `a: B a" and
+  PiE: "\<lbrakk>f: \<Prod>x: A. B x; a: A\<rbrakk> \<Longrightarrow> f `a: B a" and
 
-  beta [comps]: "\<lbrakk>a: A; \<And>x. x: A \<Longrightarrow> b x: B x\<rbrakk> \<Longrightarrow> (\<lambda>x: A. b x) `a \<equiv> b a" and
+  beta: "\<lbrakk>a: A; \<And>x. x: A \<Longrightarrow> b x: B x\<rbrakk> \<Longrightarrow> (\<lambda>x: A. b x) `a \<equiv> b a" and
 
   eta: "f: \<Prod>x: A. B x \<Longrightarrow> \<lambda>x: A. f `x \<equiv> f" and
 
-  Pi_cong [cong]: "\<lbrakk>
+  Pi_cong: "\<lbrakk>
     A: U i;
     \<And>x. x: A \<Longrightarrow> B x: U i;
     \<And>x. x: A \<Longrightarrow> B' x: U i;
     \<And>x. x: A \<Longrightarrow> B x \<equiv> B' x
     \<rbrakk> \<Longrightarrow> \<Prod>x: A. B x \<equiv> \<Prod>x: A. B' x" and
 
-  lam_cong [cong]: "\<lbrakk>\<And>x. x: A \<Longrightarrow> b x \<equiv> c x; A: U i\<rbrakk> \<Longrightarrow> \<lambda>x: A. b x \<equiv> \<lambda>x: A. c x"
+  lam_cong: "\<lbrakk>\<And>x. x: A \<Longrightarrow> b x \<equiv> c x; A: U i\<rbrakk> \<Longrightarrow> \<lambda>x: A. b x \<equiv> \<lambda>x: A. c x"
 
 
 section \<open>\<Sum>-type\<close>
@@ -112,11 +110,11 @@ abbreviation Prod (infixl "\<times>" 50)
   where "A \<times> B \<equiv> \<Sum>_: A. B"
 
 axiomatization where
-  SigF [intros]: "\<lbrakk>\<And>x. x: A \<Longrightarrow> B x: U i; A: U i\<rbrakk> \<Longrightarrow> \<Sum>x: A. B x: U i" and
+  SigF: "\<lbrakk>\<And>x. x: A \<Longrightarrow> B x: U i; A: U i\<rbrakk> \<Longrightarrow> \<Sum>x: A. B x: U i" and
 
-  SigI [intros]: "\<lbrakk>\<And>x. x : A \<Longrightarrow> B x: U i; a: A; b: B a\<rbrakk> \<Longrightarrow> <a, b>: \<Sum>x: A. B x" and
+  SigI: "\<lbrakk>\<And>x. x : A \<Longrightarrow> B x: U i; a: A; b: B a\<rbrakk> \<Longrightarrow> <a, b>: \<Sum>x: A. B x" and
 
-  SigE [elims]: "\<lbrakk>
+  SigE: "\<lbrakk>
     p: \<Sum>x: A. B x;
     A: U i;
     \<And>x. x : A \<Longrightarrow> B x: U i;
@@ -124,7 +122,7 @@ axiomatization where
     \<And>x y. \<lbrakk>x: A; y: B x\<rbrakk> \<Longrightarrow> f x y: C <x, y>
     \<rbrakk> \<Longrightarrow> SigInd A B C f p: C p" and
 
-  Sig_comp [comps]: "\<lbrakk>
+  Sig_comp: "\<lbrakk>
     a: A;
     b: B a;
     \<And>x. x: A \<Longrightarrow> B x: U i;
@@ -132,7 +130,7 @@ axiomatization where
     \<And>x y. \<lbrakk>x: A; y: B x\<rbrakk> \<Longrightarrow> f x y: C <x, y>
     \<rbrakk> \<Longrightarrow> SigInd A B C f <a, b> \<equiv> f a b" and
 
-  Sig_cong [cong]: "\<lbrakk>
+  Sig_cong: "\<lbrakk>
     \<And>x. x: A \<Longrightarrow> B x \<equiv> B' x;
     A: U i;
     \<And>x. x : A \<Longrightarrow> B x: U i;
@@ -152,11 +150,11 @@ syntax   "_Id" :: \<open>o \<Rightarrow> o \<Rightarrow> o \<Rightarrow> o\<clos
 translations "a =\<^bsub>A\<^esub> b" \<rightleftharpoons> "CONST Id A a b"
 
 axiomatization where
-  IdF [intros]: "\<lbrakk>A: U i; a: A; b: A\<rbrakk> \<Longrightarrow> a =\<^bsub>A\<^esub> b: U i" and
+  IdF: "\<lbrakk>A: U i; a: A; b: A\<rbrakk> \<Longrightarrow> a =\<^bsub>A\<^esub> b: U i" and
 
-  IdI [intros]: "a: A \<Longrightarrow> refl a: a =\<^bsub>A\<^esub> a" and
+  IdI: "a: A \<Longrightarrow> refl a: a =\<^bsub>A\<^esub> a" and
 
-  IdE [elims]: "\<lbrakk>
+  IdE: "\<lbrakk>
     p: a =\<^bsub>A\<^esub> b;
     a: A;
     b: A;
@@ -164,7 +162,7 @@ axiomatization where
     \<And>x. x: A \<Longrightarrow> f x: C x x (refl x)
     \<rbrakk> \<Longrightarrow> IdInd A C f a b p: C a b p" and
 
-  Id_comp [comps]: "\<lbrakk>
+  Id_comp: "\<lbrakk>
     a: A;
     \<And>x y p. \<lbrakk>x: A; y: A; p: x =\<^bsub>A\<^esub> y\<rbrakk> \<Longrightarrow> C x y p: U i;
     \<And>x. x: A \<Longrightarrow> f x: C x x (refl x)
@@ -181,6 +179,15 @@ ML_file "~~/src/Tools/IsaPlanner/zipper.ML"
 ML_file "~~/src/Tools/eqsubst.ML"
 
 ML_file \<open>lib.ML\<close>
+ML_file \<open>elimination.ML\<close> \<comment> \<open>declares the [elims] attribute\<close>
+
+named_theorems intros and comps and typechk
+lemmas
+  [intros] = PiF PiI SigF SigI IdF IdI and
+  [elims] = PiE SigE IdE and
+  [comps] = beta Sig_comp Id_comp and
+  [cong] = Pi_cong lam_cong Sig_cong
+
 ML_file \<open>tactics.ML\<close>
 
 method_setup assumptions =
@@ -197,8 +204,8 @@ method_setup intro =
 method_setup intros =
   \<open>Scan.succeed (fn ctxt => SIMPLE_METHOD (HEADGOAL (intros_tac ctxt)))\<close>
 
-method_setup elims =
-  \<open>Scan.succeed (fn ctxt => SIMPLE_METHOD (HEADGOAL (elims_tac ctxt)))\<close>
+(* method_setup elims =
+  \<open>Scan.succeed (fn ctxt => SIMPLE_METHOD (HEADGOAL (elims_tac ctxt)))\<close> *)
 
 method_setup typechk =
   \<open>Scan.succeed (fn ctxt => SIMPLE_METHOD (
