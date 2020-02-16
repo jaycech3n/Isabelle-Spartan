@@ -54,7 +54,7 @@ fun typechk_tac ctxt =
         let val net = Tactic.build_net
           ((Named_Theorems.get ctxt \<^named_theorems>\<open>typechk\<close>)
           @(Named_Theorems.get ctxt \<^named_theorems>\<open>intros\<close>)
-          @(Elim.rules (Context.Proof ctxt)))
+          @(Elim.rules ctxt))
         in (resolve_from_net_tac ctxt net) i end
       else no_tac)
   in

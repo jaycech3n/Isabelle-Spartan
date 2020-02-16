@@ -23,13 +23,14 @@ fun register_rule rl =
     Rules.map (Termtab.update (tp, rl))
   end
 
-fun rules context = map (op #2) (Termtab.dest (Rules.get context))
+fun rules ctxt = map (op #2) (Termtab.dest (Rules.get (Context.Proof ctxt)))
 
 (* Set up [elims] attribute *)
 val _ = Theory.setup (
   Attrib.setup \<^binding>\<open>elims\<close>
     (Scan.lift (Scan.succeed (Thm.declaration_attribute register_rule))) ""
-  #> Global_Theory.add_thms_dynamic (\<^binding>\<open>elims\<close>, rules)
+  #> Global_Theory.add_thms_dynamic (\<^binding>\<open>elims\<close>,
+      fn context => (rules (Context.proof_of context)))
 )
 
 
