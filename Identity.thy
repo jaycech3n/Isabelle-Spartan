@@ -33,7 +33,7 @@ section \<open>Basic propositional equalities\<close>
 
 lemma* pathcomp_left_refl_derivation:
   assumes "A: U i" "x: A" "y: A" "p: x =\<^bsub>A\<^esub> y"
-  shows "{}: (refl x) \<bullet> p = p"
+  shows "\<^undefined>: (refl x) \<bullet> p = p"
   apply (equality \<open>p: _\<close>)
     apply (reduce; intros)
   done
@@ -47,7 +47,7 @@ lemmas pathcomp_left_refl [typechk] =
 
 lemma* pathcomp_right_refl_derivation:
   assumes "A: U i" "x: A" "y: A" "p: x =\<^bsub>A\<^esub> y"
-  shows "{}: p \<bullet> (refl y) = p"
+  shows "\<^undefined>: p \<bullet> (refl y) = p"
   apply (equality \<open>p: _\<close>)
     apply (reduce; intros)
   done
@@ -61,7 +61,7 @@ lemmas pathcomp_right_refl [typechk] =
 
 lemma* pathcomp_left_inv_derivation:
   assumes "A: U i" "x: A" "y: A" "p: x =\<^bsub>A\<^esub> y"
-  shows "{}: p\<inverse> \<bullet> p = refl y"
+  shows "\<^undefined>: p\<inverse> \<bullet> p = refl y"
   apply (equality \<open>p: _\<close>)
     apply (reduce; intros)
   done
@@ -75,7 +75,7 @@ lemmas pathcomp_left_inv [typechk] =
 
 lemma* pathcomp_right_inv_derivation:
   assumes "A: U i" "x: A" "y: A" "p: x =\<^bsub>A\<^esub> y"
-  shows "{}: p \<bullet> p\<inverse> = refl x"
+  shows "\<^undefined>: p \<bullet> p\<inverse> = refl x"
   apply (equality \<open>p: _\<close>)
     apply (reduce; intros)
   done
@@ -89,7 +89,7 @@ lemmas pathcomp_right_inv [typechk] =
 
 lemma* pathinv_pathinv_derivation:
   assumes "A: U i" "x: A" "y: A" "p: x =\<^bsub>A\<^esub> y"
-  shows "{}: p\<inverse>\<inverse> = p"
+  shows "\<^undefined>: p\<inverse>\<inverse> = p"
   apply (equality \<open>p: _\<close>)
     apply (reduce; intros)
   done
@@ -105,7 +105,7 @@ lemma* pathcomp_assoc_derivation:
   assumes
     "A: U i" "x: A" "y: A" "z: A" "w: A"
     "p: x =\<^bsub>A\<^esub> y" "q: y =\<^bsub>A\<^esub> z" "r: z =\<^bsub>A\<^esub> w"
-  shows "{}: p \<bullet> (q \<bullet> r) = p \<bullet> q \<bullet> r"
+  shows "\<^undefined>: p \<bullet> (q \<bullet> r) = p \<bullet> q \<bullet> r"
   apply (equality \<open>p:_\<close>)
     focus premises vars x p
       apply (equality \<open>p:_\<close>)
@@ -137,7 +137,7 @@ lemma* Id_transfer_derivation:
     "x: A" "y: A"
     "f: A \<rightarrow> B"
     "p: x =\<^bsub>A\<^esub> y"
-  shows "{}: f x = f y"
+  shows "\<^undefined>: f x = f y"
   apply (equality \<open>p: _\<close>)
     apply intro
   done
@@ -165,7 +165,7 @@ lemma* ap_pathcomp_derivation:
     "f: A \<rightarrow> B"
     "p: x =\<^bsub>A\<^esub> y" "q: y =\<^bsub>A\<^esub> z"
   shows
-    "{}: f[p \<bullet> q] = f[p] \<bullet> f[q]"
+    "\<^undefined>: f[p \<bullet> q] = f[p] \<bullet> f[q]"
   apply (equality \<open>p:_\<close>)
     focus premises vars x p
       apply (equality \<open>p:_\<close>)
@@ -189,7 +189,7 @@ lemma* ap_pathinv_derivation:
     "x: A" "y: A"
     "f: A \<rightarrow> B"
     "p: x =\<^bsub>A\<^esub> y"
-  shows "{}: f[p\<inverse>] = f[p]\<inverse>"
+  shows "\<^undefined>: f[p\<inverse>] = f[p]\<inverse>"
   by (equality \<open>p:_\<close>) (reduce; intro)
 
 definition "ap_pathinv A B x y f p \<equiv>
@@ -206,7 +206,7 @@ lemma* ap_funcomp_derivation:
     "x: A" "y: A"
     "f: A \<rightarrow> B" "g: B \<rightarrow> C"
     "p: x =\<^bsub>A\<^esub> y"
-  shows "{}: (g \<circ> f)[p] = g[f[p]]"
+  shows "\<^undefined>: (g \<circ> f)[p] = g[f[p]]"
   apply (equality \<open>p:_\<close>)
     apply (simp only: funcomp_apply_comp[symmetric])
     apply (reduce; intro)
@@ -220,7 +220,7 @@ lemmas ap_funcomp [typechk] = ap_funcomp_derivation [folded ap_funcomp_def]
 
 lemma* ap_id_derivation:
   assumes "A: U i" "x: A" "y: A" "p: x =\<^bsub>A\<^esub> y"
-  shows "{}: (id A)[p] = p"
+  shows "\<^undefined>: (id A)[p] = p"
   apply (equality \<open>p:_\<close>)
     apply (subst (6 8) id_comp[symmetric]; typechk)
     apply (reduce; intros)
@@ -240,7 +240,7 @@ lemma* transport_derivation:
     "\<And>x. x: A \<Longrightarrow> P x: U i"
     "x: A" "y: A"
     "p: x =\<^bsub>A\<^esub> y"
-  shows "{}: P x \<rightarrow> P y"
+  shows "\<^undefined>: P x \<rightarrow> P y"
   by (equality \<open>p:_\<close>) intro
 
 definition "transport A P x y p \<equiv>
@@ -279,7 +279,7 @@ lemma* transport_left_inv_derivation:
     "\<And>x. x: A \<Longrightarrow> P x: U i"
     "x: A" "y: A"
     "p: x =\<^bsub>A\<^esub> y"
-  shows "{}: (trans P p\<inverse>) \<circ> (trans P p) = id (P x)"
+  shows "\<^undefined>: (trans P p\<inverse>) \<circ> (trans P p) = id (P x)"
   by (equality \<open>p:_\<close>) (reduce; intro)
 
 lemma* transport_right_inv_derivation:
@@ -288,7 +288,7 @@ lemma* transport_right_inv_derivation:
     "\<And>x. x: A \<Longrightarrow> P x: U i"
     "x: A" "y: A"
     "p: x =\<^bsub>A\<^esub> y"
-  shows "{}: (trans P p) \<circ> (trans P p\<inverse>) = id (P y)"
+  shows "\<^undefined>: (trans P p) \<circ> (trans P p\<inverse>) = id (P y)"
   by (equality \<open>p:_\<close>) (reduce; intros)
 
 lemma* transport_pathcomp_derivation:
@@ -298,7 +298,7 @@ lemma* transport_pathcomp_derivation:
     "x: A" "y: A" "z: A"
     "u: P x"
     "p: x =\<^bsub>A\<^esub> y" "q: y =\<^bsub>A\<^esub> z"
-  shows "{}: trans P q (trans P p u) = trans P (p \<bullet> q) u"
+  shows "\<^undefined>: trans P q (trans P p u) = trans P (p \<bullet> q) u"
   apply (equality \<open>p:_\<close>)
     focus premises vars x p
       apply (equality \<open>p:_\<close>)
@@ -314,7 +314,7 @@ lemma* transport_compose_typefam_derivation:
     "x: A" "y: A"
     "p: x =\<^bsub>A\<^esub> y"
     "u: P (f x)"
-  shows "{}: trans (\<lambda>x. P (f x)) p u = trans P f[p] u"
+  shows "\<^undefined>: trans (\<lambda>x. P (f x)) p u = trans P f[p] u"
   by (equality \<open>p:_\<close>) (reduce; intros)
 
 lemma* transport_function_family_derivation:
@@ -326,7 +326,7 @@ lemma* transport_function_family_derivation:
     "x: A" "y: A"
     "u: P x"
     "p: x =\<^bsub>A\<^esub> y"
-  shows "{}: trans Q p ((f x) u) = (f y) (trans P p u)"
+  shows "\<^undefined>: trans Q p ((f x) u) = (f y) (trans P p u)"
   by (equality \<open>p:_\<close>) (reduce; intros)
 
 lemma* transport_const_derivation:
@@ -335,7 +335,7 @@ lemma* transport_const_derivation:
     "x: A" "y: A"
     "p: x =\<^bsub>A\<^esub> y"
     "b: B"
-  shows "{}: trans (\<lambda>_. B) p b = b"
+  shows "\<^undefined>: trans (\<lambda>_. B) p b = b"
   by (equality \<open>p:_\<close>) (reduce; intros)
 
 definition "transport_const A B x y p \<equiv>
@@ -369,7 +369,7 @@ lemma* pathlift_derivation:
     "x: A" "y: A"
     "u: P x"
     "p: x =\<^bsub>A\<^esub> y"
-  shows "{}: <x, u> = <y, trans P p u>"
+  shows "\<^undefined>: <x, u> = <y, trans P p u>"
   by (equality \<open>p:_\<close>) (reduce; intros)
 
 definition "pathlift A P x y p u \<equiv>
@@ -399,14 +399,14 @@ lemma* pathlift_fst_derivation:
     "x: A" "y: A"
     "u: P x"
     "p: x =\<^bsub>A\<^esub> y"
-  shows "{}: fst[lift P p u] = p"
+  shows "\<^undefined>: fst[lift P p u] = p"
   apply (equality \<open>p:_\<close>)
     text \<open>Some rewriting needed here:\<close>
     \<guillemotright> vars x y
       (*Here an automatic reordering tactic would be helpful*)
-      apply (subst fst_of_pair[where ?a=x, symmetric])
+      apply (subst fst_comp[where ?a=x, symmetric])
         prefer 5
-        apply (subst fst_of_pair[where ?a=y, symmetric])
+        apply (subst fst_comp[where ?a=y, symmetric])
           prefer 5
           apply typechk
       done
@@ -431,7 +431,7 @@ lemma* dependent_map_derivation:
     "f: \<Prod>x: A. P x"
     "x: A" "y: A"
     "p: x =\<^bsub>A\<^esub> y"
-  shows "{}: trans P p (f x) = f y"
+  shows "\<^undefined>: trans P p (f x) = f y"
   by (equality \<open>p:_\<close>) (reduce; intros; typechk)
 
 definition "apd A P f x y p \<equiv>
@@ -460,7 +460,7 @@ lemma* apd_ap_derivation:
     "f: A \<rightarrow> B"
     "x: A" "y: A"
     "p: x =\<^bsub>A\<^esub> y"
-  shows "{}: apd f p = trans_const B p (f x) \<bullet> f[p]"
+  shows "\<^undefined>: apd f p = trans_const B p (f x) \<bullet> f[p]"
   by (equality \<open>p:_\<close>) (reduce; intro)
 
 

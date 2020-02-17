@@ -16,7 +16,27 @@ translations
   "snd" \<leftharpoondown> "CONST Spartan.snd A B"
 
 
-section \<open>Some more results\<close>
+section \<open>Projections\<close>
+
+lemma* fst [typechk]:
+  assumes
+    "p: \<Sum>x: A. B x"
+    "A: U i" "\<And>x. x: A \<Longrightarrow> B x: U i"
+  shows "fst p: A"
+  by typechk
+
+lemma* snd [typechk]:
+  assumes
+    "p: \<Sum>x: A. B x"
+    "A: U i" "\<And>x. x: A \<Longrightarrow> B x: U i"
+  shows "snd p: B (fst p)"
+  by typechk
+
+method fst for p::o = rule fst[of p]
+method snd for p::o = rule snd[of p]
+
+
+section \<open>Properties of \<Sigma>\<close>
 
 lemma* Sig_dist_expand_derivation:
   assumes
@@ -24,19 +44,17 @@ lemma* Sig_dist_expand_derivation:
     "A: U i"
     "\<And>x. x: A \<Longrightarrow> B x: U i"
     "\<And>x. x: A \<Longrightarrow> C x: U i"
-  shows "{}: (\<Sum>x: A. B x) \<times> (\<Sum>x: A. C x)"
-
-  apply (tactic \<open>HEADGOAL (elims_tac @{term "p"}  @{context})\<close>)
-  (* apply (rule SigE[of p]) *)
+  shows "\<^undefined>: (\<Sum>x: A. B x) \<times> (\<Sum>x: A. C x)"
+  apply (elim p)
     focus vars x y
       apply intro
         \<guillemotright> apply intro
             apply assumption
-            apply (rule PiE[where ?a=y]; rule fst)
+            apply (fst y)
           done
         \<guillemotright> apply intro
             apply assumption
-            apply (rule PiE[where ?a=y]; rule snd)
+            apply (snd y)
           done
     done
   done

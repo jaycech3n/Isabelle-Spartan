@@ -204,8 +204,9 @@ method_setup intro =
 method_setup intros =
   \<open>Scan.succeed (fn ctxt => SIMPLE_METHOD (HEADGOAL (intros_tac ctxt)))\<close>
 
-(* method_setup elims =
-  \<open>Scan.succeed (fn ctxt => SIMPLE_METHOD (HEADGOAL (elims_tac ctxt)))\<close> *)
+method_setup elim =
+  \<open>Args.term >> (fn tm => fn ctxt =>
+    SIMPLE_METHOD' (SIDE_CONDS (elims_tac tm ctxt) ctxt))\<close>
 
 method_setup typechk =
   \<open>Scan.succeed (fn ctxt => SIMPLE_METHOD (
@@ -252,6 +253,9 @@ ML \<open>
 val _ = Context.>>
   (Syntax_Phases.term_check 1 "" (fn ctxt => map (Implicits.make_holes ctxt)))
 \<close>
+
+\<comment> \<open>Proof term marker\<close>
+definition proof_term ("\<^undefined>") where [implicit]: "\<^undefined> \<equiv> ?"
 
 
 section \<open>Lambda coercion\<close>
@@ -366,7 +370,7 @@ section \<open>Equality\<close>
 
 lemma* Id_symmetric_derivation:
   assumes "A: U i" "x: A" "y: A" "p: x =\<^bsub>A\<^esub> y"
-  shows "{}: y =\<^bsub>A\<^esub> x"
+  shows "\<^undefined>: y =\<^bsub>A\<^esub> x"
   by (equality \<open>p:_\<close>) intro
 
 (*TODO: automatically generate definitions for the terms derived in the above manner*)
@@ -385,7 +389,7 @@ lemma* Id_transitive_derivation:
     "A: U i" "x: A" "y: A" "z: A"
     "p: x =\<^bsub>A\<^esub> y" "q: y =\<^bsub>A\<^esub> z"
   shows
-    "{}: x =\<^bsub>A\<^esub> z"
+    "\<^undefined>: x =\<^bsub>A\<^esub> z"
   apply (equality \<open>p: _\<close>)
     focus premises vars x p
       apply (equality \<open>p: _\<close>)
@@ -412,12 +416,12 @@ section \<open>Pairs\<close>
 definition "fst A B \<equiv> \<lambda>p: \<Sum>x: A. B x. SigInd A B (\<lambda>_. A) (\<lambda>x y. x) p"
 definition "snd A B \<equiv> \<lambda>p: \<Sum>x: A. B x. SigInd A B (\<lambda>p. B (fst A B p)) (\<lambda>x y. y) p"
 
-lemma fst [typechk]:
+lemma fst_type [typechk]:
   assumes "A: U i" "\<And>x. x: A \<Longrightarrow> B x: U i"
   shows "fst A B: (\<Sum>x: A. B x) \<rightarrow> A"
   unfolding fst_def by typechk
 
-lemma fst_of_pair [comps]:
+lemma fst_comp [comps]:
   assumes
     "a: A"
     "b: B a"
@@ -426,12 +430,12 @@ lemma fst_of_pair [comps]:
   shows "fst A B <a, b> \<equiv> a"
   unfolding fst_def by reduce
 
-lemma snd [typechk]:
+lemma snd_type [typechk]:
   assumes "A: U i" "\<And>x. x: A \<Longrightarrow> B x: U i"
   shows "snd A B: \<Prod>p: \<Sum>x: A. B x. B (fst A B p)"
   unfolding snd_def by typechk reduce
 
-lemma snd_of_pair [comps]:
+lemma snd_comp [comps]:
   assumes "a: A" "b: B a" "A: U i" "\<And>x. x: A \<Longrightarrow> B x: U i"
   shows "snd A B <a, b> \<equiv> b"
   unfolding snd_def by reduce

@@ -121,11 +121,38 @@ fun elims_tac tm = Subgoal.FOCUS_PREMS (fn {context = goal_ctxt, prems, ...} =>
             let val resolvent = Drule.infer_instantiate' goal_ctxt
               [SOME (Thm.cterm_of goal_ctxt tm)] rl
             in
-              HEADGOAL
-                (SIDE_CONDS (resolve_tac goal_ctxt [resolvent]) goal_ctxt)
+              HEADGOAL (resolve_tac goal_ctxt [resolvent])
             end
         end
     | _ => no_tac
+  end)
+
+fun elims_tac tm ctxt = SUBGOAL (fn (goal, i) =>
+  let
+    fun elim_rule typing =
+      let
+        val hd = head_of (Lib.type_of_typing typing)
+        val opt_rl = Elim.get_rule ctxt hd
+      in
+        case opt_rl of
+          NONE => Drule.dummy_thm
+        | SOME rl => Drule.infer_instantiate' ctxt
+            [SOME (Thm.cterm_of ctxt tm)] rl
+      end
+
+    val template = Lib.typing_of_term tm
+
+    val facts = Proof_Context.facts_of ctxt
+    val candidate_typings = Facts.could_unify facts template
+    val candidate_rules = map (elim_rule o Thm.prop_of o #1) candidate_typings
+
+    val prems = Logic.strip_assums_hyp goal
+    val candidate_typings' =
+      filter (fn prem => Term.could_unify (template, prem)) prems
+    val candidate_rules' = map elim_rule candidate_typings'
+  in
+    (resolve_tac ctxt candidate_rules
+    ORELSE' eresolve_tac ctxt candidate_rules') i
   end)
 
 end

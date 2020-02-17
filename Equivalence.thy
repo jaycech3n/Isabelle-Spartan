@@ -24,7 +24,7 @@ lemma* homotopy_refl_derivation:
   assumes
     "A: U i"
     "f: \<Prod>x: A. B x"
-  shows "{}: f ~ f"
+  shows "\<^undefined>: f ~ f"
   unfolding homotopy_def by intros
 
 definition "homotopy_refl A f \<equiv> \<lambda>x: A. refl (f `x)"
@@ -38,11 +38,11 @@ lemma* homotopy_symmetric_derivation:
     "\<And>x. x: A \<Longrightarrow> B x: U i"
     "f: \<Prod>x: A. B x"
     "g: \<Prod>x: A. B x"
-  shows "H: f ~ g \<Longrightarrow> {}: g ~ f"
+  shows "H: f ~ g \<Longrightarrow> \<^undefined>: g ~ f"
   unfolding homotopy_def
   apply intros
     apply (rule Id_symmetric)
-      \<guillemotright> by (rule PiE[of H])
+      \<guillemotright> by (elim H)
       \<guillemotright> by typechk
   done
 
@@ -59,13 +59,13 @@ lemma* homotopy_transitive_derivation:
     "f: \<Prod>x: A. B x"
     "g: \<Prod>x: A. B x"
     "h: \<Prod>x: A. B x"
-  shows "\<lbrakk>H1: f ~ g; H2: g ~ h\<rbrakk> \<Longrightarrow> {}: f ~ h"
+  shows "\<lbrakk>H1: f ~ g; H2: g ~ h\<rbrakk> \<Longrightarrow> \<^undefined>: f ~ h"
   unfolding homotopy_def
   apply intro
     \<guillemotright> vars x
       apply (rule Id_transitive[where ?y="g x"])
-        \<^item> by (rule PiE[of H1])
-        \<^item> by (rule PiE[of H2])
+        \<^item> by (elim H1)
+        \<^item> by (elim H2)
       done
     \<guillemotright> by typechk
   done
@@ -83,7 +83,7 @@ lemma* commute_homotopy_derivation:
     "p: x =\<^bsub>A\<^esub> y"
     "f: A \<rightarrow> B" "g: A \<rightarrow> B"
     "H: homotopy A (\<lambda>_. B) f g"
-  shows "{}: (H x) \<bullet> g[p] = f[p] \<bullet> (H y)"
+  shows "\<^undefined>: (H x) \<bullet> g[p] = f[p] \<bullet> (H y)"
   \<comment> \<open>Need this assumption unfolded for typechecking:\<close>
   supply assms(8)[unfolded homotopy_def]
   apply (equality \<open>p:_\<close>)
@@ -104,7 +104,7 @@ corollary* commute_homotopy'_derivation:
     "x: A"
     "f: A \<rightarrow> A"
     "H: homotopy A (\<lambda>_. A) f (id A)"
-  shows "{}: H (f x) = f [H x]"
+  shows "\<^undefined>: H (f x) = f [H x]"
 oops
 
 lemma* homotopy_id_left [typechk]:
@@ -125,11 +125,11 @@ lemma* homotopy_funcomp_left:
     "g: \<Prod>x: B. C x"
     "g': \<Prod>x: B. C x"
     "H: homotopy B C g g'"
-  shows "{}: homotopy A {} (g \<circ>\<^bsub>A\<^esub> f) (g' \<circ>\<^bsub>A\<^esub> f)"
+  shows "\<^undefined>: homotopy A {} (g \<circ>\<^bsub>A\<^esub> f) (g' \<circ>\<^bsub>A\<^esub> f)"
   unfolding homotopy_def
   apply (intro; reduce)
     apply (insert \<open>H: _\<close>[unfolded homotopy_def])
-      apply (erule PiE[of H]; typechk)
+      apply (elim H)
   done
 
 lemma* homotopy_funcomp_right:
@@ -139,7 +139,7 @@ lemma* homotopy_funcomp_right:
     "f': A \<rightarrow> B"
     "g: B \<rightarrow> C"
     "H: homotopy A (\<lambda>_. B) f f'"
-  shows "{}: homotopy A {} (g \<circ>\<^bsub>A\<^esub> f) (g \<circ>\<^bsub>A\<^esub> f')"
+  shows "\<^undefined>: homotopy A {} (g \<circ>\<^bsub>A\<^esub> f) (g \<circ>\<^bsub>A\<^esub> f')"
   unfolding homotopy_def
   apply (intro; reduce)
     apply (insert \<open>H: _\<close>[unfolded homotopy_def]; drule PiE, assumption)
@@ -166,7 +166,7 @@ translations "qinv f" \<leftharpoondown> "CONST Equivalence.qinv A B f"
 
 lemma* qinv_id_derivation:
   assumes "A: U i"
-  shows "{}: qinv (id A)"
+  shows "\<^undefined>: qinv (id A)"
   unfolding qinv_def
   apply intro defer
     apply intro defer
@@ -180,15 +180,15 @@ lemmas qinv_id [typechk] = qinv_id_derivation [folded qinv_id_def]
 
 lemma* quasiinv_qinv_derivation:
   assumes "A: U i" "B: U i" "f: A \<rightarrow> B"
-  shows "prf: qinv f \<Longrightarrow> {}: qinv (fst prf)"
+  shows "prf: qinv f \<Longrightarrow> \<^undefined>: qinv (fst prf)"
   unfolding qinv_def
   apply intro
     \<guillemotright> by (rule \<open>f:_\<close>)
-    \<guillemotright> apply (erule SigE, typechk)
+    \<guillemotright> apply (elim "prf")
         focus vars g HH
           apply intro
-            \<^item> by reduce (rule PiE[where ?a=HH]; rule snd)
-            \<^item> by reduce (rule PiE[where ?a=HH]; rule fst)
+            \<^item> by reduce (snd HH)
+            \<^item> by reduce (fst HH)
         done
       done
   done
@@ -226,7 +226,7 @@ lemma* qinv_imp_biinv_derivation:
   assumes
     "A: U i" "B: U i"
     "f: A \<rightarrow> B"
-  shows "{}: qinv f \<rightarrow> biinv f"
+  shows "?prf: qinv f \<rightarrow> biinv f"
   apply intros
   unfolding qinv_def biinv_def
     apply (erule Sig_dist_expand; typechk)
@@ -246,12 +246,12 @@ text \<open>
 
 lemma* biinv_imp_qinv_derivation:
   assumes "A: U i" "B: U i" "f: A \<rightarrow> B"
-  shows "{}: biinv f \<rightarrow> qinv f"
+  shows "\<^undefined>: biinv f \<rightarrow> qinv f"
 
   text \<open>Split the hypothesis \<^term>\<open>biinv f\<close> into its components:\<close>
   apply intro
   unfolding biinv_def
-  apply (erule SigE, typechk)+
+  apply (erule elims, typechk)+
 
   text \<open>Name the components:\<close>
   focus premises vars _ _ _ g H1 h H2
@@ -319,7 +319,7 @@ lemmas biinv_imp_qinv [typechk] =
   biinv_imp_qinv_derivation [folded biinv_imp_qinv_def]
 
 lemma* biinv_id_derivation:
-  "A: U i \<Longrightarrow> {}: biinv (id A)"
+  "A: U i \<Longrightarrow> \<^undefined>: biinv (id A)"
   by (rule qinv_imp_biinv) (rule qinv_id)
 
 definition "biinv_id A \<equiv> qinv_imp_biinv A A (id A) (qinv_id A)"
@@ -344,7 +344,7 @@ lemma equivalence_type [typechk]:
 
 lemma* equivalence_refl_derivation:
   assumes "A: U i"
-  shows "{}: A \<simeq> A"
+  shows "\<^undefined>: A \<simeq> A"
   unfolding equivalence_def
   apply intro defer
     apply (rule qinv_imp_biinv) defer
@@ -363,7 +363,7 @@ text \<open>
 
 lemma* equivalence_symmetric_derivation:
   assumes "A: U i" "B: U i"
-  shows "{}: A \<simeq> B \<rightarrow> B \<simeq> A"
+  shows "\<^undefined>: A \<simeq> B \<rightarrow> B \<simeq> A"
   apply intros
   unfolding equivalence_def
   apply (erule elims, typechk)
@@ -371,9 +371,7 @@ lemma* equivalence_symmetric_derivation:
     (*Definitely getting into the low-level here.*)
     apply (drule biinv_imp_qinv[THEN PiE, rotated 3], typechk)
     apply intro
-      \<^item> unfolding qinv_def
-        apply (rule fst) defer
-        by assumption typechk
+      \<^item> unfolding qinv_def by (rule fst[of "(biinv_imp_qinv A B f) prf"])
       \<^item> by (rule qinv_imp_biinv) (rule quasiinverse_qinv)
     done
   done
@@ -387,7 +385,7 @@ text \<open>
 lemma* id_imp_equiv_derivation':
   assumes
     "A: U i" "B: U i" "p: A =\<^bsub>U i\<^esub> B"
-  shows "{}: A \<simeq> B"
+  shows "\<^undefined>: A \<simeq> B"
   by (equality \<open>p:_\<close>) (rule equivalence_refl)
 
 text \<open>
