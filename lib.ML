@@ -18,6 +18,8 @@ val type_of_typing: term -> term
 val dest_Id: term -> term * term * term
 val mk_Pi: term -> term -> term -> term
 
+val typing_of_term: term -> term
+
 (*Goals*)
 val rigid_typing_concl: term -> bool
 
@@ -78,6 +80,8 @@ fun dest_Id tm = case tm of
   | _ => error "dest_Id"
 
 fun mk_Pi v typ body = Const (\<^const_name>\<open>Pi\<close>, dummyT) $ typ $ lambda v body
+
+fun typing_of_term tm = \<^const>\<open>has_type\<close> $ tm $ Var (("*?", 0), \<^typ>\<open>o\<close>)
 
 
 (** Goals **)

@@ -13,6 +13,7 @@ val typechk_tac: Proof.context -> int -> tactic
 val rule_tac: thm list -> Proof.context -> int -> tactic
 val intro_tac: Proof.context -> int -> tactic
 val intros_tac: Proof.context -> int -> tactic
+val elims_tac: term -> Proof.context -> int -> tactic
 val SIDE_CONDS: (int -> tactic) -> Proof.context -> int -> tactic
 val auto_typechk: bool Config.T
 
@@ -95,11 +96,37 @@ fun intro_tac ctxt = SUBGOAL (fn (_, i) => SIDE_CONDS
 fun intros_tac ctxt = SUBGOAL (fn (_, i) =>
   (CHANGED o REPEAT o CHANGED o intro_tac ctxt) i)
 
-(*Applies an elimination rule and solves the first resulting subgoal,
-  which must be a typing judgment for the term being eliminated*)
-(* fun elims_tac ctxt = SUBGOAL (fn (_, i) => SIDE_CONDS
-  (resolve_tac ctxt (Named_Theorems.get ctxt \<^named_theorems>\<open>elims\<close>)
-    THEN' known_tac ctxt) ctxt i) *)
+(* Basic elimination tactic *)
+(*Only uses existing type judgments from the context
+  (performs no type synthesis)*)
+fun elims_tac tm = Subgoal.FOCUS_PREMS (fn {context = goal_ctxt, prems, ...} =>
+  let
+    val template = Lib.typing_of_term tm
+    val candidate_typings =
+      let val facts = Proof_Context.facts_of goal_ctxt
+      in
+        filter (fn th => Term.could_unify (template, Thm.prop_of th)) prems
+        @ map (op #1) (Facts.could_unify facts template)
+      end
+  in
+    case candidate_typings of
+      [typing] =>
+        let
+          val hd = head_of (Lib.type_of_typing (Thm.prop_of typing))
+          val opt_rl = Elim.get_rule goal_ctxt hd
+        in
+          case opt_rl of
+            NONE => no_tac
+          | SOME rl =>
+            let val resolvent = Drule.infer_instantiate' goal_ctxt
+              [SOME (Thm.cterm_of goal_ctxt tm)] rl
+            in
+              HEADGOAL
+                (SIDE_CONDS (resolve_tac goal_ctxt [resolvent]) goal_ctxt)
+            end
+        end
+    | _ => no_tac
+  end)
 
 end
 
