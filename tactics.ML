@@ -10,12 +10,12 @@ sig
 val assumptions_tac: Proof.context -> int -> tactic
 val known_tac: Proof.context -> int -> tactic
 val typechk_tac: Proof.context -> int -> tactic
+val auto_typechk: bool Config.T
+val SIDE_CONDS: (int -> tactic) -> Proof.context -> int -> tactic
 val rule_tac: thm list -> Proof.context -> int -> tactic
 val intro_tac: Proof.context -> int -> tactic
 val intros_tac: Proof.context -> int -> tactic
 val elims_tac: term option -> Proof.context -> int -> tactic
-val SIDE_CONDS: (int -> tactic) -> Proof.context -> int -> tactic
-val auto_typechk: bool Config.T
 
 end = struct
 
@@ -118,8 +118,9 @@ fun elims_tac opt_tm ctxt = case opt_tm of
     
         val facts = Proof_Context.facts_of ctxt
         val candidate_typings = Facts.could_unify facts template
-        val candidate_rules = map (elim_rule o Thm.prop_of o #1) candidate_typings
-    
+        val candidate_rules =
+          map (elim_rule o Thm.prop_of o #1) candidate_typings
+
         val prems = Logic.strip_assums_hyp goal
         val candidate_typings' =
           filter (fn prem => Term.could_unify (template, prem)) prems
