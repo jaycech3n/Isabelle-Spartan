@@ -34,7 +34,7 @@ section \<open>Basic propositional equalities\<close>
 lemma* pathcomp_left_refl_derivation:
   assumes "A: U i" "x: A" "y: A" "p: x =\<^bsub>A\<^esub> y"
   shows "\<^undefined>: (refl x) \<bullet> p = p"
-  apply (equality \<open>p: _\<close>)
+  apply (equality \<open>p:_\<close>)
     apply (reduce; intros)
   done
 
@@ -48,7 +48,7 @@ lemmas pathcomp_left_refl [typechk] =
 lemma* pathcomp_right_refl_derivation:
   assumes "A: U i" "x: A" "y: A" "p: x =\<^bsub>A\<^esub> y"
   shows "\<^undefined>: p \<bullet> (refl y) = p"
-  apply (equality \<open>p: _\<close>)
+  apply (equality \<open>p:_\<close>)
     apply (reduce; intros)
   done
 
@@ -62,7 +62,7 @@ lemmas pathcomp_right_refl [typechk] =
 lemma* pathcomp_left_inv_derivation:
   assumes "A: U i" "x: A" "y: A" "p: x =\<^bsub>A\<^esub> y"
   shows "\<^undefined>: p\<inverse> \<bullet> p = refl y"
-  apply (equality \<open>p: _\<close>)
+  apply (equality \<open>p:_\<close>)
     apply (reduce; intros)
   done
 
@@ -76,7 +76,7 @@ lemmas pathcomp_left_inv [typechk] =
 lemma* pathcomp_right_inv_derivation:
   assumes "A: U i" "x: A" "y: A" "p: x =\<^bsub>A\<^esub> y"
   shows "\<^undefined>: p \<bullet> p\<inverse> = refl x"
-  apply (equality \<open>p: _\<close>)
+  apply (equality \<open>p:_\<close>)
     apply (reduce; intros)
   done
 
@@ -90,7 +90,7 @@ lemmas pathcomp_right_inv [typechk] =
 lemma* pathinv_pathinv_derivation:
   assumes "A: U i" "x: A" "y: A" "p: x =\<^bsub>A\<^esub> y"
   shows "\<^undefined>: p\<inverse>\<inverse> = p"
-  apply (equality \<open>p: _\<close>)
+  apply (equality \<open>p:_\<close>)
     apply (reduce; intros)
   done
 
@@ -138,7 +138,7 @@ lemma* Id_transfer_derivation:
     "f: A \<rightarrow> B"
     "p: x =\<^bsub>A\<^esub> y"
   shows "\<^undefined>: f x = f y"
-  apply (equality \<open>p: _\<close>)
+  apply (equality \<open>p:_\<close>)
     apply intro
   done
 

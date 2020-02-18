@@ -113,9 +113,9 @@ fun elims_tac opt_tm ctxt = case opt_tm of
             | SOME rl => Drule.infer_instantiate' ctxt
                 [SOME (Thm.cterm_of ctxt tm)] rl
           end
-    
+
         val template = Lib.typing_of_term tm
-    
+
         val facts = Proof_Context.facts_of ctxt
         val candidate_typings = Facts.could_unify facts template
         val candidate_rules =

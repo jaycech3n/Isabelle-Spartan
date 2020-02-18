@@ -392,9 +392,9 @@ lemma* Id_transitive_derivation:
     "p: x =\<^bsub>A\<^esub> y" "q: y =\<^bsub>A\<^esub> z"
   shows
     "\<^undefined>: x =\<^bsub>A\<^esub> z"
-  apply (equality \<open>p: _\<close>)
+  apply (equality \<open>p:_\<close>)
     focus premises vars x p
-      apply (equality \<open>p: _\<close>)
+      apply (equality \<open>p:_\<close>)
         apply intro
     done
   done
