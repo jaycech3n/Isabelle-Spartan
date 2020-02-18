@@ -27,18 +27,19 @@ val short_statement =
         [Element.Fixes fixes, Element.Assumes assumes],
         Element.Shows shows))
 
-fun theorem spec schematic descr =
+
+
+fun theorem spec descr =
   Outer_Syntax.local_theory_to_proof' spec ("state " ^ descr)
     ((long_statement || short_statement) >>
       (fn (long, binding, includes, elems, concl) =>
-        ((if schematic then Specification.schematic_theorem_cmd
-          else Specification.theorem_cmd)
-          long Thm.theoremK NONE (K I) binding includes elems concl)))
+        Specification.schematic_theorem_cmd
+          long Thm.theoremK NONE (K I) binding includes elems concl))
 in
 
-val _ = theorem \<^command_keyword>\<open>theorem*\<close> true "schematic theorem"
-val _ = theorem \<^command_keyword>\<open>lemma*\<close> true "schematic lemma"
-val _ = theorem \<^command_keyword>\<open>corollary*\<close> true "schematic corollary"
-val _ = theorem \<^command_keyword>\<open>proposition*\<close> true "schematic proposition"
+val _ = theorem \<^command_keyword>\<open>theorem*\<close> "schematic theorem"
+val _ = theorem \<^command_keyword>\<open>lemma*\<close> "schematic lemma"
+val _ = theorem \<^command_keyword>\<open>corollary*\<close> "schematic corollary"
+val _ = theorem \<^command_keyword>\<open>proposition*\<close> "schematic proposition"
 
 end
