@@ -236,11 +236,11 @@ method_setup equality = \<open>Scan.lift Parse.thm >> (fn (fact, _) => fn ctxt =
   CONTEXT_METHOD (K (Equality.equality_context_tac fact ctxt)))\<close>
 
 
-section \<open>Implicit arguments\<close>
+section \<open>Implicit notations\<close>
 
 text \<open>
   \<open>?\<close> is used to mark implicit arguments in definitions, while \<open>{}\<close> is expanded
-  immediately for elaboration in statements. 
+  immediately for elaboration in statements.
 \<close>
 
 consts
@@ -256,8 +256,13 @@ val _ = Context.>>
   (Syntax_Phases.term_check 1 "" (fn ctxt => map (Implicits.make_holes ctxt)))
 \<close>
 
-\<comment> \<open>Proof term marker\<close>
+text \<open>Automatically insert inhabitation judgments where needed:\<close>
+
 definition proof_term ("\<^undefined>") where [implicit]: "\<^undefined> \<equiv> ?"
+
+consts inhabited :: \<open>o \<Rightarrow> prop\<close> ("(_)" 0)
+
+translations "CONST inhabited A" \<rightharpoonup> "CONST has_type \<^undefined> A"
 
 
 section \<open>Lambda coercion\<close>
@@ -372,7 +377,7 @@ section \<open>Equality\<close>
 
 lemma* Id_symmetric_derivation:
   assumes "A: U i" "x: A" "y: A" "p: x =\<^bsub>A\<^esub> y"
-  shows "\<^undefined>: y =\<^bsub>A\<^esub> x"
+  shows "y =\<^bsub>A\<^esub> x"
   by (equality \<open>p:_\<close>) intro
 
 (*TODO: automatically generate definitions for the terms derived in the above manner*)
@@ -391,7 +396,7 @@ lemma* Id_transitive_derivation:
     "A: U i" "x: A" "y: A" "z: A"
     "p: x =\<^bsub>A\<^esub> y" "q: y =\<^bsub>A\<^esub> z"
   shows
-    "\<^undefined>: x =\<^bsub>A\<^esub> z"
+    "x =\<^bsub>A\<^esub> z"
   apply (equality \<open>p:_\<close>)
     focus premises vars x p
       apply (equality \<open>p:_\<close>)
