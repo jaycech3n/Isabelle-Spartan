@@ -13,7 +13,7 @@ val typechk_tac: Proof.context -> int -> tactic
 val rule_tac: thm list -> Proof.context -> int -> tactic
 val intro_tac: Proof.context -> int -> tactic
 val intros_tac: Proof.context -> int -> tactic
-val elims_tac: term -> Proof.context -> int -> tactic
+val elims_tac: term option -> Proof.context -> int -> tactic
 val SIDE_CONDS: (int -> tactic) -> Proof.context -> int -> tactic
 val auto_typechk: bool Config.T
 
@@ -99,61 +99,35 @@ fun intros_tac ctxt = SUBGOAL (fn (_, i) =>
 (* Basic elimination tactic *)
 (*Only uses existing type judgments from the context
   (performs no type synthesis)*)
-fun elims_tac tm = Subgoal.FOCUS_PREMS (fn {context = goal_ctxt, prems, ...} =>
-  let
-    val template = Lib.typing_of_term tm
-    val candidate_typings =
-      let val facts = Proof_Context.facts_of goal_ctxt
-      in
-        filter (fn th => Term.could_unify (template, Thm.prop_of th)) prems
-        @ map (op #1) (Facts.could_unify facts template)
-      end
-  in
-    case candidate_typings of
-      [typing] =>
-        let
-          val hd = head_of (Lib.type_of_typing (Thm.prop_of typing))
-          val opt_rl = Elim.get_rule goal_ctxt hd
-        in
-          case opt_rl of
-            NONE => no_tac
-          | SOME rl =>
-            let val resolvent = Drule.infer_instantiate' goal_ctxt
-              [SOME (Thm.cterm_of goal_ctxt tm)] rl
-            in
-              HEADGOAL (resolve_tac goal_ctxt [resolvent])
-            end
-        end
-    | _ => no_tac
-  end)
-
-fun elims_tac tm ctxt = SUBGOAL (fn (goal, i) =>
-  let
-    fun elim_rule typing =
+fun elims_tac opt_tm ctxt = case opt_tm of
+    NONE => SUBGOAL (fn (_, i) => eresolve_tac ctxt (Elim.rules ctxt) i)
+  | SOME tm => SUBGOAL (fn (goal, i) =>
       let
-        val hd = head_of (Lib.type_of_typing typing)
-        val opt_rl = Elim.get_rule ctxt hd
+        fun elim_rule typing =
+          let
+            val hd = head_of (Lib.type_of_typing typing)
+            val opt_rl = Elim.get_rule ctxt hd
+          in
+            case opt_rl of
+              NONE => Drule.dummy_thm
+            | SOME rl => Drule.infer_instantiate' ctxt
+                [SOME (Thm.cterm_of ctxt tm)] rl
+          end
+    
+        val template = Lib.typing_of_term tm
+    
+        val facts = Proof_Context.facts_of ctxt
+        val candidate_typings = Facts.could_unify facts template
+        val candidate_rules = map (elim_rule o Thm.prop_of o #1) candidate_typings
+    
+        val prems = Logic.strip_assums_hyp goal
+        val candidate_typings' =
+          filter (fn prem => Term.could_unify (template, prem)) prems
+        val candidate_rules' = map elim_rule candidate_typings'
       in
-        case opt_rl of
-          NONE => Drule.dummy_thm
-        | SOME rl => Drule.infer_instantiate' ctxt
-            [SOME (Thm.cterm_of ctxt tm)] rl
-      end
-
-    val template = Lib.typing_of_term tm
-
-    val facts = Proof_Context.facts_of ctxt
-    val candidate_typings = Facts.could_unify facts template
-    val candidate_rules = map (elim_rule o Thm.prop_of o #1) candidate_typings
-
-    val prems = Logic.strip_assums_hyp goal
-    val candidate_typings' =
-      filter (fn prem => Term.could_unify (template, prem)) prems
-    val candidate_rules' = map elim_rule candidate_typings'
-  in
-    (resolve_tac ctxt candidate_rules
-    ORELSE' eresolve_tac ctxt candidate_rules') i
-  end)
+        (resolve_tac ctxt candidate_rules
+        ORELSE' eresolve_tac ctxt candidate_rules') i
+      end)
 
 end
 

@@ -205,8 +205,10 @@ method_setup intros =
   \<open>Scan.succeed (fn ctxt => SIMPLE_METHOD (HEADGOAL (intros_tac ctxt)))\<close>
 
 method_setup elim =
-  \<open>Args.term >> (fn tm => fn ctxt =>
+  \<open>Scan.option Args.term >> (fn tm => fn ctxt =>
     SIMPLE_METHOD' (SIDE_CONDS (elims_tac tm ctxt) ctxt))\<close>
+
+method elims = elim+
 
 method_setup typechk =
   \<open>Scan.succeed (fn ctxt => SIMPLE_METHOD (

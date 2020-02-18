@@ -251,7 +251,7 @@ lemma* biinv_imp_qinv_derivation:
   text \<open>Split the hypothesis \<^term>\<open>biinv f\<close> into its components:\<close>
   apply intro
   unfolding biinv_def
-  apply (erule elims, typechk)+
+  apply elims
 
   text \<open>Name the components:\<close>
   focus premises vars _ _ _ g H1 h H2
@@ -366,7 +366,7 @@ lemma* equivalence_symmetric_derivation:
   shows "\<^undefined>: A \<simeq> B \<rightarrow> B \<simeq> A"
   apply intros
   unfolding equivalence_def
-  apply (erule elims, typechk)
+  apply elim
   \<guillemotright> vars _ f "prf"
     (*Definitely getting into the low-level here.*)
     apply (drule biinv_imp_qinv[THEN PiE, rotated 3], typechk)
