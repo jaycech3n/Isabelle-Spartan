@@ -18,9 +18,6 @@ section \<open>Preamble\<close>
 
 declare [[eta_contract=false]]
 
-ML_file \<open>theorem_keywords.ML\<close>
-ML_file \<open>focus.ML\<close>
-
 
 section \<open>Metatype setup\<close>
 
@@ -120,7 +117,7 @@ axiomatization where
     \<And>x. x : A \<Longrightarrow> B x: U i;
     \<And>p. p: \<Sum>x: A. B x \<Longrightarrow> C p: U i;
     \<And>x y. \<lbrakk>x: A; y: B x\<rbrakk> \<Longrightarrow> f x y: C <x, y>
-    \<rbrakk> \<Longrightarrow> SigInd A B C f p: C p" and
+    \<rbrakk> \<Longrightarrow> SigInd A (\<lambda>x. B x) (\<lambda>p. C p) f p: C p" and
 
   Sig_comp: "\<lbrakk>
     a: A;
@@ -128,7 +125,7 @@ axiomatization where
     \<And>x. x: A \<Longrightarrow> B x: U i;
     \<And>p. p: \<Sum>x: A. B x \<Longrightarrow> C p: U i;
     \<And>x y. \<lbrakk>x: A; y: B x\<rbrakk> \<Longrightarrow> f x y: C <x, y>
-    \<rbrakk> \<Longrightarrow> SigInd A B C f <a, b> \<equiv> f a b" and
+    \<rbrakk> \<Longrightarrow> SigInd A (\<lambda>x. B x) (\<lambda>p. C p) f <a, b> \<equiv> f a b" and
 
   Sig_cong: "\<lbrakk>
     \<And>x. x: A \<Longrightarrow> B x \<equiv> B' x;
@@ -160,13 +157,20 @@ axiomatization where
     b: A;
     \<And>x y p. \<lbrakk>p: x =\<^bsub>A\<^esub> y; x: A; y: A\<rbrakk> \<Longrightarrow> C x y p: U i;
     \<And>x. x: A \<Longrightarrow> f x: C x x (refl x)
-    \<rbrakk> \<Longrightarrow> IdInd A C f a b p: C a b p" and
+    \<rbrakk> \<Longrightarrow> IdInd A (\<lambda>x y p. C x y p) f a b p: C a b p" and
 
   Id_comp: "\<lbrakk>
     a: A;
     \<And>x y p. \<lbrakk>x: A; y: A; p: x =\<^bsub>A\<^esub> y\<rbrakk> \<Longrightarrow> C x y p: U i;
     \<And>x. x: A \<Longrightarrow> f x: C x x (refl x)
-    \<rbrakk> \<Longrightarrow> IdInd A C f a a (refl a) \<equiv> f a"
+    \<rbrakk> \<Longrightarrow> IdInd A (\<lambda>x y p. C x y p) f a a (refl a) \<equiv> f a"
+
+
+section \<open>Proof commands\<close>
+
+ML_file \<open>lib.ML\<close>
+ML_file \<open>theorem_keywords.ML\<close>
+ML_file \<open>focus.ML\<close>
 
 
 section \<open>Fundamental methods\<close>
@@ -178,7 +182,6 @@ ML_file "~~/src/Tools/IsaPlanner/rw_inst.ML"
 ML_file "~~/src/Tools/IsaPlanner/zipper.ML"
 ML_file "~~/src/Tools/eqsubst.ML"
 
-ML_file \<open>lib.ML\<close>
 ML_file \<open>elimination.ML\<close> \<comment> \<open>declares the [elims] attribute\<close>
 
 named_theorems intros and comps and typechk
