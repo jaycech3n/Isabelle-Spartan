@@ -38,7 +38,7 @@ lemma* homotopy_symmetric_derivation:
     "\<And>x. x: A \<Longrightarrow> B x: U i"
     "f: \<Prod>x: A. B x"
     "g: \<Prod>x: A. B x"
-  shows "H: f ~ g \<Longrightarrow> \<^undefined>: g ~ f"
+  shows "H: f ~ g \<Longrightarrow> g ~ f"
   unfolding homotopy_def
   apply intros
     apply (rule Id_symmetric)
@@ -59,7 +59,7 @@ lemma* homotopy_transitive_derivation:
     "f: \<Prod>x: A. B x"
     "g: \<Prod>x: A. B x"
     "h: \<Prod>x: A. B x"
-  shows "\<lbrakk>H1: f ~ g; H2: g ~ h\<rbrakk> \<Longrightarrow> \<^undefined>: f ~ h"
+  shows "\<lbrakk>H1: f ~ g; H2: g ~ h\<rbrakk> \<Longrightarrow> f ~ h"
   unfolding homotopy_def
   apply intro
     \<guillemotright> vars x
@@ -180,7 +180,7 @@ lemmas qinv_id [typechk] = qinv_id_derivation [folded qinv_id_def]
 
 lemma* quasiinv_qinv_derivation:
   assumes "A: U i" "B: U i" "f: A \<rightarrow> B"
-  shows "prf: qinv f \<Longrightarrow> \<^undefined>: qinv (fst prf)"
+  shows "prf: qinv f \<Longrightarrow> qinv (fst prf)"
   unfolding qinv_def
   apply intro
     \<guillemotright> by (rule \<open>f:_\<close>)
@@ -319,7 +319,7 @@ lemmas biinv_imp_qinv [typechk] =
   biinv_imp_qinv_derivation [folded biinv_imp_qinv_def]
 
 lemma* biinv_id_derivation:
-  "A: U i \<Longrightarrow> \<^undefined>: biinv (id A)"
+  "A: U i \<Longrightarrow> biinv (id A)"
   by (rule qinv_imp_biinv) (rule qinv_id)
 
 definition "biinv_id A \<equiv> qinv_imp_biinv A A (id A) (qinv_id A)"

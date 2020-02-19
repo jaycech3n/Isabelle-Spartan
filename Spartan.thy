@@ -29,7 +29,7 @@ typedecl o
 
 section \<open>Judgments\<close>
 
-judgment has_type :: \<open>o \<Rightarrow> o \<Rightarrow> prop\<close> ("(2_:/ _)")
+judgment has_type :: \<open>o \<Rightarrow> o \<Rightarrow> prop\<close> ("(2_:/ _)" 999)
 
 
 section \<open>Universes\<close>
@@ -258,11 +258,8 @@ val _ = Context.>>
 
 text \<open>Automatically insert inhabitation judgments where needed:\<close>
 
-definition proof_term ("\<^undefined>") where [implicit]: "\<^undefined> \<equiv> ?"
-
-consts inhabited :: \<open>o \<Rightarrow> prop\<close> ("(_)" 0)
-
-translations "CONST inhabited A" \<rightharpoonup> "CONST has_type \<^undefined> A"
+consts inhabited :: \<open>o \<Rightarrow> prop\<close> ("(_)")
+translations "CONST inhabited A" \<rightharpoonup> "CONST has_type {} A"
 
 
 section \<open>Lambda coercion\<close>
@@ -305,7 +302,7 @@ lemma funcompI [typechk]:
   assumes
     "A: U i"
     "B: U i"
-    "\<And>x. x : B \<Longrightarrow> C x: U i"
+    "\<And>x. x: B \<Longrightarrow> C x: U i"
     "f: A \<rightarrow> B"
     "g: \<Prod>x: B. C x"
   shows
