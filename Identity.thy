@@ -31,77 +31,42 @@ section \<open>Basic propositional equalities\<close>
 
 (*TODO: Better integration of equality type directly into reasoning...*)
 
-lemma* pathcomp_left_refl_derivation:
+lemma** pathcomp_left_refl [typechk]:
   assumes "A: U i" "x: A" "y: A" "p: x =\<^bsub>A\<^esub> y"
   shows "(refl x) \<bullet> p = p"
   apply (equality \<open>p:_\<close>)
     apply (reduce; intros)
   done
 
-definition "pathcomp_left_refl A x y p \<equiv>
-  IdInd A (\<lambda>x y p. pathcomp A x x y (refl x) p =\<^bsub>x =\<^bsub>A\<^esub> y\<^esub> p) (\<lambda>x. refl (refl x))
-  x y p"
-
-lemmas pathcomp_left_refl [typechk] =
-  pathcomp_left_refl_derivation [folded pathcomp_left_refl_def]
-
-lemma* pathcomp_right_refl_derivation:
+lemma** pathcomp_right_refl [typechk]:
   assumes "A: U i" "x: A" "y: A" "p: x =\<^bsub>A\<^esub> y"
   shows "p \<bullet> (refl y) = p"
   apply (equality \<open>p:_\<close>)
     apply (reduce; intros)
   done
 
-definition "pathcomp_right_refl A x y p \<equiv>
-  IdInd A (\<lambda>x y p. pathcomp A x y y p (refl y) =\<^bsub>x =\<^bsub>A\<^esub> y\<^esub> p) (\<lambda>x. refl (refl x))
-  x y p"
-
-lemmas pathcomp_right_refl [typechk] =
-  pathcomp_right_refl_derivation [folded pathcomp_right_refl_def]
-
-lemma* pathcomp_left_inv_derivation:
+lemma** pathcomp_left_inv [typechk]:
   assumes "A: U i" "x: A" "y: A" "p: x =\<^bsub>A\<^esub> y"
   shows "p\<inverse> \<bullet> p = refl y"
   apply (equality \<open>p:_\<close>)
     apply (reduce; intros)
   done
 
-definition "pathcomp_left_inv A x y p \<equiv>
-  IdInd A (\<lambda>a b p. pathcomp A b a b (pathinv A a b p) p =\<^bsub>b =\<^bsub>A\<^esub> b\<^esub> refl b) (\<lambda>x.
-  refl (refl x)) x y p"
-
-lemmas pathcomp_left_inv [typechk] =
-  pathcomp_left_inv_derivation [folded pathcomp_left_inv_def]
-
-lemma* pathcomp_right_inv_derivation:
+lemma** pathcomp_right_inv [typechk]:
   assumes "A: U i" "x: A" "y: A" "p: x =\<^bsub>A\<^esub> y"
   shows "p \<bullet> p\<inverse> = refl x"
   apply (equality \<open>p:_\<close>)
     apply (reduce; intros)
   done
 
-definition "pathcomp_right_inv A x y p \<equiv>
-  IdInd A (\<lambda>a b p. pathcomp A a b a p (pathinv A a b p) =\<^bsub>a =\<^bsub>A\<^esub> a\<^esub> refl a) (\<lambda>x.
-  refl (refl x)) x y p"
-
-lemmas pathcomp_right_inv [typechk] =
-  pathcomp_right_inv_derivation [folded pathcomp_right_inv_def]
-
-lemma* pathinv_pathinv_derivation:
+lemma** pathinv_pathinv [typechk]:
   assumes "A: U i" "x: A" "y: A" "p: x =\<^bsub>A\<^esub> y"
   shows "p\<inverse>\<inverse> = p"
   apply (equality \<open>p:_\<close>)
     apply (reduce; intros)
   done
 
-definition "pathinv_pathinv A x y p \<equiv>
-  IdInd A (\<lambda>a b p. pathinv A b a (pathinv A a b p) =\<^bsub>a =\<^bsub>A\<^esub> b\<^esub> p) (\<lambda>x. refl
-  (refl x)) x y p"
-
-lemmas pathinv_pathinv [typechk] =
-  pathinv_pathinv_derivation [folded pathinv_pathinv_def]
-
-lemma* pathcomp_assoc_derivation:
+lemma** pathcomp_assoc [typechk]:
   assumes
     "A: U i" "x: A" "y: A" "z: A" "w: A"
     "p: x =\<^bsub>A\<^esub> y" "q: y =\<^bsub>A\<^esub> z" "r: z =\<^bsub>A\<^esub> w"
@@ -116,22 +81,10 @@ lemma* pathcomp_assoc_derivation:
     done
   done
 
-definition "pathcomp_assoc A x y z w p q r \<equiv>
-  (IdInd A (\<lambda>a b c. \<Prod>x: b =\<^bsub>A\<^esub> z. pathcomp A a b w c (pathcomp A b z w x r)
-  =\<^bsub>a =\<^bsub>A\<^esub> w\<^esub> pathcomp A a z w (pathcomp A a b z c x) r) (\<lambda>x. \<lambda>xa: x =\<^bsub>A\<^esub> z.
-  (IdInd A (\<lambda>a b c. \<Prod>x: b =\<^bsub>A\<^esub> w. pathcomp A a a w (refl a) (pathcomp A a b w c
-  x) =\<^bsub>a =\<^bsub>A\<^esub> w\<^esub> pathcomp A a b w (pathcomp A a a b (refl a) c) x) (\<lambda>a. \<lambda>x:
-  a =\<^bsub>A\<^esub> w. IdInd A (\<lambda>a b c. pathcomp A a a b (refl a) (pathcomp A a a b (refl
-  a) c) =\<^bsub>a =\<^bsub>A\<^esub> b\<^esub> pathcomp A a a b (pathcomp A a a a (refl a) (refl a)) c)
-  (\<lambda>a. refl (refl a)) a w x) x z xa) r) x y p) q"
-
-lemmas pathcomp_assoc [typechk] =
-  pathcomp_assoc_derivation [folded pathcomp_assoc_def]
-
 
 section \<open>Functoriality of functions\<close>
 
-lemma* Id_transfer_derivation:
+lemma** ap [typechk]:
   assumes
     "A: U i" "B: U i"
     "x: A" "y: A"
@@ -142,23 +95,17 @@ lemma* Id_transfer_derivation:
     apply intro
   done
 
-definition "ap A B x y f p \<equiv>
-  IdInd A (\<lambda>x y _. f `x =\<^bsub>B\<^esub> f `y) (\<lambda>x. refl (f `x)) x y p"
-
 definition ap_i ("_[_]" [1000, 0])
   where [implicit]: "ap_i f p \<equiv> ap ? ? ? ? f p"
 
 translations "f[p]" \<leftharpoondown> "CONST ap A B x y f p"
-
-lemmas Id_transfer [typechk] =
-  Id_transfer_derivation [folded ap_def]
 
 lemma* ap_refl [comps]:
   assumes "f: A \<rightarrow> B" "x: A" "A: U i" "B: U i"
   shows "f[refl x] \<equiv> refl (f x)"
   unfolding ap_def by (subst comps) reduce
 
-lemma* ap_pathcomp_derivation:
+lemma** ap_pathcomp [typechk]:
   assumes
     "A: U i" "B: U i"
     "x: A" "y: A" "z: A"
@@ -173,17 +120,7 @@ lemma* ap_pathcomp_derivation:
     done
   done
 
-definition "ap_pathcomp A B x y z f p q \<equiv>
-  IdInd A (\<lambda>a b c. \<Prod>x: b =\<^bsub>A\<^esub> z. ap A B a z f (pathcomp A a b z c x)
-  =\<^bsub>f `a =\<^bsub>B\<^esub> f `z\<^esub> pathcomp B (f `a) (f `b) (f `z) (ap A B a b f c) (ap A B b z
-  f x)) (\<lambda>x. \<lambda>xa: x =\<^bsub>A\<^esub> z. IdInd A (\<lambda>a b c. ap A B a b f (pathcomp A a a b
-  (refl a) c) =\<^bsub>f `a =\<^bsub>B\<^esub> f `b\<^esub> pathcomp B (f `a) (f `a) (f `b) (ap A B a a f
-  (refl a)) (ap A B a b f c)) (\<lambda>a. refl (refl (f `a))) x z xa) x y p `q"
-
-lemmas ap_pathcomp [typechk] =
-  ap_pathcomp_derivation [folded ap_pathcomp_def]
-
-lemma* ap_pathinv_derivation:
+lemma** ap_pathinv [typechk]:
   assumes
     "A: U i" "B: U i"
     "x: A" "y: A"
@@ -192,15 +129,9 @@ lemma* ap_pathinv_derivation:
   shows "f[p\<inverse>] = f[p]\<inverse>"
   by (equality \<open>p:_\<close>) (reduce; intro)
 
-definition "ap_pathinv A B x y f p \<equiv>
-  IdInd A (\<lambda>a b c. ap A B b a f (pathinv A a b c) =\<^bsub>f `b =\<^bsub>B\<^esub> f `a\<^esub> pathinv B (f
-  `a) (f `b) (ap A B a b f c)) (\<lambda>x. refl (refl (f `x))) x y p"
-
-lemmas ap_pathinv [typechk] = ap_pathinv_derivation [folded ap_pathinv_def]
-
 text \<open>The next two proofs currently use some low-level rewriting.\<close>
 
-lemma* ap_funcomp_derivation:
+lemma** ap_funcomp [typechk]:
   assumes
     "A: U i" "B: U i" "C: U i"
     "x: A" "y: A"
@@ -212,13 +143,7 @@ lemma* ap_funcomp_derivation:
     apply (reduce; intro)
   done
 
-definition "ap_funcomp A B C x y f g p \<equiv>
-  IdInd A (\<lambda>a b c. ap A C a b (g \<circ>\<^bsub>A\<^esub> f) c =\<^bsub>g `(f `a) =\<^bsub>C\<^esub> g `(f `b)\<^esub> ap B C (f
-  `a) (f `b) g (ap A B a b f c)) (\<lambda>x. refl (refl (g `(f `x)))) x y p"
-
-lemmas ap_funcomp [typechk] = ap_funcomp_derivation [folded ap_funcomp_def]
-
-lemma* ap_id_derivation:
+lemma** ap_id [typechk]:
   assumes "A: U i" "x: A" "y: A" "p: x =\<^bsub>A\<^esub> y"
   shows "(id A)[p] = p"
   apply (equality \<open>p:_\<close>)
@@ -226,15 +151,10 @@ lemma* ap_id_derivation:
     apply (reduce; intros)
   done
 
-definition "ap_id A x y p \<equiv>
-  IdInd A (\<lambda>a b c. ap A A a b (id A) c =\<^bsub>a =\<^bsub>A\<^esub> b\<^esub> c) (\<lambda>x. refl (refl x)) x y p"
-
-lemmas ap_id [typechk] = ap_id_derivation [folded ap_id_def]
-
 
 section \<open>Transport\<close>
 
-lemma* transport_derivation:
+lemma** transport [typechk]:
   assumes
     "A: U i"
     "\<And>x. x: A \<Longrightarrow> P x: U i"
@@ -243,15 +163,10 @@ lemma* transport_derivation:
   shows "P x \<rightarrow> P y"
   by (equality \<open>p:_\<close>) intro
 
-definition "transport A P x y p \<equiv>
-  IdInd A (\<lambda>a b _. P a \<rightarrow> P b) (\<lambda>x. \<lambda>u: P x. u) x y p"
-
 definition transport_i ("trans")
   where [implicit]: "trans P p \<equiv> transport ? P ? ? p"
 
 translations "trans P p" \<leftharpoondown> "CONST transport A P x y p"
-
-lemmas transport [typechk] = transport_derivation [folded transport_def]
 
 lemma* transport_comp [comps]:
   assumes
@@ -273,7 +188,7 @@ lemma* use_transport:
   shows "trans P p\<inverse> u: P x"
   by typechk
 
-lemma* transport_left_inv_derivation:
+lemma** transport_left_inv [typechk]:
   assumes
     "A: U i"
     "\<And>x. x: A \<Longrightarrow> P x: U i"
@@ -282,7 +197,7 @@ lemma* transport_left_inv_derivation:
   shows "(trans P p\<inverse>) \<circ> (trans P p) = id (P x)"
   by (equality \<open>p:_\<close>) (reduce; intro)
 
-lemma* transport_right_inv_derivation:
+lemma** transport_right_inv [typechk]:
   assumes
     "A: U i"
     "\<And>x. x: A \<Longrightarrow> P x: U i"
@@ -291,7 +206,7 @@ lemma* transport_right_inv_derivation:
   shows "(trans P p) \<circ> (trans P p\<inverse>) = id (P y)"
   by (equality \<open>p:_\<close>) (reduce; intros)
 
-lemma* transport_pathcomp_derivation:
+lemma** transport_pathcomp [typechk]:
   assumes
     "A: U i"
     "\<And>x. x: A \<Longrightarrow> P x: U i"
@@ -306,7 +221,7 @@ lemma* transport_pathcomp_derivation:
     done
   done
 
-lemma* transport_compose_typefam_derivation:
+lemma** transport_compose_typefam [typechk]:
   assumes
     "A: U i" "B: U i"
     "\<And>x. x: B \<Longrightarrow> P x: U i"
@@ -317,7 +232,7 @@ lemma* transport_compose_typefam_derivation:
   shows "trans (\<lambda>x. P (f x)) p u = trans P f[p] u"
   by (equality \<open>p:_\<close>) (reduce; intros)
 
-lemma* transport_function_family_derivation:
+lemma** transport_function_family [typechk]:
   assumes
     "A: U i"
     "\<And>x. x: A \<Longrightarrow> P x: U i"
@@ -329,31 +244,18 @@ lemma* transport_function_family_derivation:
   shows "trans Q p ((f x) u) = (f y) (trans P p u)"
   by (equality \<open>p:_\<close>) (reduce; intros)
 
-lemma* transport_const_derivation:
+lemma** transport_const [typechk]:
   assumes
     "A: U i" "B: U i"
     "x: A" "y: A"
     "p: x =\<^bsub>A\<^esub> y"
-    "b: B"
-  shows "trans (\<lambda>_. B) p b = b"
-  by (equality \<open>p:_\<close>) (reduce; intros)
-
-definition "transport_const A B x y p \<equiv>
-  \<lambda>b: B. IdInd A (\<lambda>x y p. transport A (\<lambda>_. B) x y p `b =\<^bsub>B\<^esub> b) (\<lambda>x. refl b) x y
-  p"
+  shows "\<Prod>b: B. trans (\<lambda>_. B) p b = b"
+  by (intro, equality \<open>p:_\<close>) (reduce; intro)
 
 definition transport_const_i ("trans'_const")
   where [implicit]: "trans_const B p \<equiv> transport_const ? B ? ? p"
 
 translations "trans_const B p" \<leftharpoondown> "CONST transport_const A B x y p"
-
-lemma* transport_const [typechk]:
-  assumes
-    "A: U i" "B: U i"
-    "x: A" "y: A"
-    "p: x =\<^bsub>A\<^esub> y"
-  shows "trans_const B p: \<Prod>b: B. trans (\<lambda>_. B) p b = b"
-  unfolding transport_const_def by reduce+
 
 lemma* transport_const_comp [comps]:
   assumes
@@ -362,26 +264,20 @@ lemma* transport_const_comp [comps]:
   shows "trans_const B (refl x) b\<equiv> refl b"
   unfolding transport_const_def by (subst comps) reduce+
 
-lemma* pathlift_derivation:
+lemma** pathlift [typechk]:
   assumes
     "A: U i"
     "\<And>x. x: A \<Longrightarrow> P x: U i"
     "x: A" "y: A"
-    "u: P x"
     "p: x =\<^bsub>A\<^esub> y"
+    "u: P x"
   shows "<x, u> = <y, trans P p u>"
   by (equality \<open>p:_\<close>) (reduce; intros)
-
-definition "pathlift A P x y p u \<equiv>
-  IdInd A (\<lambda>a b c. \<Prod>x: P a. <a, x> =\<^bsub>\<Sum>x: A. P x\<^esub> <b, transport A P a b c `x>)
-  (\<lambda>x. \<lambda>xa: P x. refl <x, xa>) x y p `u"
 
 definition pathlift_i ("lift")
   where [implicit]: "lift P p u \<equiv> pathlift ? P ? ? p u"
 
 translations "lift P p u" \<leftharpoondown> "CONST pathlift A P x y p u"
-
-lemmas pathlift [typechk] = pathlift_derivation [folded pathlift_def]
 
 lemma* pathlift_comp [comps]:
   assumes

@@ -6,7 +6,8 @@ imports
   "HOL-Eisbach.Eisbach"
   "HOL-Eisbach.Eisbach_Tools"
 keywords
-  "theorem*" "lemma*" "corollary*" "proposition*" :: thy_goal_stmt and
+  "theorem*" "lemma*" "corollary*" "proposition*"
+  "theorem**" "lemma**" "corollary**" "proposition**" :: thy_goal_stmt and
   "focus" "\<guillemotright>" "\<^item>" "\<^enum>" "~" :: prf_script_goal % "proof" and
   "vars":: quasi_command and
   "print_coercions" :: thy_decl
@@ -168,6 +169,8 @@ axiomatization where
 
 section \<open>Proof commands\<close>
 
+named_theorems typechk
+
 ML_file \<open>lib.ML\<close>
 ML_file \<open>theorem_keywords.ML\<close>
 ML_file \<open>focus.ML\<close>
@@ -184,7 +187,7 @@ ML_file "~~/src/Tools/eqsubst.ML"
 
 ML_file \<open>elimination.ML\<close> \<comment> \<open>declares the [elims] attribute\<close>
 
-named_theorems intros and comps and typechk
+named_theorems intros and comps
 lemmas
   [intros] = PiF PiI SigF SigI IdF IdI and
   [elims] = PiE SigE IdE and
@@ -375,23 +378,17 @@ lemma id_U [typechk]:
 
 section \<open>Equality\<close>
 
-lemma* Id_symmetric_derivation:
+lemma** pathinv [typechk]:
   assumes "A: U i" "x: A" "y: A" "p: x =\<^bsub>A\<^esub> y"
   shows "y =\<^bsub>A\<^esub> x"
   by (equality \<open>p:_\<close>) intro
-
-(*TODO: automatically generate definitions for the terms derived in the above manner*)
-
-definition "pathinv A x y p \<equiv> IdInd A (\<lambda>x y _. y =\<^bsub>A\<^esub> x) (\<lambda>x. refl x) x y p"
-
-lemmas Id_symmetric [typechk] = Id_symmetric_derivation [folded pathinv_def]
 
 lemma pathinv_comp [comps]:
   assumes "x: A" "A: U i"
   shows "pathinv A x x (refl x) \<equiv> refl x"
   unfolding pathinv_def by reduce
 
-lemma* Id_transitive_derivation:
+lemma** pathcomp [typechk]:
   assumes
     "A: U i" "x: A" "y: A" "z: A"
     "p: x =\<^bsub>A\<^esub> y" "q: y =\<^bsub>A\<^esub> z"
@@ -403,14 +400,6 @@ lemma* Id_transitive_derivation:
         apply intro
     done
   done
-
-definition "pathcomp A x y z p q \<equiv>
-  IdInd A
-    (\<lambda>x y _. y =\<^bsub>A\<^esub> z \<rightarrow> x =\<^bsub>A\<^esub> z)
-    (\<lambda>x. \<lambda>q: x =\<^bsub>A\<^esub> z. IdInd A (\<lambda>x z _. (x =\<^bsub>A\<^esub> z)) (\<lambda>x. refl x) x z q)
-    x y p q"
-
-lemmas Id_transitive [typechk] = Id_transitive_derivation [folded pathcomp_def]
 
 lemma pathcomp_comp [comps]:
   assumes "a: A" "A: U i"

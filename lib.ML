@@ -28,6 +28,7 @@ val has_subterm: term list -> term -> bool
 val subterm_count: term -> term -> int
 val subterm_count_distinct: term list -> term -> int
 val traverse_term: (term -> term list -> term) -> term -> term
+val collect_subterms: (term -> bool) -> term -> term list
 
 (*Orderings*)
 val subterm_order: term -> term -> order
@@ -128,6 +129,10 @@ fun traverse_term f t =
   in
     map_aux t
   end
+
+fun collect_subterms f (t $ u) = collect_subterms f t @ collect_subterms f u
+  | collect_subterms f (Abs (_, _, t)) = collect_subterms f t
+  | collect_subterms f t = if f t then [t] else []
 
 
 (** Orderings **)

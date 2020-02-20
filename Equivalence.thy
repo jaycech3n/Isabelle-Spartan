@@ -41,7 +41,7 @@ lemma* homotopy_symmetric_derivation:
   shows "H: f ~ g \<Longrightarrow> g ~ f"
   unfolding homotopy_def
   apply intros
-    apply (rule Id_symmetric)
+    apply (rule pathinv)
       \<guillemotright> by (elim H)
       \<guillemotright> by typechk
   done
@@ -63,7 +63,7 @@ lemma* homotopy_transitive_derivation:
   unfolding homotopy_def
   apply intro
     \<guillemotright> vars x
-      apply (rule Id_transitive[where ?y="g x"])
+      apply (rule pathcomp[where ?y="g x"])
         \<^item> by (elim H1)
         \<^item> by (elim H2)
       done
@@ -93,7 +93,7 @@ lemma* commute_homotopy_derivation:
           propositional equality.\<close>
         apply (rule use_transport[where ?x="H x \<bullet> refl (g x)"])
           \<guillemotright> by (rule pathcomp_right_refl)
-          \<guillemotright> by (rule Id_symmetric) (rule pathcomp_left_refl)
+          \<guillemotright> by (rule pathinv) (rule pathcomp_left_refl)
           \<guillemotright> by typechk
     done
   done
@@ -143,7 +143,7 @@ lemma* homotopy_funcomp_right:
   unfolding homotopy_def
   apply (intro; reduce)
     apply (insert \<open>H: _\<close>[unfolded homotopy_def]; drule PiE, assumption)
-      apply (rule Id_transfer, assumption)
+      apply (rule ap, assumption)
   done
 
 
@@ -222,7 +222,7 @@ definition biinv_i ("biinv")
 
 translations "biinv f" \<leftharpoondown> "CONST Equivalence.biinv A B f"
 
-lemma* qinv_imp_biinv_derivation:
+lemma** qinv_imp_biinv [typechk]:
   assumes
     "A: U i" "B: U i"
     "f: A \<rightarrow> B"
@@ -231,13 +231,6 @@ lemma* qinv_imp_biinv_derivation:
   unfolding qinv_def biinv_def
     apply (erule Sig_dist_expand; typechk)
   done
-
-definition "qinv_imp_biinv A B f \<equiv>
-  \<lambda>x: Equivalence.qinv A B f. Sig_dist_expand (B \<rightarrow> A) (\<lambda>x. homotopy A (\<lambda>_. A)
-  (x \<circ>\<^bsub>A\<^esub> f) (id A)) (\<lambda>x. homotopy B (\<lambda>_. B) (f \<circ>\<^bsub>B\<^esub> x) (id B)) x"
-
-lemmas qinv_imp_biinv [typechk] =
-  qinv_imp_biinv_derivation [folded qinv_imp_biinv_def]
 
 text \<open>
   Show that bi-invertible maps are quasi-inverses, as a demonstration of how to

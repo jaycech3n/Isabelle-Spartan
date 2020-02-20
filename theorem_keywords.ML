@@ -27,19 +27,194 @@ val short_statement =
         [Element.Fixes fixes, Element.Assumes assumes],
         Element.Shows shows))
 
+fun prep_statement prep_att prep_stmt raw_elems raw_stmt ctxt =
+  let
+    val (stmt, elems_ctxt) = prep_stmt raw_elems raw_stmt ctxt
+    val prems = Assumption.local_prems_of elems_ctxt ctxt
+    val stmt_ctxt = fold (fold (Variable.auto_fixes o fst) o snd)
+      stmt elems_ctxt
+  in
+    case raw_stmt of
+      Element.Shows _ =>
+        let val stmt' = Attrib.map_specs (map prep_att) stmt
+        in (([], prems, stmt', NONE), stmt_ctxt) end
+    | Element.Obtains raw_obtains =>
+        let
+          val asms_ctxt = stmt_ctxt
+            |> fold (fn ((name, _), asm) =>
+                snd o Proof_Context.add_assms Assumption.assume_export
+                  [((name, [Context_Rules.intro_query NONE]), asm)]) stmt
+          val that = Assumption.local_prems_of asms_ctxt stmt_ctxt
+          val ([(_, that')], that_ctxt) = asms_ctxt
+            |> Proof_Context.set_stmt true
+            |> Proof_Context.note_thmss ""
+                [((Binding.name Auto_Bind.thatN, []), [(that, [])])]
+            ||> Proof_Context.restore_stmt asms_ctxt
 
+          val stmt' = [
+              (Binding.empty_atts,
+              [(#2 (#1 (Obtain.obtain_thesis ctxt)), [])])
+            ]
+        in
+          ((Obtain.obtains_attribs raw_obtains, prems, stmt', SOME that'),
+          that_ctxt)
+        end
+  end
 
-fun theorem spec descr =
+fun define_proof_term name (local_name, [th]) lthy =
+      let
+        fun make_name_binding suffix local_name =
+          let val base_local_name = Long_Name.base_name local_name
+          in
+            Binding.qualified_name
+              ((case base_local_name of
+                  "" => name
+                | _ => base_local_name)
+              ^(case suffix of
+                  SOME "prf" => "_prf"
+                | SOME "def" => "_def"
+                | _ => ""))
+          end
+
+        val (prems, concl) =
+          (Logic.strip_assums_hyp (Thm.prop_of th),
+          Logic.strip_assums_concl (Thm.prop_of th))
+      in
+        if not (Lib.is_typing concl) then
+          ([], lthy)
+        else let
+          val params = distinct (op aconv) (flat
+            (map (Lib.collect_subterms
+              (fn t => case t of
+                  Var (_, \<^typ>\<open>lvl\<close>) => false
+                | Var (_, _) => true
+                | _ => false)) prems))
+
+          val prf_tm =
+            fold_rev lambda params (Lib.term_of_typing concl)
+
+          val ((_, (_, raw_def)), lthy') = Local_Theory.define
+            ((make_name_binding NONE local_name, Mixfix.NoSyn),
+            ((make_name_binding (SOME "prf") local_name, []), prf_tm)) lthy
+
+          val def =
+            fold
+              (fn th1 => fn th2 => Thm.combination th2 th1)
+              (map (Thm.reflexive o Thm.cterm_of lthy) params)
+              raw_def
+
+          val ((_, def'), lthy'') = Local_Theory.note
+            ((make_name_binding (SOME "def") local_name, []), [def])
+            lthy'
+        in
+          (def', lthy'')
+        end
+      end
+  | define_proof_term _ _ _ = error
+      ("Unimplemented: handling proof terms of multiple facts in"
+      ^" single result")
+
+fun gen_theorem
+      schematic bundle_includes prep_att prep_stmt
+      long gen_prf kind before_qed after_qed (name, raw_atts)
+      raw_includes raw_elems raw_concl int lthy =
+  let
+    val _ = Local_Theory.assert lthy;
+
+    val elems = raw_elems |> map (Element.map_ctxt_attrib (prep_att lthy))
+    val ((more_atts, prems, stmt, facts), goal_ctxt) = lthy
+      |> bundle_includes raw_includes
+      |> prep_statement (prep_att lthy) prep_stmt elems raw_concl
+    val atts = more_atts @ map (prep_att lthy) raw_atts
+    val pos = Position.thread_data ()
+
+    val prems_name = if long then Auto_Bind.assmsN else Auto_Bind.thatN
+
+    fun after_qed' results goal_ctxt' =
+      let
+        val results' = burrow
+          (map (Goal.norm_result lthy) o Proof_Context.export goal_ctxt' lthy)
+          results
+
+        val (res, lthy') =
+          if forall (Binding.is_empty_atts o fst) stmt
+          then (map (pair "") results', lthy)
+          else
+            Local_Theory.notes_kind kind
+              (map2 (fn (b, _) => fn ths => (b, [(ths, [])])) stmt results')
+              lthy
+
+        val (res', lthy'') =
+          if gen_prf then let
+            val (prf_tm_defs, lthy'') =
+              fold
+                (fn result => fn (defs, lthy) =>
+                  apfst (fn new_defs => defs @ new_defs)
+                    (define_proof_term (Binding.name_of name) result lthy))
+                res ([], lthy')
+
+            val res' =
+              map (apsnd (map (Local_Defs.fold lthy'' prf_tm_defs))) res
+
+            val (_, lthy''') =
+              Local_Theory.notes_kind kind
+                [((name, atts), [(maps #2 res', [])])] lthy''
+          in
+            (res', lthy''')
+          end
+          else let
+            val (_, lthy'') =
+              Local_Theory.notes_kind kind
+                [((name, atts), [(maps #2 res, [])])] lthy'
+          in
+            (res, lthy'')
+          end
+
+        val _ = Proof_Display.print_results int pos lthy''
+            ((kind, Binding.name_of name), res')
+      in
+        after_qed results' lthy''
+      end
+  in
+    goal_ctxt
+    |> not (null prems) ?
+      (Proof_Context.note_thmss "" [((Binding.name prems_name, []), [(prems, [])])] #> snd)
+    |> Proof.theorem before_qed after_qed' (map snd stmt)
+    |> (case facts of NONE => I | SOME ths => Proof.refine_insert ths)
+    |> tap (fn state => not schematic andalso Proof.schematic_goal state andalso
+        error "Illegal schematic goal statement")
+  end
+
+val schematic_theorem_cmd =
+  gen_theorem
+    true
+    Bundle.includes_cmd
+    Attrib.check_src
+    Expression.read_statement
+
+fun theorem spec gen_prf descr =
   Outer_Syntax.local_theory_to_proof' spec ("state " ^ descr)
     ((long_statement || short_statement) >>
       (fn (long, binding, includes, elems, concl) =>
-        Specification.schematic_theorem_cmd
-          long Thm.theoremK NONE (K I) binding includes elems concl))
+        schematic_theorem_cmd
+          long gen_prf Thm.theoremK NONE (K I) binding includes elems concl))
 in
 
-val _ = theorem \<^command_keyword>\<open>theorem*\<close> "schematic theorem"
-val _ = theorem \<^command_keyword>\<open>lemma*\<close> "schematic lemma"
-val _ = theorem \<^command_keyword>\<open>corollary*\<close> "schematic corollary"
-val _ = theorem \<^command_keyword>\<open>proposition*\<close> "schematic proposition"
+val _ = theorem \<^command_keyword>\<open>theorem*\<close> false "schematic theorem"
+val _ = theorem \<^command_keyword>\<open>lemma*\<close> false "schematic lemma"
+val _ = theorem \<^command_keyword>\<open>corollary*\<close> false "schematic corollary"
+val _ = theorem \<^command_keyword>\<open>proposition*\<close> false "schematic proposition"
+
+val _ = theorem \<^command_keyword>\<open>theorem**\<close> true
+  "schematic theorem defining proof terms"
+
+val _ = theorem \<^command_keyword>\<open>lemma**\<close> true
+  "schematic lemma defining proof terms"
+
+val _ = theorem \<^command_keyword>\<open>corollary**\<close> true
+  "schematic corollary defining proof terms"
+
+val _ = theorem \<^command_keyword>\<open>proposition**\<close> true
+  "schematic proposition defining proof terms"
 
 end

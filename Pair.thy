@@ -38,7 +38,7 @@ method snd for p::o = rule snd[of p]
 
 section \<open>Properties of \<Sigma>\<close>
 
-lemma* Sig_dist_expand_derivation:
+lemma** Sig_dist_expand [typechk]:
   assumes
     "p: \<Sum>x: A. B x \<times> C x"
     "A: U i"
@@ -58,13 +58,6 @@ lemma* Sig_dist_expand_derivation:
           done
     done
   done
-
-definition "Sig_dist_expand A B C p \<equiv>
-  SigInd A (\<lambda>x. B x \<times> C x) (\<lambda>_. (\<Sum>x: A. B x) \<times> (\<Sum>x: A. C x)) (\<lambda>x y. <<x,
-  Spartan.fst (B x) (\<lambda>_. C x) `y>, <x, Spartan.snd (B x) (\<lambda>_. C x) `y>>) p"
-
-lemmas Sig_dist_expand [typechk] =
-  Sig_dist_expand_derivation [folded Sig_dist_expand_def]
 
 
 end
