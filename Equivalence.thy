@@ -148,7 +148,7 @@ definition qinv_i ("qinv")
 
 translations "qinv f" \<leftharpoondown> "CONST Equivalence.qinv A B f"
 
-lemma** qinv_id [typechk]:
+lemma** id_qinv [typechk]:
   assumes "A: U i"
   shows "qinv (id A)"
   unfolding qinv_def
@@ -160,7 +160,7 @@ lemma** qinv_id [typechk]:
 
 lemma** quasiinv_qinv [typechk]:
   assumes "A: U i" "B: U i" "f: A \<rightarrow> B"
-  shows "qinv f \<Longrightarrow> qinv (fst prf)"
+  shows "prf: qinv f \<Longrightarrow> qinv (fst prf)"
   unfolding qinv_def
   apply intro
     \<guillemotright> by (rule \<open>f:_\<close>)
@@ -172,6 +172,22 @@ lemma** quasiinv_qinv [typechk]:
         done
       done
   done
+
+lemma** funcomp_qinv [typechk]:
+  assumes
+    "A: U i" "B: U i" "C: U i"
+    "f: A \<rightarrow> B" "g: B \<rightarrow> C"
+  shows "qinv f \<rightarrow> qinv g \<rightarrow> qinv (g \<circ> f)"
+  apply intros
+  unfolding qinv_def
+  apply elims
+  focus
+    premises hyps
+    vars _ _ f_inv _ g_inv _ Hf1 Hf2 Hg1 Hg2
+
+    apply intro
+    apply (rule funcompI[where ?f=g_inv and ?g=f_inv])
+oops
 
 subsection \<open>Bi-invertible maps\<close>
 
@@ -263,9 +279,18 @@ lemma** biinv_imp_qinv [typechk]:
     done
   done
 
-lemma** biinv_id [typechk]:
+lemma** id_biinv [typechk]:
   "A: U i \<Longrightarrow> biinv (id A)"
-  by (rule qinv_imp_biinv) (rule qinv_id)
+    by (rule qinv_imp_biinv) (rule id_qinv)
+
+lemma** funcomp_biinv [typechk]:
+  assumes
+    "A: U i" "B: U i" "C: U i"
+    "f: A \<rightarrow> B" "g: B \<rightarrow> C"
+  shows "biinv f \<rightarrow> biinv g \<rightarrow> biinv (g \<circ> f)"
+  apply intros
+  focus vars biinv\<^sub>f biinv\<^sub>g
+    oops
 
 
 section \<open>Equivalence\<close>
@@ -289,7 +314,7 @@ lemma** equivalence_refl [typechk]:
   unfolding equivalence_def
   apply intro defer
     apply (rule qinv_imp_biinv) defer
-      apply (rule qinv_id)
+      apply (rule id_qinv)
   done
 
 text \<open>
@@ -311,6 +336,13 @@ lemma** equivalence_symmetric [typechk]:
     done
   done
 
+lemma** equivalence_transitive [typechk]:
+  assumes "A: U i" "B: U i" "C: U i"
+  shows "A \<simeq> B \<rightarrow> B \<simeq> C \<rightarrow> A \<simeq> C"
+  apply intros
+  unfolding equivalence_def
+oops  
+
 text \<open>
   Equal types are equivalent. We give two proofs: the first by induction, and
   the second by following the HoTT book and showing that transport is an
@@ -324,8 +356,8 @@ lemma* id_imp_equiv':
   by (equality \<open>p:_\<close>) (rule equivalence_refl)
 
 text \<open>
-  The following proof is a bit wordy because (1) the typechecker doesn't
-  rewrite, and (2) we don't yet have universe automation.
+  The following proof is wordy because (1) the typechecker doesn't rewrite, and
+  (2) we don't yet have universe automation.
 \<close>
 
 lemma** id_imp_equiv [typechk]:
@@ -352,7 +384,7 @@ lemma** id_imp_equiv [typechk]:
           \<^enum> by (rule lift_universe)
           \<^enum> apply reduce
               apply (rule qinv_imp_biinv)
-                apply (rule qinv_id)
+                apply (rule id_qinv)
             done
         done
       done
