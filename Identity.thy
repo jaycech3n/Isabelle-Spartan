@@ -23,8 +23,8 @@ definition pathcomp_i (infixl "\<bullet>" 121)
 
 translations
   "x = y" \<leftharpoondown> "x =\<^bsub>A\<^esub> y"
-  "p\<inverse>" \<leftharpoondown> "CONST pathinv A x y p"
-  "p \<bullet> q" \<leftharpoondown> "CONST pathcomp A x y z p q"
+  "p\<inverse>" \<leftharpoondown> "CONST pathinv A i x y p"
+  (* "p \<bullet> q" \<leftharpoondown> "CONST pathcomp A i x y z p q" *)
 
 
 section \<open>Basic propositional equalities\<close>
@@ -288,7 +288,7 @@ lemma* pathlift_comp [comps]:
   shows "lift P (refl x) u \<equiv> refl <x, u>"
   unfolding pathlift_def by (subst comps) reduce+
 
-lemma* pathlift_fst_derivation:
+lemma** pathlift_fst [typechk]:
   assumes
     "A: U i"
     "\<And>x. x: A \<Longrightarrow> P x: U i"
@@ -309,18 +309,10 @@ lemma* pathlift_fst_derivation:
     \<guillemotright> by reduce intro
   done
 
-definition "pathlift_fst A P x y p u \<equiv>
-  IdInd A (\<lambda>a b c. \<Prod>x: P a. ap (\<Sum>x: A. P x) A <a, x> <b, transport A (\<lambda>a. P a) a
-  b c `x> (Spartan.fst A (\<lambda>a. P a)) (pathlift A (\<lambda>a. P a) a b c x) =\<^bsub>a =\<^bsub>A\<^esub> b\<^esub>
-  c) (\<lambda>x. \<lambda>_: P x. refl (refl x)) x y p `u"
-
-lemmas pathlift_fst [typechk] =
-  pathlift_fst_derivation [folded pathlift_fst_def]
-
 
 section \<open>Dependent paths\<close>
 
-lemma* dependent_map_derivation:
+lemma** apd [typechk]:
   assumes
     "A: U i"
     "\<And>x. x: A \<Longrightarrow> P x: U i"
@@ -330,16 +322,10 @@ lemma* dependent_map_derivation:
   shows "trans P p (f x) = f y"
   by (equality \<open>p:_\<close>) (reduce; intros; typechk)
 
-definition "apd A P f x y p \<equiv>
-  IdInd A (\<lambda>x y p. transport A (\<lambda>x. P x) x y p `(f `x) =\<^bsub>P y\<^esub> f `y) (\<lambda>x. refl (f
-  `x)) x y p"
-
 definition apd_i ("apd")
   where [implicit]: "apd f p \<equiv> Identity.apd ? ? f ? ? p"
 
 translations "apd f p" \<leftharpoondown> "CONST Identity.apd A P f x y p"
-
-lemmas dependent_map [typechk] = dependent_map_derivation [folded apd_def]
 
 lemma* dependent_map_comp [comps]:
   assumes
@@ -350,7 +336,7 @@ lemma* dependent_map_comp [comps]:
   shows "apd f (refl x) \<equiv> refl (f x)"
   unfolding apd_def by (subst comps) reduce+
 
-lemma* apd_ap_derivation:
+lemma** apd_ap [typechk]:
   assumes
     "A: U i" "B: U i"
     "f: A \<rightarrow> B"

@@ -172,7 +172,7 @@ section \<open>Proof commands\<close>
 named_theorems typechk
 
 ML_file \<open>lib.ML\<close>
-ML_file \<open>theorem_keywords.ML\<close>
+ML_file \<open>goals.ML\<close>
 ML_file \<open>focus.ML\<close>
 
 

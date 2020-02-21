@@ -20,19 +20,14 @@ lemma* homotopy_type [typechk]:
   shows "f ~ g: U i"
   unfolding homotopy_def by typechk
 
-lemma* homotopy_refl_derivation:
+lemma** homotopy_refl [typechk]:
   assumes
     "A: U i"
     "f: \<Prod>x: A. B x"
   shows "f ~ f"
   unfolding homotopy_def by intros
 
-definition "homotopy_refl A f \<equiv> \<lambda>x: A. refl (f `x)"
-
-lemmas homotopy_refl [typechk] =
-  homotopy_refl_derivation [folded homotopy_refl_def]
-
-lemma* homotopy_symmetric_derivation:
+lemma** homotopy_symmetric [typechk]:
   assumes
     "A: U i"
     "\<And>x. x: A \<Longrightarrow> B x: U i"
@@ -46,13 +41,7 @@ lemma* homotopy_symmetric_derivation:
       \<guillemotright> by typechk
   done
 
-definition "homotopy_symmetric A B f g H \<equiv>
-  \<lambda>x: A. pathinv (B x) (f `x) (g `x) (H `x)"
-
-lemmas homotopy_symmetric [typechk] =
-  homotopy_symmetric_derivation [folded homotopy_symmetric_def]
-
-lemma* homotopy_transitive_derivation:
+lemma** homotopy_transitive [typechk]:
   assumes
     "A: U i"
     "\<And>x. x: A \<Longrightarrow> B x: U i"
@@ -70,13 +59,7 @@ lemma* homotopy_transitive_derivation:
     \<guillemotright> by typechk
   done
 
-definition "homotopy_transitive A B f g h H1 H2 \<equiv>
-  \<lambda>x: A. pathcomp (B x) (f `x) (g `x) (h `x) (H1 `x) (H2 `x)"
-
-lemmas homotopy_transitive [typechk] =
-  homotopy_transitive_derivation [folded homotopy_transitive_def]
-
-lemma* commute_homotopy_derivation:
+lemma** commute_homotopy [typechk]:
   assumes
     "A: U i" "B: U i"
     "x: A" "y: A"
@@ -98,7 +81,7 @@ lemma* commute_homotopy_derivation:
     done
   done
 
-corollary* commute_homotopy'_derivation:
+corollary** commute_homotopy' [typechk]:
   assumes
     "A: U i"
     "x: A"
@@ -164,7 +147,7 @@ definition qinv_i ("qinv")
 
 translations "qinv f" \<leftharpoondown> "CONST Equivalence.qinv A B f"
 
-lemma* qinv_id_derivation:
+lemma** qinv_id [typechk]:
   assumes "A: U i"
   shows "qinv (id A)"
   unfolding qinv_def
@@ -174,13 +157,9 @@ lemma* qinv_id_derivation:
       apply (rule homotopy_id_left)
   done
 
-definition "qinv_id A \<equiv> <id A, <homotopy_refl A (id A), homotopy_refl A (id A)>>"
-
-lemmas qinv_id [typechk] = qinv_id_derivation [folded qinv_id_def]
-
-lemma* quasiinv_qinv_derivation:
+lemma** quasiinv_qinv [typechk]:
   assumes "A: U i" "B: U i" "f: A \<rightarrow> B"
-  shows "prf: qinv f \<Longrightarrow> qinv (fst prf)"
+  shows "qinv f \<Longrightarrow> qinv (fst prf)"
   unfolding qinv_def
   apply intro
     \<guillemotright> by (rule \<open>f:_\<close>)
@@ -192,19 +171,6 @@ lemma* quasiinv_qinv_derivation:
         done
       done
   done
-
-definition "quasiinverse_qinv A B f prf \<equiv>
-  <f, SigInd (B \<rightarrow> A) (\<lambda>g. homotopy A (\<lambda>_. A) (g \<circ>\<^bsub>A\<^esub> f) (id A) \<times> homotopy B
-  (\<lambda>_. B) (f \<circ>\<^bsub>B\<^esub> g) (id B)) (\<lambda>a. homotopy B (\<lambda>_. B) (f \<circ>\<^bsub>B\<^esub> Spartan.fst (B \<rightarrow> A)
-  (\<lambda>x. homotopy A (\<lambda>_. A) (x \<circ>\<^bsub>A\<^esub> f) (id A) \<times> homotopy B (\<lambda>_. B) (f \<circ>\<^bsub>B\<^esub> x)
-  (id B)) `a) (id B) \<times> homotopy A (\<lambda>_. A) (Spartan.fst (B \<rightarrow> A) (\<lambda>x. homotopy A
-  (\<lambda>_. A) (x \<circ>\<^bsub>A\<^esub> f) (id A) \<times> homotopy B (\<lambda>_. B) (f \<circ>\<^bsub>B\<^esub> x) (id B)) `a \<circ>\<^bsub>A\<^esub> f)
-  (id A)) (\<lambda>g HH. <Spartan.snd (homotopy A (\<lambda>_. A) (g \<circ>\<^bsub>A\<^esub> f) (id A)) (\<lambda>x.
-  homotopy B (\<lambda>_. B) (f \<circ>\<^bsub>B\<^esub> g) (id B)) `HH, Spartan.fst (homotopy A (\<lambda>_. A)
-  (g \<circ>\<^bsub>A\<^esub> f) (id A)) (\<lambda>x. homotopy B (\<lambda>_. B) (f \<circ>\<^bsub>B\<^esub> g) (id B)) `HH>) prf>"
-
-lemmas quasiinverse_qinv =
-  quasiinv_qinv_derivation [folded quasiinverse_qinv_def]
 
 subsection \<open>Bi-invertible maps\<close>
 
@@ -237,7 +203,7 @@ text \<open>
   work in this system.
 \<close>
 
-lemma* biinv_imp_qinv_derivation:
+lemma** biinv_imp_qinv [typechk]:
   assumes "A: U i" "B: U i" "f: A \<rightarrow> B"
   shows "biinv f \<rightarrow> qinv f"
 
@@ -297,27 +263,9 @@ lemma* biinv_imp_qinv_derivation:
     done
   done
 
-definition "biinv_imp_qinv A B f \<equiv>
-  \<lambda>x: Equivalence.biinv A B f. SigInd (\<Sum>g: B \<rightarrow> A. homotopy A (\<lambda>_. A) (g \<circ>\<^bsub>A\<^esub> f)
-  (id A)) (\<lambda>_. \<Sum>g: B \<rightarrow> A. homotopy B (\<lambda>_. B) (f \<circ>\<^bsub>B\<^esub> g) (id B)) (\<lambda>a.
-  Equivalence.qinv A B f) (\<lambda>uua y. SigInd (B \<rightarrow> A) (\<lambda>g. homotopy A (\<lambda>_. A) (g
-  \<circ>\<^bsub>A\<^esub> f) (id A)) (\<lambda>a. Equivalence.qinv A B f) (\<lambda>g ya. SigInd (B \<rightarrow> A) (\<lambda>g.
-  homotopy B (\<lambda>_. B) (f \<circ>\<^bsub>B\<^esub> g) (id B)) (\<lambda>a. Equivalence.qinv A B f) (\<lambda>h H2. <g,
-  <ya, homotopy_transitive B (\<lambda>x. B) (f \<circ>\<^bsub>B\<^esub> g) (f \<circ>\<^bsub>B\<^esub> h) (id B) (\<lambda>x: B. ap A B
-  (g `x) (h `x) f (homotopy_transitive B (\<lambda>x. A) g (g \<circ>\<^bsub>B\<^esub> f \<circ>\<^bsub>B\<^esub> h) h (\<lambda>x: B.
-  ap B A (id B `x) ((f \<circ>\<^bsub>B\<^esub> h) `x) g (homotopy_symmetric B (\<lambda>x. B) (f \<circ>\<^bsub>B\<^esub> h)
-  (id B) H2 `x)) (\<lambda>x: B. ya `(h `x)) `x)) H2>>) y) uua) x"
-
-lemmas biinv_imp_qinv [typechk] =
-  biinv_imp_qinv_derivation [folded biinv_imp_qinv_def]
-
-lemma* biinv_id_derivation:
+lemma** biinv_id [typechk]:
   "A: U i \<Longrightarrow> biinv (id A)"
   by (rule qinv_imp_biinv) (rule qinv_id)
-
-definition "biinv_id A \<equiv> qinv_imp_biinv A A (id A) (qinv_id A)"
-
-lemmas biinv_id [typechk] = biinv_id_derivation [folded biinv_id_def]
 
 
 section \<open>Equivalence\<close>
@@ -335,7 +283,7 @@ lemma equivalence_type [typechk]:
   shows "A \<simeq> B: U i"
   unfolding equivalence_def by typechk
 
-lemma* equivalence_refl_derivation:
+lemma** equivalence_refl [typechk]:
   assumes "A: U i"
   shows "A \<simeq> A"
   unfolding equivalence_def
@@ -344,17 +292,12 @@ lemma* equivalence_refl_derivation:
       apply (rule qinv_id)
   done
 
-definition "equivalence_refl A \<equiv> <id A, qinv_imp_biinv A A (id A) `qinv_id A>"
-
-lemmas equivalence_refl [typechk] =
-  equivalence_refl_derivation [folded equivalence_refl_def]
-
 text \<open>
   The following could perhaps be easier with transport (but then I think we need
   univalence?)...
 \<close>
 
-lemma* equivalence_symmetric_derivation:
+lemma** equivalence_symmetric [typechk]:
   assumes "A: U i" "B: U i"
   shows "A \<simeq> B \<rightarrow> B \<simeq> A"
   apply intros
@@ -365,7 +308,7 @@ lemma* equivalence_symmetric_derivation:
     apply (drule biinv_imp_qinv[THEN PiE, rotated 3], typechk)
     apply intro
       \<^item> unfolding qinv_def by (rule fst[of "(biinv_imp_qinv A B f) prf"])
-      \<^item> by (rule qinv_imp_biinv) (rule quasiinverse_qinv)
+      \<^item> by (rule qinv_imp_biinv) (rule quasiinv_qinv)
     done
   done
 
@@ -375,7 +318,7 @@ text \<open>
   equivalence.
 \<close>
 
-lemma* id_imp_equiv_derivation':
+lemma* id_imp_equiv':
   assumes
     "A: U i" "B: U i" "p: A =\<^bsub>U i\<^esub> B"
   shows "A \<simeq> B"
@@ -386,7 +329,7 @@ text \<open>
   rewrite, and (2) we don't yet have universe automation.
 \<close>
 
-lemma* id_imp_equiv_derivation:
+lemma** id_imp_equiv [typechk]:
   assumes
     "A: U i" "B: U i" "p: A =\<^bsub>U i\<^esub> B"
   shows "<trans (id (U i)) p, ?isequiv>: A \<simeq> B"

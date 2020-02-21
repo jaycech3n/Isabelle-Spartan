@@ -1,7 +1,7 @@
-(*  Title:      theorem_keywords.ML
+(*  Title:      goals.ML
     Author:     Makarius Wenzel, Joshua Chen
 
-Schematic theorem commands, to enable statements with implicits.
+Goal statements and proof term export.
 
 Modified from code originally written by Makarius Wenzel.
 *)
@@ -83,12 +83,13 @@ fun define_proof_term name (local_name, [th]) lthy =
         if not (Lib.is_typing concl) then
           ([], lthy)
         else let
-          val params = distinct (op aconv) (flat
-            (map (Lib.collect_subterms
-              (fn t => case t of
-                  Var (_, \<^typ>\<open>lvl\<close>) => false
-                | Var (_, _) => true
-                | _ => false)) prems))
+          val prems_vars = distinct Term.aconv (flat
+            (map (Lib.collect_subterms is_Var) prems))
+
+          val concl_vars = Lib.collect_subterms is_Var
+            (Lib.term_of_typing concl)
+
+          val params = inter Term.aconv concl_vars prems_vars
 
           val prf_tm =
             fold_rev lambda params (Lib.term_of_typing concl)
