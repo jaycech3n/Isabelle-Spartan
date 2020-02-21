@@ -13,6 +13,7 @@ val typechk_tac: Proof.context -> int -> tactic
 val auto_typechk: bool Config.T
 val SIDE_CONDS: (int -> tactic) -> Proof.context -> int -> tactic
 val rule_tac: thm list -> Proof.context -> int -> tactic
+val dest_tac: int option -> thm list -> Proof.context -> int -> tactic
 val intro_tac: Proof.context -> int -> tactic
 val intros_tac: Proof.context -> int -> tactic
 val elims_tac: term option -> Proof.context -> int -> tactic
@@ -75,19 +76,26 @@ fun SIDE_CONDS tac ctxt =
     tac THEN_ALL_NEW (TRY o side_cond_tac)
   end
 
+local
+fun mk_rules _ ths [] = ths
+  | mk_rules n ths ths' =
+      let val ths'' = foldr1 (op @)
+        (map (fn th => [rotate_prems n (th RS @{thm PiE})] handle THM _ => []) ths')
+      in
+        mk_rules n (ths @ ths') ths''
+      end
+in
+
 (*Resolves with given rules, discharging as many side conditions as possible*)
 fun rule_tac ths ctxt =
-  let
-    fun mk_rules ths [] = ths
-      | mk_rules ths ths' =
-          let val ths'' = foldr1 (op @)
-            (map (fn th => [th RS @{thm PiE}] handle THM _ => []) ths')
-          in
-            mk_rules (ths @ ths') ths''
-          end
-  in
-    SIDE_CONDS (resolve_tac ctxt (mk_rules [] ths)) ctxt
-  end
+  SIDE_CONDS (resolve_tac ctxt (mk_rules 0 [] ths)) ctxt
+
+(*Attempts destruct-resolution with the n-th premise of the given rules*)
+fun dest_tac opt_n ths ctxt = SIDE_CONDS (dresolve_tac ctxt
+  (mk_rules (case opt_n of NONE => 0 | SOME 0 => 0 | SOME n => n-1) [] ths))
+  ctxt
+
+end
 
 (*Applies some introduction rule*)
 fun intro_tac ctxt = SUBGOAL (fn (_, i) => SIDE_CONDS

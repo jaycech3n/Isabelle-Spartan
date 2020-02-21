@@ -224,6 +224,11 @@ method_setup rule =
   \<open>Attrib.thms >> (fn ths => fn ctxt =>
     SIMPLE_METHOD (HEADGOAL (rule_tac ths ctxt)))\<close>
 
+method_setup dest =
+  \<open>Scan.lift (Scan.option (Args.parens Parse.int)) -- Attrib.thms
+    >> (fn (opt_n, ths) => fn ctxt =>
+        SIMPLE_METHOD (HEADGOAL (dest_tac opt_n ths ctxt)))\<close>
+
 \<comment> \<open>The Simplifier is used as a basis for some methods\<close>
 setup \<open>
   map_theory_simpset (fn ctxt =>

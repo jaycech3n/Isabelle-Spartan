@@ -125,7 +125,8 @@ lemma* homotopy_funcomp_right:
   shows "homotopy A {} (g \<circ>\<^bsub>A\<^esub> f) (g \<circ>\<^bsub>A\<^esub> f')"
   unfolding homotopy_def
   apply (intro; reduce)
-    apply (insert \<open>H: _\<close>[unfolded homotopy_def]; drule PiE, assumption)
+    apply (insert \<open>H: _\<close>[unfolded homotopy_def])
+      apply (dest PiE, assumption)
       apply (rule ap, assumption)
   done
 
@@ -195,8 +196,7 @@ lemma** qinv_imp_biinv [typechk]:
   shows "?prf: qinv f \<rightarrow> biinv f"
   apply intros
   unfolding qinv_def biinv_def
-    apply (erule Sig_dist_expand; typechk)
-  done
+  by (rule Sig_dist_expand)
 
 text \<open>
   Show that bi-invertible maps are quasi-inverses, as a demonstration of how to
@@ -304,8 +304,7 @@ lemma** equivalence_symmetric [typechk]:
   unfolding equivalence_def
   apply elim
   \<guillemotright> vars _ f "prf"
-    (*Definitely getting into the low-level here.*)
-    apply (drule biinv_imp_qinv[THEN PiE, rotated 3], typechk)
+    apply (dest (4) biinv_imp_qinv)
     apply intro
       \<^item> unfolding qinv_def by (rule fst[of "(biinv_imp_qinv A B f) prf"])
       \<^item> by (rule qinv_imp_biinv) (rule quasiinv_qinv)
