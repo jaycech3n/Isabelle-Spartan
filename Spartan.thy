@@ -6,10 +6,9 @@ imports
   "HOL-Eisbach.Eisbach"
   "HOL-Eisbach.Eisbach_Tools"
 keywords
-  "theorem*" "lemma*" "corollary*" "proposition*"
-  "theorem**" "lemma**" "corollary**" "proposition**" :: thy_goal_stmt and
+  "Theorem" "Lemma" "Corollary" "Proposition" :: thy_goal_stmt and
   "focus" "\<guillemotright>" "\<^item>" "\<^enum>" "~" :: prf_script_goal % "proof" and
-  "vars":: quasi_command and
+  "derive" "vars":: quasi_command and
   "print_coercions" :: thy_decl
 
 begin
@@ -383,7 +382,7 @@ lemma id_U [typechk]:
 
 section \<open>Equality\<close>
 
-lemma** pathinv [typechk]:
+Lemma (derive) pathinv [typechk]:
   assumes "A: U i" "x: A" "y: A" "p: x =\<^bsub>A\<^esub> y"
   shows "y =\<^bsub>A\<^esub> x"
   by (equality \<open>p:_\<close>) intro
@@ -393,7 +392,7 @@ lemma pathinv_comp [comps]:
   shows "pathinv A x x (refl x) \<equiv> refl x"
   unfolding pathinv_def by reduce
 
-lemma** pathcomp [typechk]:
+Lemma (derive) pathcomp [typechk]:
   assumes
     "A: U i" "x: A" "y: A" "z: A"
     "p: x =\<^bsub>A\<^esub> y" "q: y =\<^bsub>A\<^esub> z"

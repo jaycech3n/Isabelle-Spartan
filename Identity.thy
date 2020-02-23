@@ -31,42 +31,42 @@ section \<open>Basic propositional equalities\<close>
 
 (*TODO: Better integration of equality type directly into reasoning...*)
 
-lemma** pathcomp_left_refl [typechk]:
+Lemma (derive) pathcomp_left_refl [typechk]:
   assumes "A: U i" "x: A" "y: A" "p: x =\<^bsub>A\<^esub> y"
   shows "(refl x) \<bullet> p = p"
   apply (equality \<open>p:_\<close>)
     apply (reduce; intros)
   done
 
-lemma** pathcomp_right_refl [typechk]:
+Lemma (derive) pathcomp_right_refl [typechk]:
   assumes "A: U i" "x: A" "y: A" "p: x =\<^bsub>A\<^esub> y"
   shows "p \<bullet> (refl y) = p"
   apply (equality \<open>p:_\<close>)
     apply (reduce; intros)
   done
 
-lemma** pathcomp_left_inv [typechk]:
+Lemma (derive) pathcomp_left_inv [typechk]:
   assumes "A: U i" "x: A" "y: A" "p: x =\<^bsub>A\<^esub> y"
   shows "p\<inverse> \<bullet> p = refl y"
   apply (equality \<open>p:_\<close>)
     apply (reduce; intros)
   done
 
-lemma** pathcomp_right_inv [typechk]:
+Lemma (derive) pathcomp_right_inv [typechk]:
   assumes "A: U i" "x: A" "y: A" "p: x =\<^bsub>A\<^esub> y"
   shows "p \<bullet> p\<inverse> = refl x"
   apply (equality \<open>p:_\<close>)
     apply (reduce; intros)
   done
 
-lemma** pathinv_pathinv [typechk]:
+Lemma (derive) pathinv_pathinv [typechk]:
   assumes "A: U i" "x: A" "y: A" "p: x =\<^bsub>A\<^esub> y"
   shows "p\<inverse>\<inverse> = p"
   apply (equality \<open>p:_\<close>)
     apply (reduce; intros)
   done
 
-lemma** pathcomp_assoc [typechk]:
+Lemma (derive) pathcomp_assoc [typechk]:
   assumes
     "A: U i" "x: A" "y: A" "z: A" "w: A"
     "p: x =\<^bsub>A\<^esub> y" "q: y =\<^bsub>A\<^esub> z" "r: z =\<^bsub>A\<^esub> w"
@@ -84,7 +84,7 @@ lemma** pathcomp_assoc [typechk]:
 
 section \<open>Functoriality of functions\<close>
 
-lemma** ap [typechk]:
+Lemma (derive) ap [typechk]:
   assumes
     "A: U i" "B: U i"
     "x: A" "y: A"
@@ -100,12 +100,12 @@ definition ap_i ("_[_]" [1000, 0])
 
 translations "f[p]" \<leftharpoondown> "CONST ap A B x y f p"
 
-lemma* ap_refl [comps]:
+Lemma ap_refl [comps]:
   assumes "f: A \<rightarrow> B" "x: A" "A: U i" "B: U i"
   shows "f[refl x] \<equiv> refl (f x)"
   unfolding ap_def by (subst comps) reduce
 
-lemma** ap_pathcomp [typechk]:
+Lemma (derive) ap_pathcomp [typechk]:
   assumes
     "A: U i" "B: U i"
     "x: A" "y: A" "z: A"
@@ -120,7 +120,7 @@ lemma** ap_pathcomp [typechk]:
     done
   done
 
-lemma** ap_pathinv [typechk]:
+Lemma (derive) ap_pathinv [typechk]:
   assumes
     "A: U i" "B: U i"
     "x: A" "y: A"
@@ -131,7 +131,7 @@ lemma** ap_pathinv [typechk]:
 
 text \<open>The next two proofs currently use some low-level rewriting.\<close>
 
-lemma** ap_funcomp [typechk]:
+Lemma (derive) ap_funcomp [typechk]:
   assumes
     "A: U i" "B: U i" "C: U i"
     "x: A" "y: A"
@@ -143,7 +143,7 @@ lemma** ap_funcomp [typechk]:
     apply (reduce; intro)
   done
 
-lemma** ap_id [typechk]:
+Lemma (derive) ap_id [typechk]:
   assumes "A: U i" "x: A" "y: A" "p: x =\<^bsub>A\<^esub> y"
   shows "(id A)[p] = p"
   apply (equality \<open>p:_\<close>)
@@ -154,7 +154,7 @@ lemma** ap_id [typechk]:
 
 section \<open>Transport\<close>
 
-lemma** transport [typechk]:
+Lemma (derive) transport [typechk]:
   assumes
     "A: U i"
     "\<And>x. x: A \<Longrightarrow> P x: U i"
@@ -168,7 +168,7 @@ definition transport_i ("trans")
 
 translations "trans P p" \<leftharpoondown> "CONST transport A P x y p"
 
-lemma* transport_comp [comps]:
+Lemma transport_comp [comps]:
   assumes
     "a: A"
     "A: U i"
@@ -178,7 +178,7 @@ lemma* transport_comp [comps]:
 
 \<comment> \<open>TODO: Build transport automation!\<close>
 
-lemma* use_transport:
+Lemma use_transport:
   assumes
     "p: x =\<^bsub>A\<^esub> y"
     "u: P y"
@@ -188,7 +188,7 @@ lemma* use_transport:
   shows "trans P p\<inverse> u: P x"
   by typechk
 
-lemma** transport_left_inv [typechk]:
+Lemma (derive) transport_left_inv [typechk]:
   assumes
     "A: U i"
     "\<And>x. x: A \<Longrightarrow> P x: U i"
@@ -197,7 +197,7 @@ lemma** transport_left_inv [typechk]:
   shows "(trans P p\<inverse>) \<circ> (trans P p) = id (P x)"
   by (equality \<open>p:_\<close>) (reduce; intro)
 
-lemma** transport_right_inv [typechk]:
+Lemma (derive) transport_right_inv [typechk]:
   assumes
     "A: U i"
     "\<And>x. x: A \<Longrightarrow> P x: U i"
@@ -206,7 +206,7 @@ lemma** transport_right_inv [typechk]:
   shows "(trans P p) \<circ> (trans P p\<inverse>) = id (P y)"
   by (equality \<open>p:_\<close>) (reduce; intros)
 
-lemma** transport_pathcomp [typechk]:
+Lemma (derive) transport_pathcomp [typechk]:
   assumes
     "A: U i"
     "\<And>x. x: A \<Longrightarrow> P x: U i"
@@ -221,7 +221,7 @@ lemma** transport_pathcomp [typechk]:
     done
   done
 
-lemma** transport_compose_typefam [typechk]:
+Lemma (derive) transport_compose_typefam [typechk]:
   assumes
     "A: U i" "B: U i"
     "\<And>x. x: B \<Longrightarrow> P x: U i"
@@ -232,7 +232,7 @@ lemma** transport_compose_typefam [typechk]:
   shows "trans (\<lambda>x. P (f x)) p u = trans P f[p] u"
   by (equality \<open>p:_\<close>) (reduce; intros)
 
-lemma** transport_function_family [typechk]:
+Lemma (derive) transport_function_family [typechk]:
   assumes
     "A: U i"
     "\<And>x. x: A \<Longrightarrow> P x: U i"
@@ -244,7 +244,7 @@ lemma** transport_function_family [typechk]:
   shows "trans Q p ((f x) u) = (f y) (trans P p u)"
   by (equality \<open>p:_\<close>) (reduce; intros)
 
-lemma** transport_const [typechk]:
+Lemma (derive) transport_const [typechk]:
   assumes
     "A: U i" "B: U i"
     "x: A" "y: A"
@@ -257,14 +257,14 @@ definition transport_const_i ("trans'_const")
 
 translations "trans_const B p" \<leftharpoondown> "CONST transport_const A B x y p"
 
-lemma* transport_const_comp [comps]:
+Lemma transport_const_comp [comps]:
   assumes
     "A: U i" "B: U i"
     "x: A" "b: B"
   shows "trans_const B (refl x) b\<equiv> refl b"
   unfolding transport_const_def by (subst comps) reduce+
 
-lemma** pathlift [typechk]:
+Lemma (derive) pathlift [typechk]:
   assumes
     "A: U i"
     "\<And>x. x: A \<Longrightarrow> P x: U i"
@@ -279,7 +279,7 @@ definition pathlift_i ("lift")
 
 translations "lift P p u" \<leftharpoondown> "CONST pathlift A P x y p u"
 
-lemma* pathlift_comp [comps]:
+Lemma pathlift_comp [comps]:
   assumes
     "u: P x"
     "x: A"
@@ -288,7 +288,7 @@ lemma* pathlift_comp [comps]:
   shows "lift P (refl x) u \<equiv> refl <x, u>"
   unfolding pathlift_def by (subst comps) reduce+
 
-lemma** pathlift_fst [typechk]:
+Lemma (derive) pathlift_fst [typechk]:
   assumes
     "A: U i"
     "\<And>x. x: A \<Longrightarrow> P x: U i"
@@ -312,7 +312,7 @@ lemma** pathlift_fst [typechk]:
 
 section \<open>Dependent paths\<close>
 
-lemma** apd [typechk]:
+Lemma (derive) apd [typechk]:
   assumes
     "A: U i"
     "\<And>x. x: A \<Longrightarrow> P x: U i"
@@ -327,7 +327,7 @@ definition apd_i ("apd")
 
 translations "apd f p" \<leftharpoondown> "CONST Identity.apd A P f x y p"
 
-lemma* dependent_map_comp [comps]:
+Lemma dependent_map_comp [comps]:
   assumes
     "A: U i"
     "\<And>x. x: A \<Longrightarrow> P x: U i"
@@ -336,7 +336,7 @@ lemma* dependent_map_comp [comps]:
   shows "apd f (refl x) \<equiv> refl (f x)"
   unfolding apd_def by (subst comps) reduce+
 
-lemma** apd_ap [typechk]:
+Lemma (derive) apd_ap [typechk]:
   assumes
     "A: U i" "B: U i"
     "f: A \<rightarrow> B"

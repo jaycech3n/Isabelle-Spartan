@@ -117,7 +117,7 @@ fun define_proof_term name (local_name, [th]) lthy =
 
 fun gen_theorem
       schematic bundle_includes prep_att prep_stmt
-      long gen_prf kind before_qed after_qed (name, raw_atts)
+      gen_prf long kind before_qed after_qed (name, raw_atts)
       raw_includes raw_elems raw_concl int lthy =
   let
     val _ = Local_Theory.assert lthy;
@@ -193,29 +193,19 @@ val schematic_theorem_cmd =
     Attrib.check_src
     Expression.read_statement
 
-fun theorem spec gen_prf descr =
+fun theorem spec descr =
   Outer_Syntax.local_theory_to_proof' spec ("state " ^ descr)
-    ((long_statement || short_statement) >>
-      (fn (long, binding, includes, elems, concl) =>
+    (Scan.option (Args.parens (Args.$$$ "derive"))
+    -- (long_statement || short_statement) >>
+      (fn (opt_derive, (long, binding, includes, elems, concl)) =>
         schematic_theorem_cmd
-          long gen_prf Thm.theoremK NONE (K I) binding includes elems concl))
+          (case opt_derive of SOME "derive" => true | _ => false)
+          long Thm.theoremK NONE (K I) binding includes elems concl))
 in
 
-val _ = theorem \<^command_keyword>\<open>theorem*\<close> false "schematic theorem"
-val _ = theorem \<^command_keyword>\<open>lemma*\<close> false "schematic lemma"
-val _ = theorem \<^command_keyword>\<open>corollary*\<close> false "schematic corollary"
-val _ = theorem \<^command_keyword>\<open>proposition*\<close> false "schematic proposition"
-
-val _ = theorem \<^command_keyword>\<open>theorem**\<close> true
-  "schematic theorem defining proof terms"
-
-val _ = theorem \<^command_keyword>\<open>lemma**\<close> true
-  "schematic lemma defining proof terms"
-
-val _ = theorem \<^command_keyword>\<open>corollary**\<close> true
-  "schematic corollary defining proof terms"
-
-val _ = theorem \<^command_keyword>\<open>proposition**\<close> true
-  "schematic proposition defining proof terms"
+val _ = theorem \<^command_keyword>\<open>Theorem\<close> "schematic theorem"
+val _ = theorem \<^command_keyword>\<open>Lemma\<close> "schematic lemma"
+val _ = theorem \<^command_keyword>\<open>Corollary\<close> "schematic corollary"
+val _ = theorem \<^command_keyword>\<open>Proposition\<close> "schematic proposition"
 
 end

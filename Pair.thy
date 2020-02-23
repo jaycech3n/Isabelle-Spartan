@@ -18,14 +18,14 @@ translations
 
 section \<open>Projections\<close>
 
-lemma* fst [typechk]:
+Lemma fst [typechk]:
   assumes
     "p: \<Sum>x: A. B x"
     "A: U i" "\<And>x. x: A \<Longrightarrow> B x: U i"
   shows "fst p: A"
   by typechk
 
-lemma* snd [typechk]:
+Lemma snd [typechk]:
   assumes
     "p: \<Sum>x: A. B x"
     "A: U i" "\<And>x. x: A \<Longrightarrow> B x: U i"
@@ -38,7 +38,7 @@ method snd for p::o = rule snd[of p]
 
 section \<open>Properties of \<Sigma>\<close>
 
-lemma** Sig_dist_expand [typechk]:
+Lemma (derive) Sig_dist_expand [typechk]:
   assumes
     "p: \<Sum>x: A. B x \<times> C x"
     "A: U i"

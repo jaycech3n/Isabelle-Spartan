@@ -12,7 +12,7 @@ definition homotopy_i (infix "~" 100)
 
 translations "f ~ g" \<leftharpoondown> "CONST homotopy A B f g"
 
-lemma* homotopy_type [typechk]:
+Lemma homotopy_type [typechk]:
   assumes
     "A: U i"
     "\<And>x. x: A \<Longrightarrow> B x: U i"
@@ -20,14 +20,14 @@ lemma* homotopy_type [typechk]:
   shows "f ~ g: U i"
   unfolding homotopy_def by typechk
 
-lemma** homotopy_refl [typechk]:
+Lemma (derive) homotopy_refl [typechk]:
   assumes
     "A: U i"
     "f: \<Prod>x: A. B x"
   shows "f ~ f"
   unfolding homotopy_def by intros
 
-lemma** homotopy_symmetric [typechk]:
+Lemma (derive) homotopy_symmetric [typechk]:
   assumes
     "A: U i"
     "\<And>x. x: A \<Longrightarrow> B x: U i"
@@ -41,7 +41,7 @@ lemma** homotopy_symmetric [typechk]:
       \<guillemotright> by typechk
   done
 
-lemma** homotopy_transitive [typechk]:
+Lemma (derive) homotopy_transitive [typechk]:
   assumes
     "A: U i"
     "\<And>x. x: A \<Longrightarrow> B x: U i"
@@ -59,7 +59,7 @@ lemma** homotopy_transitive [typechk]:
     \<guillemotright> by typechk
   done
 
-lemma** commute_homotopy [typechk]:
+Lemma (derive) commute_homotopy [typechk]:
   assumes
     "A: U i" "B: U i"
     "x: A" "y: A"
@@ -81,7 +81,7 @@ lemma** commute_homotopy [typechk]:
     done
   done
 
-corollary** commute_homotopy' [typechk]:
+Corollary (derive) commute_homotopy' [typechk]:
   assumes
     "A: U i"
     "x: A"
@@ -90,17 +90,17 @@ corollary** commute_homotopy' [typechk]:
   shows "H (f x) = f [H x]"
 oops
 
-lemma* homotopy_id_left [typechk]:
+Lemma homotopy_id_left [typechk]:
   assumes "A: U i" "B: U i" "f: A \<rightarrow> B"
   shows "homotopy_refl A f: (id B) \<circ> f ~ f"
   unfolding homotopy_refl_def homotopy_def by (subst comps) typechk
 
-lemma* homotopy_id_right [typechk]:
+Lemma homotopy_id_right [typechk]:
   assumes "A: U i" "B: U i" "f: A \<rightarrow> B"
   shows "homotopy_refl A f: f \<circ> (id A) ~ f"
   unfolding homotopy_refl_def homotopy_def by (subst comps) typechk
 
-lemma* homotopy_funcomp_left:
+Lemma homotopy_funcomp_left:
   assumes
     "A: U i" "B: U i"
     "\<And>x. x: B \<Longrightarrow> C x: U i"
@@ -115,7 +115,7 @@ lemma* homotopy_funcomp_left:
       apply (elim H)
   done
 
-lemma* homotopy_funcomp_right:
+Lemma homotopy_funcomp_right:
   assumes
     "A: U i" "B: U i" "C: U i"
     "f: A \<rightarrow> B"
@@ -148,7 +148,7 @@ definition qinv_i ("qinv")
 
 translations "qinv f" \<leftharpoondown> "CONST Equivalence.qinv A B f"
 
-lemma** id_qinv [typechk]:
+Lemma (derive) id_qinv [typechk]:
   assumes "A: U i"
   shows "qinv (id A)"
   unfolding qinv_def
@@ -158,7 +158,7 @@ lemma** id_qinv [typechk]:
       apply (rule homotopy_id_left)
   done
 
-lemma** quasiinv_qinv [typechk]:
+Lemma (derive) quasiinv_qinv [typechk]:
   assumes "A: U i" "B: U i" "f: A \<rightarrow> B"
   shows "prf: qinv f \<Longrightarrow> qinv (fst prf)"
   unfolding qinv_def
@@ -173,7 +173,13 @@ lemma** quasiinv_qinv [typechk]:
       done
   done
 
-lemma** funcomp_qinv [typechk]:
+Lemma (derive)
+  "H: f ~ g \<Longrightarrow> HH: F f ~ G f \<Longrightarrow> F g ~ G g"
+  unfolding homotopy_def
+  
+oops
+
+Lemma (derive) funcomp_qinv [typechk]:
   assumes
     "A: U i" "B: U i" "C: U i"
     "f: A \<rightarrow> B" "g: B \<rightarrow> C"
@@ -187,6 +193,7 @@ lemma** funcomp_qinv [typechk]:
 
     apply intro
     apply (rule funcompI[where ?f=g_inv and ?g=f_inv])
+    apply (subst comps, typechk)+
 oops
 
 subsection \<open>Bi-invertible maps\<close>
@@ -205,7 +212,7 @@ definition biinv_i ("biinv")
 
 translations "biinv f" \<leftharpoondown> "CONST Equivalence.biinv A B f"
 
-lemma** qinv_imp_biinv [typechk]:
+Lemma (derive) qinv_imp_biinv [typechk]:
   assumes
     "A: U i" "B: U i"
     "f: A \<rightarrow> B"
@@ -219,7 +226,7 @@ text \<open>
   work in this system.
 \<close>
 
-lemma** biinv_imp_qinv [typechk]:
+Lemma (derive) biinv_imp_qinv [typechk]:
   assumes "A: U i" "B: U i" "f: A \<rightarrow> B"
   shows "biinv f \<rightarrow> qinv f"
 
@@ -279,11 +286,11 @@ lemma** biinv_imp_qinv [typechk]:
     done
   done
 
-lemma** id_biinv [typechk]:
+Lemma (derive) id_biinv [typechk]:
   "A: U i \<Longrightarrow> biinv (id A)"
     by (rule qinv_imp_biinv) (rule id_qinv)
 
-lemma** funcomp_biinv [typechk]:
+Lemma (derive) funcomp_biinv [typechk]:
   assumes
     "A: U i" "B: U i" "C: U i"
     "f: A \<rightarrow> B" "g: B \<rightarrow> C"
@@ -308,7 +315,7 @@ lemma equivalence_type [typechk]:
   shows "A \<simeq> B: U i"
   unfolding equivalence_def by typechk
 
-lemma** equivalence_refl [typechk]:
+Lemma (derive) equivalence_refl [typechk]:
   assumes "A: U i"
   shows "A \<simeq> A"
   unfolding equivalence_def
@@ -322,7 +329,7 @@ text \<open>
   univalence?)...
 \<close>
 
-lemma** equivalence_symmetric [typechk]:
+Lemma (derive) equivalence_symmetric [typechk]:
   assumes "A: U i" "B: U i"
   shows "A \<simeq> B \<rightarrow> B \<simeq> A"
   apply intros
@@ -336,7 +343,7 @@ lemma** equivalence_symmetric [typechk]:
     done
   done
 
-lemma** equivalence_transitive [typechk]:
+Lemma (derive) equivalence_transitive [typechk]:
   assumes "A: U i" "B: U i" "C: U i"
   shows "A \<simeq> B \<rightarrow> B \<simeq> C \<rightarrow> A \<simeq> C"
   apply intros
@@ -349,7 +356,7 @@ text \<open>
   equivalence.
 \<close>
 
-lemma* id_imp_equiv':
+Lemma id_imp_equiv':
   assumes
     "A: U i" "B: U i" "p: A =\<^bsub>U i\<^esub> B"
   shows "A \<simeq> B"
@@ -360,7 +367,7 @@ text \<open>
   (2) we don't yet have universe automation.
 \<close>
 
-lemma** id_imp_equiv [typechk]:
+Lemma (derive) id_imp_equiv [typechk]:
   assumes
     "A: U i" "B: U i" "p: A =\<^bsub>U i\<^esub> B"
   shows "<trans (id (U i)) p, ?isequiv>: A \<simeq> B"
