@@ -173,12 +173,6 @@ Lemma (derive) quasiinv_qinv [typechk]:
       done
   done
 
-Lemma (derive)
-  "H: f ~ g \<Longrightarrow> HH: F f ~ G f \<Longrightarrow> F g ~ G g"
-  unfolding homotopy_def
-  
-oops
-
 Lemma (derive) funcomp_qinv [typechk]:
   assumes
     "A: U i" "B: U i" "C: U i"
@@ -193,7 +187,8 @@ Lemma (derive) funcomp_qinv [typechk]:
 
     apply intro
     apply (rule funcompI[where ?f=g_inv and ?g=f_inv])
-    apply (subst comps, typechk)+
+    apply (subst comps, typechk)+ (*This should not have to be here*)
+    (*Whole bunch of rewriting steps and then we're done*)
 oops
 
 subsection \<open>Bi-invertible maps\<close>
@@ -297,7 +292,8 @@ Lemma (derive) funcomp_biinv [typechk]:
   shows "biinv f \<rightarrow> biinv g \<rightarrow> biinv (g \<circ> f)"
   apply intros
   focus vars biinv\<^sub>f biinv\<^sub>g
-    oops
+  (*Follows from funcomp_qinv*)
+oops
 
 
 section \<open>Equivalence\<close>
@@ -348,7 +344,7 @@ Lemma (derive) equivalence_transitive [typechk]:
   shows "A \<simeq> B \<rightarrow> B \<simeq> C \<rightarrow> A \<simeq> C"
   apply intros
   unfolding equivalence_def
-oops  
+oops
 
 text \<open>
   Equal types are equivalent. We give two proofs: the first by induction, and
