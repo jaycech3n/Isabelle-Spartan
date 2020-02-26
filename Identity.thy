@@ -24,7 +24,7 @@ definition pathcomp_i (infixl "\<bullet>" 121)
 translations
   "x = y" \<leftharpoondown> "x =\<^bsub>A\<^esub> y"
   "p\<inverse>" \<leftharpoondown> "CONST pathinv A i x y p"
-  (* "p \<bullet> q" \<leftharpoondown> "CONST pathcomp A i x y z p q" *)
+  "p \<bullet> q" \<leftharpoondown> "CONST pathcomp A x y z p q"
 
 
 section \<open>Basic propositional equalities\<close>
