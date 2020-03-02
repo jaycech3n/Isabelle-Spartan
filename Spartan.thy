@@ -235,7 +235,7 @@ setup \<open>
 \<close>
 
 \<comment> \<open>Reduces terms via judgmental equalities\<close>
-method reduce uses add = (simp add: comps add)
+method reduce uses add = (simp add: comps add | subst comps, reduce add: add)+
 
 
 section \<open>Identity induction\<close>
