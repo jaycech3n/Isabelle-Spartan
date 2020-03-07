@@ -29,10 +29,10 @@ Lemma (derive) homotopy_refl [typechk]:
 
 Lemma (derive) homotopy_symmetric [typechk]:
   assumes
-    "A: U i"
-    "\<And>x. x: A \<Longrightarrow> B x: U i"
     "f: \<Prod>x: A. B x"
     "g: \<Prod>x: A. B x"
+    "A: U i"
+    "\<And>x. x: A \<Longrightarrow> B x: U i"
   shows "H: f ~ g \<Longrightarrow> g ~ f"
   unfolding homotopy_def
   apply intros
@@ -43,11 +43,11 @@ Lemma (derive) homotopy_symmetric [typechk]:
 
 Lemma (derive) homotopy_transitive [typechk]:
   assumes
-    "A: U i"
-    "\<And>x. x: A \<Longrightarrow> B x: U i"
     "f: \<Prod>x: A. B x"
     "g: \<Prod>x: A. B x"
     "h: \<Prod>x: A. B x"
+    "A: U i"
+    "\<And>x. x: A \<Longrightarrow> B x: U i"
   shows "\<lbrakk>H1: f ~ g; H2: g ~ h\<rbrakk> \<Longrightarrow> f ~ h"
   unfolding homotopy_def
   apply intro
@@ -93,21 +93,21 @@ oops
 Lemma homotopy_id_left [typechk]:
   assumes "A: U i" "B: U i" "f: A \<rightarrow> B"
   shows "homotopy_refl A f: (id B) \<circ> f ~ f"
-  unfolding homotopy_refl_def homotopy_def by (subst comps) typechk
+  unfolding homotopy_refl_def homotopy_def by reduce
 
 Lemma homotopy_id_right [typechk]:
   assumes "A: U i" "B: U i" "f: A \<rightarrow> B"
   shows "homotopy_refl A f: f \<circ> (id A) ~ f"
-  unfolding homotopy_refl_def homotopy_def by (subst comps) typechk
+  unfolding homotopy_refl_def homotopy_def by reduce
 
 Lemma homotopy_funcomp_left:
   assumes
-    "A: U i" "B: U i"
-    "\<And>x. x: B \<Longrightarrow> C x: U i"
+    "H: homotopy B C g g'"
     "f: A \<rightarrow> B"
     "g: \<Prod>x: B. C x"
     "g': \<Prod>x: B. C x"
-    "H: homotopy B C g g'"
+    "A: U i" "B: U i"
+    "\<And>x. x: B \<Longrightarrow> C x: U i"
   shows "homotopy A {} (g \<circ>\<^bsub>A\<^esub> f) (g' \<circ>\<^bsub>A\<^esub> f)"
   unfolding homotopy_def
   apply (intro; reduce)
@@ -117,11 +117,11 @@ Lemma homotopy_funcomp_left:
 
 Lemma homotopy_funcomp_right:
   assumes
-    "A: U i" "B: U i" "C: U i"
+    "H: homotopy A (\<lambda>_. B) f f'"
     "f: A \<rightarrow> B"
     "f': A \<rightarrow> B"
     "g: B \<rightarrow> C"
-    "H: homotopy A (\<lambda>_. B) f f'"
+    "A: U i" "B: U i" "C: U i"
   shows "homotopy A {} (g \<circ>\<^bsub>A\<^esub> f) (g \<circ>\<^bsub>A\<^esub> f')"
   unfolding homotopy_def
   apply (intro; reduce)
@@ -187,7 +187,7 @@ Lemma (derive) funcomp_qinv [typechk]:
 
     apply intro
     apply (rule funcompI[where ?f=g_inv and ?g=f_inv])
-    apply (subst comps, typechk)+ (*This should not have to be here*)
+    apply reduce
     (*Whole bunch of rewriting steps and then we're done*)
 oops
 
@@ -251,7 +251,7 @@ Lemma (derive) biinv_imp_qinv [typechk]:
         block is used to calculate "forward".
       \<close>
       proof -
-        have "?\<alpha>: g ~ g \<circ> f \<circ> h"
+        have "g ~ g \<circ> f \<circ> h"
           apply (subst id_right[symmetric], typechk)
           apply (rule homotopy_funcomp_right)
           apply (rule homotopy_symmetric)
@@ -259,22 +259,22 @@ Lemma (derive) biinv_imp_qinv [typechk]:
           by fact
 
         moreover
-        have "?\<beta>: g \<circ> f \<circ> h ~ h"
+        have "g \<circ> f \<circ> h ~ h"
           apply (subst (2) id_left[symmetric, of h], typechk)
           apply (subst funcomp_assoc[symmetric], typechk)
           apply (rule homotopy_funcomp_left)
           by fact
   
         ultimately
-        have "?\<gamma>: g ~ h"
+        have "g ~ h"
           apply (rule homotopy_transitive) defer
           by assumption+ typechk
   
         then
-        have "?\<delta>: f \<circ> g ~ f \<circ> h"
+        have "f \<circ> g ~ f \<circ> h"
           by (rule homotopy_funcomp_right)
   
-        thus "?H2: f \<circ> g ~ id B"
+        thus "f \<circ> g ~ id B"
           apply (rule homotopy_transitive) defer
           by (assumption, rule \<open>H2:_\<close>) typechk
       qed

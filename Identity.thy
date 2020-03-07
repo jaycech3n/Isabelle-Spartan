@@ -103,7 +103,7 @@ translations "f[p]" \<leftharpoondown> "CONST ap A B x y f p"
 Lemma ap_refl [comps]:
   assumes "f: A \<rightarrow> B" "x: A" "A: U i" "B: U i"
   shows "f[refl x] \<equiv> refl (f x)"
-  unfolding ap_def by (subst comps) reduce
+  unfolding ap_def by reduce
 
 Lemma (derive) ap_pathcomp [typechk]:
   assumes
@@ -174,7 +174,7 @@ Lemma transport_comp [comps]:
     "A: U i"
     "\<And>x. x: A \<Longrightarrow> P x: U i"
   shows "trans P (refl a) \<equiv> id (P a)"
-  unfolding transport_def id_def by (subst comps) reduce
+  unfolding transport_def id_def by reduce
 
 \<comment> \<open>TODO: Build transport automation!\<close>
 
@@ -259,10 +259,10 @@ translations "trans_const B p" \<leftharpoondown> "CONST transport_const A B x y
 
 Lemma transport_const_comp [comps]:
   assumes
-    "A: U i" "B: U i"
     "x: A" "b: B"
+    "A: U i" "B: U i"
   shows "trans_const B (refl x) b\<equiv> refl b"
-  unfolding transport_const_def by (subst comps) reduce+
+  unfolding transport_const_def by reduce
 
 Lemma (derive) pathlift [typechk]:
   assumes
@@ -286,7 +286,7 @@ Lemma pathlift_comp [comps]:
     "\<And>x. x: A \<Longrightarrow> P x: U i"
     "A: U i"
   shows "lift P (refl x) u \<equiv> refl <x, u>"
-  unfolding pathlift_def by (subst comps) reduce+
+  unfolding pathlift_def by reduce
 
 Lemma (derive) pathlift_fst [typechk]:
   assumes
@@ -329,12 +329,12 @@ translations "apd f p" \<leftharpoondown> "CONST Identity.apd A P f x y p"
 
 Lemma dependent_map_comp [comps]:
   assumes
-    "A: U i"
-    "\<And>x. x: A \<Longrightarrow> P x: U i"
     "f: \<Prod>x: A. P x"
     "x: A"
+    "A: U i"
+    "\<And>x. x: A \<Longrightarrow> P x: U i"
   shows "apd f (refl x) \<equiv> refl (f x)"
-  unfolding apd_def by (subst comps) reduce+
+  unfolding apd_def by reduce
 
 Lemma (derive) apd_ap [typechk]:
   assumes

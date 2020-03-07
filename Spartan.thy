@@ -361,7 +361,7 @@ definition id where "id A \<equiv> \<lambda>x: A. x"
 lemma
   idI [typechk]: "A: U i \<Longrightarrow> id A: A \<rightarrow> A" and
   id_comp [comps]: "x: A \<Longrightarrow> (id A) x \<equiv> x"
-  unfolding id_def by reduce reduce
+  unfolding id_def by reduce
 
 lemma id_left [comps]:
   assumes "f: A \<rightarrow> B" "A: U i" "B: U i"
