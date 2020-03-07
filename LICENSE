@@ -6,7 +6,6 @@ the terms of the GNU Lesser General Public License v3.0 reproduced below,
 WITH THE EXCEPTION OF the following files:
   focus.ML
   goals.ML
-  simp.ML
 
 These have been modified from source code which is part of the official
 Isabelle distribution (https://isabelle.in.tum.de/) and licensed under the
