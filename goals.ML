@@ -115,8 +115,8 @@ fun define_proof_term name (local_name, [th]) lthy =
       ("Unimplemented: handling proof terms of multiple facts in"
       ^" single result")
 
-fun gen_theorem
-      schematic bundle_includes prep_att prep_stmt
+fun gen_schematic_theorem
+      bundle_includes prep_att prep_stmt
       gen_prf long kind before_qed after_qed (name, raw_atts)
       raw_includes raw_elems raw_concl int lthy =
   let
@@ -137,42 +137,47 @@ fun gen_theorem
           (map (Goal.norm_result lthy) o Proof_Context.export goal_ctxt' lthy)
           results
 
-        val (res, lthy') =
+        val ((res, lthy'), substmts) =
           if forall (Binding.is_empty_atts o fst) stmt
-          then (map (pair "") results', lthy)
+          then ((map (pair "") results', lthy), false)
           else
-            Local_Theory.notes_kind kind
+            (Local_Theory.notes_kind kind
               (map2 (fn (b, _) => fn ths => (b, [(ths, [])])) stmt results')
-              lthy
+              lthy,
+            true)
 
         val (res', lthy'') =
-          if gen_prf then let
-            val (prf_tm_defs, lthy'') =
-              fold
-                (fn result => fn (defs, lthy) =>
-                  apfst (fn new_defs => defs @ new_defs)
-                    (define_proof_term (Binding.name_of name) result lthy))
-                res ([], lthy')
-
-            val res' =
-              map (apsnd (map (Local_Defs.fold lthy'' prf_tm_defs))) res
-
-            val (_, lthy''') =
+          if gen_prf
+          then
+            let
+              val (prf_tm_defs, lthy'') =
+                fold
+                  (fn result => fn (defs, lthy) =>
+                    apfst (fn new_defs => defs @ new_defs)
+                      (define_proof_term (Binding.name_of name) result lthy))
+                  res ([], lthy')
+  
+              val res_folded =
+                map (apsnd (map (Local_Defs.fold lthy'' prf_tm_defs))) res
+            in
               Local_Theory.notes_kind kind
-                [((name, atts), [(maps #2 res', [])])] lthy''
-          in
-            (res', lthy''')
-          end
-          else let
-            val (_, lthy'') =
-              Local_Theory.notes_kind kind
-                [((name, atts), [(maps #2 res, [])])] lthy'
-          in
-            (res, lthy'')
-          end
+                [((name, atts), [(maps #2 res_folded, [])])]
+                lthy''
+            end
+          else
+            Local_Theory.notes_kind kind
+              [((name, atts), [(maps #2 res, [])])]
+              lthy'
 
         val _ = Proof_Display.print_results int pos lthy''
-            ((kind, Binding.name_of name), res')
+            ((kind, Binding.name_of name), map (fn (_, ths) => ("", ths)) res')
+
+        val _ =
+          if substmts then map
+            (fn (name, ths) => Proof_Display.print_results int pos lthy''
+              (("and", name), [("", ths)]))
+            res
+          else []
       in
         after_qed results' lthy''
       end
@@ -182,13 +187,10 @@ fun gen_theorem
       (Proof_Context.note_thmss "" [((Binding.name prems_name, []), [(prems, [])])] #> snd)
     |> Proof.theorem before_qed after_qed' (map snd stmt)
     |> (case facts of NONE => I | SOME ths => Proof.refine_insert ths)
-    |> tap (fn state => not schematic andalso Proof.schematic_goal state andalso
-        error "Illegal schematic goal statement")
   end
 
 val schematic_theorem_cmd =
-  gen_theorem
-    true
+  gen_schematic_theorem
     Bundle.includes_cmd
     Attrib.check_src
     Expression.read_statement
@@ -200,12 +202,12 @@ fun theorem spec descr =
       (fn (opt_derive, (long, binding, includes, elems, concl)) =>
         schematic_theorem_cmd
           (case opt_derive of SOME "derive" => true | _ => false)
-          long Thm.theoremK NONE (K I) binding includes elems concl))
+          long descr NONE (K I) binding includes elems concl))
 in
 
-val _ = theorem \<^command_keyword>\<open>Theorem\<close> "schematic theorem"
-val _ = theorem \<^command_keyword>\<open>Lemma\<close> "schematic lemma"
-val _ = theorem \<^command_keyword>\<open>Corollary\<close> "schematic corollary"
-val _ = theorem \<^command_keyword>\<open>Proposition\<close> "schematic proposition"
+val _ = theorem \<^command_keyword>\<open>Theorem\<close> "Theorem"
+val _ = theorem \<^command_keyword>\<open>Lemma\<close> "Lemma"
+val _ = theorem \<^command_keyword>\<open>Corollary\<close> "Corollary"
+val _ = theorem \<^command_keyword>\<open>Proposition\<close> "Proposition"
 
 end
