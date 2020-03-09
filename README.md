@@ -11,5 +11,5 @@ An initial system description is available here: [Isabelle/Spartan — A Depende
 [Why "spartan"?](http://math.andrej.com/wp-content/uploads/2017/12/Spartan-Type-Theory.pdf)
 
 ### To-do List
-  - Tactics to automate propositional equality and homotopy rewriting
+  - Tactics to automate propositional equality and homotopy rewriting — probably implement a general congruence tactic.
   - Universe level automation
