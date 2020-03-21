@@ -180,12 +180,12 @@ Lemma transport_comp [comps]:
 
 Lemma use_transport:
   assumes
-    "p: x =\<^bsub>A\<^esub> y"
-    "u: P y"
+    "p: y =\<^bsub>A\<^esub> x"
+    "u: P x"
     "x: A" "y: A"
     "A: U i"
     "\<And>x. x: A \<Longrightarrow> P x: U i"
-  shows "trans P p\<inverse> u: P x"
+  shows "trans P p\<inverse> u: P y"
   by typechk
 
 Lemma (derive) transport_left_inv [typechk]:
@@ -344,6 +344,5 @@ Lemma (derive) apd_ap [typechk]:
     "p: x =\<^bsub>A\<^esub> y"
   shows "apd f p = trans_const B p (f x) \<bullet> f[p]"
   by (equality \<open>p:_\<close>) (reduce; intro)
-
 
 end

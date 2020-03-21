@@ -74,7 +74,7 @@ Lemma (derive) commute_homotopy [typechk]:
       apply reduce
         \<comment> \<open>Here it would really be nice to have automation for transport and
           propositional equality.\<close>
-        apply (rule use_transport[where ?x="H x \<bullet> refl (g x)"])
+        apply (rule use_transport[where ?y="H x \<bullet> refl (g x)"])
           \<guillemotright> by (rule pathcomp_right_refl)
           \<guillemotright> by (rule pathinv) (rule pathcomp_left_refl)
           \<guillemotright> by typechk
@@ -91,12 +91,12 @@ Corollary (derive) commute_homotopy' [typechk]:
 oops
 
 Lemma homotopy_id_left [typechk]:
-  assumes "A: U i" "B: U i" "f: A \<rightarrow> B"
+  assumes "f: A \<rightarrow> B" "A: U i" "B: U i"
   shows "homotopy_refl A f: (id B) \<circ> f ~ f"
   unfolding homotopy_refl_def homotopy_def by reduce
 
 Lemma homotopy_id_right [typechk]:
-  assumes "A: U i" "B: U i" "f: A \<rightarrow> B"
+  assumes "f: A \<rightarrow> B" "A: U i" "B: U i"
   shows "homotopy_refl A f: f \<circ> (id A) ~ f"
   unfolding homotopy_refl_def homotopy_def by reduce
 
