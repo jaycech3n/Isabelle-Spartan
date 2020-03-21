@@ -41,6 +41,19 @@ Lemma (derive) homotopy_symmetric [typechk]:
       \<guillemotright> by typechk
   done
 
+text \<open>\<open>hsym\<close> attribute for homotopies:\<close>
+
+ML \<open>
+structure HSym_Attr = Sym_Attr (
+  struct
+    val name = "hsym"
+    val symmetry_rule = @{thm homotopy_symmetric[rotated 4]}
+  end
+)
+\<close>
+
+setup \<open>HSym_Attr.setup\<close>
+
 Lemma (derive) homotopy_transitive [typechk]:
   assumes
     "f: \<Prod>x: A. B x"

@@ -175,6 +175,11 @@ ML_file \<open>goals.ML\<close>
 ML_file \<open>focus.ML\<close>
 
 
+section \<open>Congruence automation\<close>
+
+ML_file \<open>congruence.ML\<close>
+
+
 section \<open>Fundamental methods\<close>
 
 \<comment> \<open>\<open>subst\<close> method\<close>
@@ -409,6 +414,19 @@ lemma pathcomp_comp [comps]:
   assumes "a: A" "A: U i"
   shows "pathcomp A a a a (refl a) (refl a) \<equiv> refl a"
   unfolding pathcomp_def by reduce
+
+text \<open>Set up \<open>sym\<close> attribute for propositional equalities:\<close>
+
+ML \<open>
+structure Id_Sym_Attr = Sym_Attr (
+  struct
+    val name = "sym"
+    val symmetry_rule = @{thm pathinv[rotated 3]}
+  end
+)
+\<close>
+
+setup \<open>Id_Sym_Attr.setup\<close>
 
 
 section \<open>Pairs\<close>
