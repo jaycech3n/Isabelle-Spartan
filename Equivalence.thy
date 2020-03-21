@@ -91,12 +91,12 @@ Corollary (derive) commute_homotopy' [typechk]:
 oops
 
 Lemma homotopy_id_left [typechk]:
-  assumes "f: A \<rightarrow> B" "A: U i" "B: U i"
+  assumes "A: U i" "B: U i" "f: A \<rightarrow> B"
   shows "homotopy_refl A f: (id B) \<circ> f ~ f"
   unfolding homotopy_refl_def homotopy_def by reduce
 
 Lemma homotopy_id_right [typechk]:
-  assumes "f: A \<rightarrow> B" "A: U i" "B: U i"
+  assumes "A: U i" "B: U i" "f: A \<rightarrow> B"
   shows "homotopy_refl A f: f \<circ> (id A) ~ f"
   unfolding homotopy_refl_def homotopy_def by reduce
 
