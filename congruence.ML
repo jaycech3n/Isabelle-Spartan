@@ -10,7 +10,7 @@ struct
     val distinct_prems = the_single o Seq.list_of o Tactic.distinct_subgoals_tac
   in
     val attr = Thm.rule_attribute []
-      (K (fn th => distinct_prems (th RS D.symmetry_rule)))
+      (K (fn th => distinct_prems (th RS D.symmetry_rule) handle THM _ => th))
     val setup = Attrib.setup (Binding.name D.name) (Scan.succeed attr) ""
   end
 end
