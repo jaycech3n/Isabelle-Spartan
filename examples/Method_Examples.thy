@@ -1,5 +1,5 @@
 theory Method_Examples
-imports "../Equivalence"
+imports "../theories/Equivalence"
 
 begin
 
@@ -11,13 +11,13 @@ Lemma rule:
   assumes asm: "\<And>x y. x: A \<Longrightarrow> y: B x \<Longrightarrow> f x y: C x y"
   shows "C a b"
   apply (rule asm)
-  oops
+oops
 
 Lemma rule':
   assumes asm: "f: \<Prod>x: A. \<Prod>y: B x. C x y"
   shows "C a b"
   apply (rule asm)
-  oops
+oops
 
 
 end
