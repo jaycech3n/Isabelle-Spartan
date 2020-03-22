@@ -170,14 +170,14 @@ section \<open>Proof commands\<close>
 
 named_theorems typechk
 
-ML_file \<open>lib.ML\<close>
-ML_file \<open>goals.ML\<close>
-ML_file \<open>focus.ML\<close>
+ML_file \<open>../lib.ML\<close>
+ML_file \<open>../goals.ML\<close>
+ML_file \<open>../focus.ML\<close>
 
 
 section \<open>Congruence automation\<close>
 
-ML_file \<open>congruence.ML\<close>
+ML_file \<open>../congruence.ML\<close>
 
 
 section \<open>Fundamental methods\<close>
@@ -189,7 +189,7 @@ ML_file "~~/src/Tools/IsaPlanner/rw_inst.ML"
 ML_file "~~/src/Tools/IsaPlanner/zipper.ML"
 ML_file "~~/src/Tools/eqsubst.ML"
 
-ML_file \<open>elimination.ML\<close> \<comment> \<open>declares the [elims] attribute\<close>
+ML_file \<open>../elimination.ML\<close> \<comment> \<open>declares the [elims] attribute\<close>
 
 named_theorems intros and comps
 lemmas
@@ -198,7 +198,7 @@ lemmas
   [comps] = beta Sig_comp Id_comp and
   [cong] = Pi_cong lam_cong Sig_cong
 
-ML_file \<open>tactics.ML\<close>
+ML_file \<open>../tactics.ML\<close>
 
 method_setup assumptions =
   \<open>Scan.succeed (fn ctxt => SIMPLE_METHOD (
@@ -245,7 +245,7 @@ method reduce uses add = (simp add: comps add | subst comps, reduce add: add)+
 
 section \<open>Identity induction\<close>
 
-ML_file \<open>equality.ML\<close>
+ML_file \<open>../equality.ML\<close>
 
 method_setup equality = \<open>Scan.lift Parse.thm >> (fn (fact, _) => fn ctxt =>
   CONTEXT_METHOD (K (Equality.equality_context_tac fact ctxt)))\<close>
@@ -262,7 +262,7 @@ consts
   iarg :: \<open>'a\<close> ("?")
   hole :: \<open>'b\<close> ("{}")
 
-ML_file \<open>implicits.ML\<close>
+ML_file \<open>../implicits.ML\<close>
 
 attribute_setup implicit = \<open>Scan.succeed Implicits.implicit_defs_attr\<close>
 
