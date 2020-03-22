@@ -20,14 +20,14 @@ Lemma homotopy_type [typechk]:
   shows "f ~ g: U i"
   unfolding homotopy_def by typechk
 
-Lemma (derive) homotopy_refl [typechk]:
+Lemma (derive) homotopy_refl:
   assumes
     "A: U i"
     "f: \<Prod>x: A. B x"
   shows "f ~ f"
   unfolding homotopy_def by intros
 
-Lemma (derive) homotopy_symmetric [typechk]:
+Lemma (derive) homotopy_symmetric:
   assumes
     "f: \<Prod>x: A. B x"
     "g: \<Prod>x: A. B x"
@@ -54,7 +54,7 @@ structure HSym_Attr = Sym_Attr (
 
 setup \<open>HSym_Attr.setup\<close>
 
-Lemma (derive) homotopy_transitive [typechk]:
+Lemma (derive) homotopy_transitive:
   assumes
     "f: \<Prod>x: A. B x"
     "g: \<Prod>x: A. B x"
@@ -72,7 +72,7 @@ Lemma (derive) homotopy_transitive [typechk]:
     \<guillemotright> by typechk
   done
 
-Lemma (derive) commute_homotopy [typechk]:
+Lemma (derive) commute_homotopy:
   assumes
     "A: U i" "B: U i"
     "x: A" "y: A"
@@ -94,7 +94,7 @@ Lemma (derive) commute_homotopy [typechk]:
     done
   done
 
-Corollary (derive) commute_homotopy' [typechk]:
+Corollary (derive) commute_homotopy':
   assumes
     "A: U i"
     "x: A"
@@ -161,7 +161,7 @@ definition qinv_i ("qinv")
 
 translations "qinv f" \<leftharpoondown> "CONST Equivalence.qinv A B f"
 
-Lemma (derive) id_qinv [typechk]:
+Lemma (derive) id_qinv:
   assumes "A: U i"
   shows "qinv (id A)"
   unfolding qinv_def
@@ -171,7 +171,7 @@ Lemma (derive) id_qinv [typechk]:
       apply (rule homotopy_id_left)
   done
 
-Lemma (derive) quasiinv_qinv [typechk]:
+Lemma (derive) quasiinv_qinv:
   assumes "A: U i" "B: U i" "f: A \<rightarrow> B"
   shows "prf: qinv f \<Longrightarrow> qinv (fst prf)"
   unfolding qinv_def
@@ -186,7 +186,7 @@ Lemma (derive) quasiinv_qinv [typechk]:
       done
   done
 
-Lemma (derive) funcomp_qinv [typechk]:
+Lemma (derive) funcomp_qinv:
   assumes
     "A: U i" "B: U i" "C: U i"
     "f: A \<rightarrow> B" "g: B \<rightarrow> C"
@@ -220,7 +220,7 @@ definition biinv_i ("biinv")
 
 translations "biinv f" \<leftharpoondown> "CONST Equivalence.biinv A B f"
 
-Lemma (derive) qinv_imp_biinv [typechk]:
+Lemma (derive) qinv_imp_biinv:
   assumes
     "A: U i" "B: U i"
     "f: A \<rightarrow> B"
@@ -234,7 +234,7 @@ text \<open>
   work in this system.
 \<close>
 
-Lemma (derive) biinv_imp_qinv [typechk]:
+Lemma (derive) biinv_imp_qinv:
   assumes "A: U i" "B: U i" "f: A \<rightarrow> B"
   shows "biinv f \<rightarrow> qinv f"
 
@@ -294,11 +294,11 @@ Lemma (derive) biinv_imp_qinv [typechk]:
     done
   done
 
-Lemma (derive) id_biinv [typechk]:
+Lemma (derive) id_biinv:
   "A: U i \<Longrightarrow> biinv (id A)"
     by (rule qinv_imp_biinv) (rule id_qinv)
 
-Lemma (derive) funcomp_biinv [typechk]:
+Lemma (derive) funcomp_biinv:
   assumes
     "A: U i" "B: U i" "C: U i"
     "f: A \<rightarrow> B" "g: B \<rightarrow> C"
@@ -324,7 +324,7 @@ lemma equivalence_type [typechk]:
   shows "A \<simeq> B: U i"
   unfolding equivalence_def by typechk
 
-Lemma (derive) equivalence_refl [typechk]:
+Lemma (derive) equivalence_refl:
   assumes "A: U i"
   shows "A \<simeq> A"
   unfolding equivalence_def
@@ -338,7 +338,7 @@ text \<open>
   univalence?)...
 \<close>
 
-Lemma (derive) equivalence_symmetric [typechk]:
+Lemma (derive) equivalence_symmetric:
   assumes "A: U i" "B: U i"
   shows "A \<simeq> B \<rightarrow> B \<simeq> A"
   apply intros
@@ -352,7 +352,7 @@ Lemma (derive) equivalence_symmetric [typechk]:
     done
   done
 
-Lemma (derive) equivalence_transitive [typechk]:
+Lemma (derive) equivalence_transitive:
   assumes "A: U i" "B: U i" "C: U i"
   shows "A \<simeq> B \<rightarrow> B \<simeq> C \<rightarrow> A \<simeq> C"
   apply intros
@@ -376,7 +376,7 @@ text \<open>
   (2) we don't yet have universe automation.
 \<close>
 
-Lemma (derive) id_imp_equiv [typechk]:
+Lemma (derive) id_imp_equiv:
   assumes
     "A: U i" "B: U i" "p: A =\<^bsub>U i\<^esub> B"
   shows "<trans (id (U i)) p, ?isequiv>: A \<simeq> B"

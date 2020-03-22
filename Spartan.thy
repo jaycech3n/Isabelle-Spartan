@@ -387,7 +387,7 @@ lemma id_U [typechk]:
 
 section \<open>Equality\<close>
 
-Lemma (derive) pathinv [typechk]:
+Lemma (derive) pathinv:
   assumes "A: U i" "x: A" "y: A" "p: x =\<^bsub>A\<^esub> y"
   shows "y =\<^bsub>A\<^esub> x"
   by (equality \<open>p:_\<close>) intro
@@ -397,7 +397,7 @@ lemma pathinv_comp [comps]:
   shows "pathinv A x x (refl x) \<equiv> refl x"
   unfolding pathinv_def by reduce
 
-Lemma (derive) pathcomp [typechk]:
+Lemma (derive) pathcomp:
   assumes
     "A: U i" "x: A" "y: A" "z: A"
     "p: x =\<^bsub>A\<^esub> y" "q: y =\<^bsub>A\<^esub> z"
