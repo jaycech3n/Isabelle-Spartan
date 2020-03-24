@@ -38,7 +38,7 @@ method snd for p::o = rule snd[of p]
 
 section \<open>Properties of \<Sigma>\<close>
 
-Lemma (derive) Sig_dist_expand [typechk]:
+Lemma (derive) Sig_dist_expand:
   assumes
     "p: \<Sum>x: A. B x \<times> C x"
     "A: U i"
