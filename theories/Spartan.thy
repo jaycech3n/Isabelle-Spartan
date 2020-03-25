@@ -212,8 +212,8 @@ lemma imp_cong_eq:
    apply (drule Pure.equal_elim_rule1 Pure.equal_elim_rule2; assumption)+
   done
 
-ML_file \<open>$ISABELLE_HOME/src/HOL/Library/cconv.ML\<close>
-ML_file \<open>$ISABELLE_HOME/src/HOL/Library/rewrite.ML\<close>
+ML_file \<open>../lib/cconv.ML\<close>
+ML_file \<open>../lib/rewrite.ML\<close>
 
 subsection \<open>Reasoning\<close>
 

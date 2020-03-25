@@ -147,6 +147,13 @@ Lemma (derive) ap_id:
   assumes "A: U i" "x: A" "y: A" "p: x =\<^bsub>A\<^esub> y"
   shows "(id A)[p] = p"
   apply (equality \<open>p:_\<close>)
+
+    (* This should work after fixing rewrite
+    apply (rewrite at "\<hole> = y" in for (y p) id_comp[symmetric]) defer
+    apply (rewrite at "_ = \<hole>" in for (y p) id_comp[symmetric]) defer
+      apply (rule ap)
+    *)
+
     apply (subst (6 8) id_comp[symmetric]; typechk)
     apply (reduce; intros)
   done
