@@ -16,7 +16,7 @@ sig
   val CCONVERSION: cconv -> int -> tactic
 end
 
-signature CCONV =
+(* signature CCONV =
 sig
   include BASIC_CCONV
   val no_cconv: cconv
@@ -37,9 +37,9 @@ sig
   val concl_cconv: int -> cconv -> cconv
   val fconv_rule: cconv -> thm -> thm
   val gconv_rule: cconv -> int -> thm -> thm
-end
+end *)
 
-structure CConv : CCONV =
+structure CConv (* : CCONV *) =
 struct
 
 val concl_lhs_of = Thm.cprop_of #> Drule.strip_imp_concl #> Thm.dest_equals_lhs
@@ -47,6 +47,7 @@ val concl_rhs_of = Thm.cprop_of #> Drule.strip_imp_concl #> Thm.dest_equals_rhs
 
 fun transitive th1 th2 = Drule.transitive_thm OF [th1, th2]
 
+(*\<lbrakk>?f == ?g; ?s == ?t\<rbrakk> \<Longrightarrow> ?f ?s == ?g ?t*)
 val combination_thm =
   let
     val fg = \<^cprop>\<open>f :: 'a :: {} \<Rightarrow> 'b :: {} \<equiv> g\<close>
@@ -56,6 +57,7 @@ val combination_thm =
       |> Thm.implies_intr fg
   in Drule.export_without_context thm end
 
+(*(!!x. ?s x == ?t x) ==> \<lambda>n. ?s n == \<lambda>n. ?t n*)
 fun abstract_rule_thm n =
   let
     val eq = \<^cprop>\<open>\<And>x :: 'a :: {}. (s :: 'a \<Rightarrow> 'b :: {}) x \<equiv> t x\<close>
@@ -89,6 +91,8 @@ fun (cv1 then_cconv cv2) ct =
 
 fun first_cconv cvs = fold_rev (curry op else_cconv) cvs no_cconv
 
+(*Generate the conversion that takes ct and returns rule with its conclusion's
+  lhs instantiated to ct.*)
 fun rewr_cconv rule ct =
   let
     val rule1 = Thm.incr_indexes (Thm.maxidx_of_cterm ct + 1) rule
@@ -101,6 +105,13 @@ fun rewr_cconv rule ct =
       if Thm.dest_equals_lhs concl aconvc ct then rule3
       else let val ceq = Thm.dest_fun2 concl
            in rule3 RS Thm.trivial (Thm.mk_binop ceq ct (Thm.dest_equals_rhs concl)) end
+
+val _ = tracing "======== rewr_cconv ========"
+val _ = (tracing "rule, selected term:"; @{print} rule; @{print} ct)
+val _ = (tracing "rule1, rule2, rule3:"; @{print} rule1; @{print} rule2; @{print} rule3)
+val _ = (tracing "concl, rule4:"; @{print} concl; @{print} rule4)
+val _ = (tracing "final thm:";@{print} (transitive rule4 (Thm.beta_conversion true (concl_rhs_of rule4))))
+
   in
     transitive rule4 (Thm.beta_conversion true (concl_rhs_of rule4))
   end
@@ -123,7 +134,7 @@ fun abs_cconv cv ctxt ct =
   (case Thm.term_of ct of
      Abs (x, _, _) =>
        let
-         (* Instantiate the rule properly and apply it to the eq theorem. *)
+         (*Instantiate the rule properly and apply it to the eq theorem.*)
          fun abstract_rule u v eq =
            let
              (* Take a variable v and an equality theorem of form:
@@ -133,6 +144,7 @@ fun abs_cconv cv ctxt ct =
              fun mk_concl var eq =
                let
                  val certify = Thm.cterm_of ctxt
+
                  fun abs term = (Term.lambda var term) $ var
                  fun equals_cong f t =
                    Logic.dest_equals t
@@ -150,10 +162,17 @@ fun abs_cconv cv ctxt ct =
              |> Drule.zero_var_indexes
            end
 
-         (* Destruct the abstraction and apply the conversion. *)
+         (*Destruct the abstraction and apply the conversion.*)
          val (u, ctxt') = yield_singleton Variable.variant_fixes Name.uu ctxt
          val (v, ct') = Thm.dest_abs (SOME u) ct
          val eq = cv (v, ctxt') ct'
+
+val _ = tracing "======== abs_cconv ========"
+val _ = tracing "v, ct', eq:"
+val _ = (@{print} v; @{print} ct'; @{print} eq)
+val _ = tracing "final rule:"
+val _ = @{print} (abstract_rule u v eq)
+
        in
          if Thm.is_reflexive eq
          then all_cconv ct
@@ -164,7 +183,7 @@ fun abs_cconv cv ctxt ct =
 val arg1_cconv = fun_cconv o arg_cconv
 val fun2_cconv = fun_cconv o fun_cconv
 
-(* conversions on HHF rules *)
+(* Conversions on HHF rules *)
 
 (*rewrite B in \<And>x1 ... xn. B*)
 fun params_cconv n cv ctxt ct =
