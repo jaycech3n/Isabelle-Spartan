@@ -1,5 +1,6 @@
-(*  Title:      HOL/Library/rewrite.ML
+(*  Title:      rewrite.ML
     Author:     Christoph Traut, Lars Noschinski, TU Muenchen
+    Modified:   Joshua Chen, University of Innsbruck
 
 This is a rewrite method that supports subterm-selection based on patterns.
 
@@ -13,6 +14,9 @@ patterns but has diverged significantly during its development.
 
 We also allow introduction of identifiers for bound variables,
 which can then be used to match arbitrary subterms inside abstractions.
+
+This code is slightly modified from the original at HOL/Library/rewrite.ML,
+to incorporate auto-typechecking for type theory.
 *)
 
 infix 1 then_pconv;
@@ -445,9 +449,17 @@ val _ =
       let val scan = raw_pattern -- to_parser -- Parse.thms1
       in context_lift scan prep_args end
   in
-    Method.setup \<^binding>\<open>rewrite\<close> (subst_parser >>
+    Method.setup \<^binding>\<open>rewr\<close> (subst_parser >>
       (fn (pattern, inthms, (to, pat_ctxt)) => fn orig_ctxt =>
-        SIMPLE_METHOD' (rewrite_export_tac orig_ctxt ((pattern, to), SOME pat_ctxt) inthms)))
-      "single-step rewriting, allowing subterm selection via patterns."
+        SIMPLE_METHOD'
+          (rewrite_export_tac orig_ctxt ((pattern, to), SOME pat_ctxt) inthms)))
+      "single-step rewriting, allowing subterm selection via patterns"
+    #>
+    (Method.setup \<^binding>\<open>rewrite\<close> (subst_parser >>
+      (fn (pattern, inthms, (to, pat_ctxt)) => fn orig_ctxt =>
+        SIMPLE_METHOD' (SIDE_CONDS
+          (rewrite_export_tac orig_ctxt ((pattern, to), SOME pat_ctxt) inthms)
+          orig_ctxt)))
+      "single-step rewriting with auto-typechecking")
   end
 end
