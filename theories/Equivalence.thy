@@ -265,7 +265,7 @@ Lemma (derive) biinv_imp_qinv:
       \<close>
       proof -
         have "g ~ g \<circ> f \<circ> h"
-          apply (subst id_right[symmetric], typechk)
+          apply (subst id_right[symmetric])
           apply (rule homotopy_funcomp_right)
           apply (rule homotopy_symmetric)
           text \<open>Now we are done since this is known.\<close>
@@ -273,8 +273,8 @@ Lemma (derive) biinv_imp_qinv:
 
         moreover
         have "g \<circ> f \<circ> h ~ h"
-          apply (subst (2) id_left[symmetric, of h], typechk)
-          apply (subst funcomp_assoc[symmetric], typechk)
+          apply (subst (2) id_left[symmetric, of h])
+          apply (subst funcomp_assoc[symmetric])
           apply (rule homotopy_funcomp_left)
           by fact
   
@@ -387,14 +387,14 @@ Lemma (derive) id_imp_equiv:
         \<comment> \<open>Switch off auto-typechecking, which messes with universe levels\<close>
         supply [[auto_typechk=false]]
 
-        apply (subst id_comp[symmetric, of A]) ~ by typechk
-        apply (subst id_comp[symmetric, of B]) ~ by typechk
-        apply (rule transport, rule U_in_U, typechk)
+        apply (subst id_comp[symmetric, of A])
+        apply (subst id_comp[symmetric, of B])
+        apply (rule transport, rule U_in_U)
         apply (rule lift_universe_codomain, rule U_in_U, typechk)
         apply (rule U_in_U)
         done
       \<^item> premises vars A
-        apply (subst transport_comp)
+        apply (sub transport_comp)
           \<^enum> by typechk
           \<^enum> by (rule U_in_U)
           \<^enum> by (rule lift_universe)
@@ -407,9 +407,9 @@ Lemma (derive) id_imp_equiv:
 
     \<guillemotright> \<comment> \<open>Similar proof as in the first subgoal above\<close>
       supply [[auto_typechk=false]]
-      apply (subst (2) id_comp[symmetric, of A]) ~ by typechk
-      apply (subst (2) id_comp[symmetric, of B]) ~ by typechk
-      apply (rule transport, rule U_in_U, typechk)
+      apply (subst (2) id_comp[symmetric, of A])
+      apply (subst (2) id_comp[symmetric, of B])
+      apply (rule transport, rule U_in_U)
       apply (rule lift_universe_codomain, rule U_in_U, typechk)
       apply (rule U_in_U)
       done

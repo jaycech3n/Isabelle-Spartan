@@ -147,14 +147,8 @@ Lemma (derive) ap_id:
   assumes "A: U i" "x: A" "y: A" "p: x =\<^bsub>A\<^esub> y"
   shows "(id A)[p] = p"
   apply (equality \<open>p:_\<close>)
-
-    (* This should work after fixing rewrite
-    apply (rewrite at "\<hole> = y" in for (y p) id_comp[symmetric]) defer
-    apply (rewrite at "_ = \<hole>" in for (y p) id_comp[symmetric]) defer
-      apply (rule ap)
-    *)
-
-    apply (subst (6 8) id_comp[symmetric]; typechk)
+    apply (rewrite at "\<hole> = _" id_comp[symmetric])
+    apply (rewrite at "_ = \<hole>" id_comp[symmetric])
     apply (reduce; intros)
   done
 
@@ -307,11 +301,9 @@ Lemma (derive) pathlift_fst:
     text \<open>Some rewriting needed here:\<close>
     \<guillemotright> vars x y
       (*Here an automatic reordering tactic would be helpful*)
-      apply (subst fst_comp[where ?a=x, symmetric])
-        prefer 5
-        apply (subst fst_comp[where ?a=y, symmetric])
-          prefer 5
-          apply typechk
+      apply (rewrite at x in "x = y" fst_comp[symmetric])
+        prefer 4
+        apply (rewrite at y in "_ = y" fst_comp[symmetric])
       done
     \<guillemotright> by reduce intro
   done

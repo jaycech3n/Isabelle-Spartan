@@ -182,41 +182,6 @@ ML_file \<open>../lib/congruence.ML\<close>
 
 section \<open>Methods\<close>
 
-subsection \<open>Substitution and rewriting\<close>
-
-ML_file "~~/src/Tools/misc_legacy.ML"
-ML_file "~~/src/Tools/IsaPlanner/isand.ML"
-ML_file "~~/src/Tools/IsaPlanner/rw_inst.ML"
-ML_file "~~/src/Tools/IsaPlanner/zipper.ML"
-ML_file "~~/src/Tools/eqsubst.ML"
-
-consts rewrite_HOLE :: "'a::{}"  ("\<hole>")
-
-lemma eta_expand:
-  fixes f :: "'a::{} \<Rightarrow> 'b::{}"
-  shows "f \<equiv> \<lambda>x. f x" .
-
-lemma rewr_imp:
-  assumes "PROP A \<equiv> PROP B"
-  shows "(PROP A \<Longrightarrow> PROP C) \<equiv> (PROP B \<Longrightarrow> PROP C)"
-  apply (rule Pure.equal_intr_rule)
-  apply (drule equal_elim_rule2[OF assms]; assumption)
-  apply (drule equal_elim_rule1[OF assms]; assumption)
-  done
-
-lemma imp_cong_eq:
-  "(PROP A \<Longrightarrow> (PROP B \<Longrightarrow> PROP C) \<equiv> (PROP B' \<Longrightarrow> PROP C')) \<equiv>
-    ((PROP B \<Longrightarrow> PROP A \<Longrightarrow> PROP C) \<equiv> (PROP B' \<Longrightarrow> PROP A \<Longrightarrow> PROP C'))"
-  apply (intro Pure.equal_intr_rule)
-     apply (drule (1) cut_rl; drule Pure.equal_elim_rule1 Pure.equal_elim_rule2; assumption)+
-   apply (drule Pure.equal_elim_rule1 Pure.equal_elim_rule2; assumption)+
-  done
-
-ML_file \<open>../lib/cconv.ML\<close>
-ML_file \<open>../lib/rewrite.ML\<close>
-
-subsection \<open>Reasoning\<close>
-
 ML_file \<open>../lib/elimination.ML\<close> \<comment> \<open>declares the [elims] attribute\<close>
 
 named_theorems intros and comps
@@ -261,13 +226,47 @@ method_setup dest =
     >> (fn (opt_n, ths) => fn ctxt =>
         SIMPLE_METHOD (HEADGOAL (dest_tac opt_n ths ctxt)))\<close>
 
-\<comment> \<open>The Simplifier is used as a basis for some methods\<close>
+subsection \<open>Rewriting\<close>
+
+\<comment> \<open>\<open>subst\<close> method\<close>
+ML_file "~~/src/Tools/misc_legacy.ML"
+ML_file "~~/src/Tools/IsaPlanner/isand.ML"
+ML_file "~~/src/Tools/IsaPlanner/rw_inst.ML"
+ML_file "~~/src/Tools/IsaPlanner/zipper.ML"
+ML_file "../lib/eqsubst.ML"
+
+\<comment> \<open>\<open>rewrite\<close> method\<close>
+consts rewrite_HOLE :: "'a::{}"  ("\<hole>")
+
+lemma eta_expand:
+  fixes f :: "'a::{} \<Rightarrow> 'b::{}"
+  shows "f \<equiv> \<lambda>x. f x" .
+
+lemma rewr_imp:
+  assumes "PROP A \<equiv> PROP B"
+  shows "(PROP A \<Longrightarrow> PROP C) \<equiv> (PROP B \<Longrightarrow> PROP C)"
+  apply (rule Pure.equal_intr_rule)
+  apply (drule equal_elim_rule2[OF assms]; assumption)
+  apply (drule equal_elim_rule1[OF assms]; assumption)
+  done
+
+lemma imp_cong_eq:
+  "(PROP A \<Longrightarrow> (PROP B \<Longrightarrow> PROP C) \<equiv> (PROP B' \<Longrightarrow> PROP C')) \<equiv>
+    ((PROP B \<Longrightarrow> PROP A \<Longrightarrow> PROP C) \<equiv> (PROP B' \<Longrightarrow> PROP A \<Longrightarrow> PROP C'))"
+  apply (Pure.intro Pure.equal_intr_rule)
+     apply (drule (1) cut_rl; drule Pure.equal_elim_rule1 Pure.equal_elim_rule2; assumption)+
+   apply (drule Pure.equal_elim_rule1 Pure.equal_elim_rule2; assumption)+
+  done
+
+ML_file \<open>~~/src/HOL/Library/cconv.ML\<close>
+ML_file \<open>../lib/rewrite.ML\<close>
+
+\<comment> \<open>\<open>reduce\<close> method computes terms via judgmental equalities\<close>
 setup \<open>
   map_theory_simpset (fn ctxt =>
     ctxt addSolver (mk_solver "" typechk_tac))
 \<close>
 
-\<comment> \<open>Reduces terms via judgmental equalities\<close>
 method reduce uses add = (simp add: comps add | subst comps, reduce add: add)+
 
 
@@ -311,7 +310,7 @@ section \<open>Lambda coercion\<close>
 abbreviation (input) lambda :: \<open>o \<Rightarrow> o \<Rightarrow> o\<close>
   where "lambda f \<equiv> \<lambda>x. f `x"
 
-ML_file \<open>$ISABELLE_HOME/src/Tools/subtyping.ML\<close>
+ML_file \<open>~~/src/Tools/subtyping.ML\<close>
 declare [[coercion_enabled, coercion lambda]]
 
 translations "f x" \<leftharpoondown> "f `x"
@@ -327,7 +326,7 @@ lemma eta_exp:
 lemma lift_universe_codomain:
   assumes "A: U i" "f: A \<rightarrow> U j"
   shows "f: A \<rightarrow> U (S j)"
-  apply (subst eta_exp)
+  apply (sub eta_exp)
     apply known
     apply (Pure.rule intros; rule lift_universe)
   done
@@ -400,13 +399,13 @@ lemma id_left [comps]:
   assumes "f: A \<rightarrow> B" "A: U i" "B: U i"
   shows "(id B) \<circ>\<^bsub>A\<^esub> f \<equiv> f"
   unfolding id_def
-  by (subst eta_exp[of f], typechk, reduce) (reduce add: eta)
+  by (subst eta_exp[of f]) (reduce, rule eta)
 
 lemma id_right [comps]:
   assumes "f: A \<rightarrow> B" "A: U i" "B: U i"
   shows "f \<circ>\<^bsub>A\<^esub> (id A) \<equiv> f"
   unfolding id_def
-  by (subst eta_exp[of f], typechk, reduce) (reduce add: eta)
+  by (subst eta_exp[of f]) (reduce, rule eta)
 
 lemma id_U [typechk]:
   "id (U i): U i \<rightarrow> U i"
