@@ -23,7 +23,7 @@ definition pathcomp_i (infixl "\<bullet>" 121)
 
 translations
   "x = y" \<leftharpoondown> "x =\<^bsub>A\<^esub> y"
-  "p\<inverse>" \<leftharpoondown> "CONST pathinv A i x y p"
+  "p\<inverse>" \<leftharpoondown> "CONST pathinv A x y p"
   "p \<bullet> q" \<leftharpoondown> "CONST pathcomp A x y z p q"
 
 
