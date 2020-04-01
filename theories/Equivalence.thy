@@ -244,9 +244,7 @@ Lemma (derive) biinv_imp_qinv:
 
   text \<open>Split the hypothesis \<^term>\<open>biinv f\<close> into its components:\<close>
   apply intro
-  unfolding biinv_def thm SigE
-    apply (erule SigE) apply typechk
-    apply (erule SigE) apply typechk
+  unfolding biinv_def
   apply elims
 
   text \<open>Name the components:\<close>
@@ -270,32 +268,24 @@ Lemma (derive) biinv_imp_qinv:
         block is used to calculate "forward".
       \<close>
       proof -
-        have "g ~ g \<circ> f \<circ> h"
-          apply (subst id_right[symmetric])
-          apply (rule homotopy_funcomp_right)
-          apply (rule homotopy_symmetric)
-          text \<open>Now we are done since this is known.\<close>
-          by fact
+        have "g \<circ> (id B) ~ g \<circ> f \<circ> h"
+          by (rule homotopy_funcomp_right) (rule \<open>H2:_\<close>[hsym])
 
-        moreover
-        have "g \<circ> f \<circ> h ~ h"
-          apply (subst (2) id_left[symmetric, of h])
-          apply (subst funcomp_assoc[symmetric])
-          apply (rule homotopy_funcomp_left)
-          by fact
-  
-        ultimately
-        have "g ~ h"
-          apply (rule homotopy_transitive)
-          by assumption+ typechk
-  
-        then
-        have "f \<circ> g ~ f \<circ> h"
+        moreover have "g \<circ> f \<circ> h ~ (id A) \<circ> h"
+          by (subst funcomp_assoc[symmetric])
+             (rule homotopy_funcomp_left, rule \<open>H1:_\<close>)
+
+        ultimately have "g ~ h"
+          apply (rewrite to "g \<circ> (id B)" id_right[symmetric])
+          apply (rewrite to "(id A) \<circ> h" id_left[symmetric])
+          by (rule homotopy_transitive) (assumption, typechk)
+
+        then have "f \<circ> g ~ f \<circ> h"
           by (rule homotopy_funcomp_right)
   
-        thus "f \<circ> g ~ id B"
-          apply (rule homotopy_transitive)
-          by (assumption, rule \<open>H2:_\<close>) typechk
+        with \<open>H2:_\<close>
+        show "f \<circ> g ~ id B"
+          by (rule homotopy_transitive) (assumption+, typechk)
       qed
     done
   done
