@@ -27,7 +27,7 @@ Lemma (derive) homotopy_refl:
   shows "f ~ f"
   unfolding homotopy_def by intros
 
-Lemma (derive) homotopy_symmetric:
+Lemma (derive) hsym:
   assumes
     "f: \<Prod>x: A. B x"
     "g: \<Prod>x: A. B x"
@@ -41,20 +41,22 @@ Lemma (derive) homotopy_symmetric:
       \<guillemotright> by typechk
   done
 
+lemmas homotopy_symmetric = hsym[rotated 4]
+
 text \<open>\<open>hsym\<close> attribute for homotopies:\<close>
 
 ML \<open>
 structure HSym_Attr = Sym_Attr (
   struct
     val name = "hsym"
-    val symmetry_rule = @{thm homotopy_symmetric[rotated 4]}
+    val symmetry_rule = @{thm homotopy_symmetric}
   end
 )
 \<close>
 
 setup \<open>HSym_Attr.setup\<close>
 
-Lemma (derive) homotopy_transitive:
+Lemma (derive) htrans:
   assumes
     "f: \<Prod>x: A. B x"
     "g: \<Prod>x: A. B x"
@@ -71,6 +73,8 @@ Lemma (derive) homotopy_transitive:
       done
     \<guillemotright> by typechk
   done
+
+lemmas homotopy_transitive = htrans[rotated 5]
 
 Lemma (derive) commute_homotopy:
   assumes
@@ -240,7 +244,9 @@ Lemma (derive) biinv_imp_qinv:
 
   text \<open>Split the hypothesis \<^term>\<open>biinv f\<close> into its components:\<close>
   apply intro
-  unfolding biinv_def
+  unfolding biinv_def thm SigE
+    apply (erule SigE) apply typechk
+    apply (erule SigE) apply typechk
   apply elims
 
   text \<open>Name the components:\<close>
@@ -280,7 +286,7 @@ Lemma (derive) biinv_imp_qinv:
   
         ultimately
         have "g ~ h"
-          apply (rule homotopy_transitive) defer
+          apply (rule homotopy_transitive)
           by assumption+ typechk
   
         then
@@ -288,7 +294,7 @@ Lemma (derive) biinv_imp_qinv:
           by (rule homotopy_funcomp_right)
   
         thus "f \<circ> g ~ id B"
-          apply (rule homotopy_transitive) defer
+          apply (rule homotopy_transitive)
           by (assumption, rule \<open>H2:_\<close>) typechk
       qed
     done
