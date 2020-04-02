@@ -15,7 +15,6 @@ val is_typing: term -> bool
 val dest_typing: term -> term * term
 val term_of_typing: term -> term
 val type_of_typing: term -> term
-val dest_Id: term -> term * term * term
 val mk_Pi: term -> term -> term -> term
 
 val typing_of_term: term -> term
@@ -75,10 +74,6 @@ fun dest_typing (Const (\<^const_name>\<open>has_type\<close>, _) $ t $ T) = (t,
 
 val term_of_typing = #1 o dest_typing
 val type_of_typing = #2 o dest_typing
-
-fun dest_Id tm = case tm of
-    Const (\<^const_name>\<open>Id\<close>, _) $ A $ x $ y => (A, x, y)
-  | _ => error "dest_Id"
 
 fun mk_Pi v typ body = Const (\<^const_name>\<open>Pi\<close>, dummyT) $ typ $ lambda v body
 

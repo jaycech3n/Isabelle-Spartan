@@ -229,7 +229,7 @@ Lemma (derive) qinv_imp_biinv:
   shows "?prf: qinv f \<rightarrow> biinv f"
   apply intros
   unfolding qinv_def biinv_def
-  by (rule Sig_dist_expand)
+  by (rule Sig_dist_exp)
 
 text \<open>
   Show that bi-invertible maps are quasi-inverses, as a demonstration of how to

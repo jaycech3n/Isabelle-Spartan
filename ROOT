@@ -4,6 +4,5 @@ session Spartan in "theories" = Pure +
     "HOL-Eisbach"
   theories
     Spartan
-    Pair
     Identity
     Equivalence

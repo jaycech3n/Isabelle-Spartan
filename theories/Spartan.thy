@@ -1,4 +1,4 @@
-chapter \<open>Spartan type theory\<close>
+text \<open>Spartan type theory\<close>
 
 theory Spartan
 imports
@@ -135,35 +135,7 @@ axiomatization where
     \<rbrakk> \<Longrightarrow> \<Sum>x: A. B x \<equiv> \<Sum>x: A. B' x"
 
 
-section \<open>Identity type\<close>
 
-axiomatization
-  Id    :: \<open>o \<Rightarrow> o \<Rightarrow> o \<Rightarrow> o\<close> and
-  refl  :: \<open>o \<Rightarrow> o\<close> and
-  IdInd :: \<open>o \<Rightarrow> (o \<Rightarrow> o \<Rightarrow> o \<Rightarrow> o) \<Rightarrow> (o \<Rightarrow> o) \<Rightarrow> o \<Rightarrow> o \<Rightarrow> o \<Rightarrow> o\<close>
-
-syntax   "_Id" :: \<open>o \<Rightarrow> o \<Rightarrow> o \<Rightarrow> o\<close> ("(2_ =\<^bsub>_\<^esub>/ _)" [111, 0, 111] 110)
-
-translations "a =\<^bsub>A\<^esub> b" \<rightleftharpoons> "CONST Id A a b"
-
-axiomatization where
-  IdF: "\<lbrakk>A: U i; a: A; b: A\<rbrakk> \<Longrightarrow> a =\<^bsub>A\<^esub> b: U i" and
-
-  IdI: "a: A \<Longrightarrow> refl a: a =\<^bsub>A\<^esub> a" and
-
-  IdE: "\<lbrakk>
-    p: a =\<^bsub>A\<^esub> b;
-    a: A;
-    b: A;
-    \<And>x y p. \<lbrakk>p: x =\<^bsub>A\<^esub> y; x: A; y: A\<rbrakk> \<Longrightarrow> C x y p: U i;
-    \<And>x. x: A \<Longrightarrow> f x: C x x (refl x)
-    \<rbrakk> \<Longrightarrow> IdInd A (\<lambda>x y p. C x y p) f a b p: C a b p" and
-
-  Id_comp: "\<lbrakk>
-    a: A;
-    \<And>x y p. \<lbrakk>x: A; y: A; p: x =\<^bsub>A\<^esub> y\<rbrakk> \<Longrightarrow> C x y p: U i;
-    \<And>x. x: A \<Longrightarrow> f x: C x x (refl x)
-    \<rbrakk> \<Longrightarrow> IdInd A (\<lambda>x y p. C x y p) f a a (refl a) \<equiv> f a"
 
 
 section \<open>Proof commands\<close>
@@ -186,9 +158,9 @@ ML_file \<open>../lib/elimination.ML\<close> \<comment> \<open>declares the [eli
 
 named_theorems intros and comps
 lemmas
-  [intros] = PiF PiI SigF SigI IdF IdI and
-  [elims] = PiE SigE IdE and
-  [comps] = beta Sig_comp Id_comp and
+  [intros] = PiF PiI SigF SigI and
+  [elims] = PiE SigE and
+  [comps] = beta Sig_comp and
   [cong] = Pi_cong lam_cong Sig_cong
 
 ML_file \<open>../lib/tactics.ML\<close>
@@ -268,14 +240,6 @@ setup \<open>
 \<close>
 
 method reduce uses add = (simp add: comps add | subst comps, reduce add: add)+
-
-
-section \<open>Identity induction\<close>
-
-ML_file \<open>../lib/equality.ML\<close>
-
-method_setup equality = \<open>Scan.lift Parse.thm >> (fn (fact, _) => fn ctxt =>
-  CONTEXT_METHOD (K (Equality.equality_context_tac fact ctxt)))\<close>
 
 
 section \<open>Implicit notations\<close>
@@ -412,50 +376,6 @@ lemma id_U [typechk]:
   by typechk (fact U_in_U)
 
 
-section \<open>Equality\<close>
-
-Lemma (derive) pathinv:
-  assumes "A: U i" "x: A" "y: A" "p: x =\<^bsub>A\<^esub> y"
-  shows "y =\<^bsub>A\<^esub> x"
-  by (equality \<open>p:_\<close>) intro
-
-lemma pathinv_comp [comps]:
-  assumes "x: A" "A: U i"
-  shows "pathinv A x x (refl x) \<equiv> refl x"
-  unfolding pathinv_def by reduce
-
-Lemma (derive) pathcomp:
-  assumes
-    "A: U i" "x: A" "y: A" "z: A"
-    "p: x =\<^bsub>A\<^esub> y" "q: y =\<^bsub>A\<^esub> z"
-  shows
-    "x =\<^bsub>A\<^esub> z"
-  apply (equality \<open>p:_\<close>)
-    focus premises vars x p
-      apply (equality \<open>p:_\<close>)
-        apply intro
-    done
-  done
-
-lemma pathcomp_comp [comps]:
-  assumes "a: A" "A: U i"
-  shows "pathcomp A a a a (refl a) (refl a) \<equiv> refl a"
-  unfolding pathcomp_def by reduce
-
-text \<open>Set up \<open>sym\<close> attribute for propositional equalities:\<close>
-
-ML \<open>
-structure Id_Sym_Attr = Sym_Attr (
-  struct
-    val name = "sym"
-    val symmetry_rule = @{thm pathinv[rotated 3]}
-  end
-)
-\<close>
-
-setup \<open>Id_Sym_Attr.setup\<close>
-
-
 section \<open>Pairs\<close>
 
 definition "fst A B \<equiv> \<lambda>p: \<Sum>x: A. B x. SigInd A B (\<lambda>_. A) (\<lambda>x y. x) p"
@@ -484,6 +404,60 @@ lemma snd_comp [comps]:
   assumes "a: A" "b: B a" "A: U i" "\<And>x. x: A \<Longrightarrow> B x: U i"
   shows "snd A B <a, b> \<equiv> b"
   unfolding snd_def by reduce
+
+subsection \<open>Notation\<close>
+
+definition fst_i ("fst")
+  where [implicit]: "fst \<equiv> Spartan.fst ? ?"
+
+definition snd_i ("snd")
+  where [implicit]: "snd \<equiv> Spartan.snd ? ?"
+
+translations
+  "fst" \<leftharpoondown> "CONST Spartan.fst A B"
+  "snd" \<leftharpoondown> "CONST Spartan.snd A B"
+
+subsection \<open>Projections\<close>
+
+Lemma fst [typechk]:
+  assumes
+    "p: \<Sum>x: A. B x"
+    "A: U i" "\<And>x. x: A \<Longrightarrow> B x: U i"
+  shows "fst p: A"
+  by typechk
+
+Lemma snd [typechk]:
+  assumes
+    "p: \<Sum>x: A. B x"
+    "A: U i" "\<And>x. x: A \<Longrightarrow> B x: U i"
+  shows "snd p: B (fst p)"
+  by typechk
+
+method fst for p::o = rule fst[of p]
+method snd for p::o = rule snd[of p]
+
+subsection \<open>Properties of \<Sigma>\<close>
+
+Lemma (derive) Sig_dist_exp:
+  assumes
+    "p: \<Sum>x: A. B x \<times> C x"
+    "A: U i"
+    "\<And>x. x: A \<Longrightarrow> B x: U i"
+    "\<And>x. x: A \<Longrightarrow> C x: U i"
+  shows "(\<Sum>x: A. B x) \<times> (\<Sum>x: A. C x)"
+  apply (elim p)
+    focus vars x y
+      apply intro
+        \<guillemotright> apply intro
+            apply assumption
+            apply (fst y)
+          done
+        \<guillemotright> apply intro
+            apply assumption
+            apply (snd y)
+          done
+    done
+  done
 
 
 end

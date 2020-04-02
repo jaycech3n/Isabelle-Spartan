@@ -1,14 +1,100 @@
 chapter \<open>The identity type\<close>
 
 text \<open>
-  More about the identity type, the higher groupoid structure of types, and type
-  families as fibrations.
+  The identity type, the higher groupoid structure of types,
+  and type families as fibrations.
 \<close>
 
 theory Identity
-imports Spartan Pair
+imports Spartan
 
 begin
+
+axiomatization
+  Id    :: \<open>o \<Rightarrow> o \<Rightarrow> o \<Rightarrow> o\<close> and
+  refl  :: \<open>o \<Rightarrow> o\<close> and
+  IdInd :: \<open>o \<Rightarrow> (o \<Rightarrow> o \<Rightarrow> o \<Rightarrow> o) \<Rightarrow> (o \<Rightarrow> o) \<Rightarrow> o \<Rightarrow> o \<Rightarrow> o \<Rightarrow> o\<close>
+
+syntax   "_Id" :: \<open>o \<Rightarrow> o \<Rightarrow> o \<Rightarrow> o\<close> ("(2_ =\<^bsub>_\<^esub>/ _)" [111, 0, 111] 110)
+
+translations "a =\<^bsub>A\<^esub> b" \<rightleftharpoons> "CONST Id A a b"
+
+axiomatization where
+  IdF: "\<lbrakk>A: U i; a: A; b: A\<rbrakk> \<Longrightarrow> a =\<^bsub>A\<^esub> b: U i" and
+
+  IdI: "a: A \<Longrightarrow> refl a: a =\<^bsub>A\<^esub> a" and
+
+  IdE: "\<lbrakk>
+    p: a =\<^bsub>A\<^esub> b;
+    a: A;
+    b: A;
+    \<And>x y p. \<lbrakk>p: x =\<^bsub>A\<^esub> y; x: A; y: A\<rbrakk> \<Longrightarrow> C x y p: U i;
+    \<And>x. x: A \<Longrightarrow> f x: C x x (refl x)
+    \<rbrakk> \<Longrightarrow> IdInd A (\<lambda>x y p. C x y p) f a b p: C a b p" and
+
+  Id_comp: "\<lbrakk>
+    a: A;
+    \<And>x y p. \<lbrakk>x: A; y: A; p: x =\<^bsub>A\<^esub> y\<rbrakk> \<Longrightarrow> C x y p: U i;
+    \<And>x. x: A \<Longrightarrow> f x: C x x (refl x)
+    \<rbrakk> \<Longrightarrow> IdInd A (\<lambda>x y p. C x y p) f a a (refl a) \<equiv> f a"
+
+lemmas
+  [intros] = IdF IdI and
+  [elims] = IdE and
+  [comps] = Id_comp
+
+
+section \<open>Induction\<close>
+
+ML_file \<open>../lib/equality.ML\<close>
+
+method_setup equality = \<open>Scan.lift Parse.thm >> (fn (fact, _) => fn ctxt =>
+  CONTEXT_METHOD (K (Equality.equality_context_tac fact ctxt)))\<close>
+
+
+section \<open>Symmetry and transitivity\<close>
+
+Lemma (derive) pathinv:
+  assumes "A: U i" "x: A" "y: A" "p: x =\<^bsub>A\<^esub> y"
+  shows "y =\<^bsub>A\<^esub> x"
+  by (equality \<open>p:_\<close>) intro
+
+lemma pathinv_comp [comps]:
+  assumes "x: A" "A: U i"
+  shows "pathinv A x x (refl x) \<equiv> refl x"
+  unfolding pathinv_def by reduce
+
+Lemma (derive) pathcomp:
+  assumes
+    "A: U i" "x: A" "y: A" "z: A"
+    "p: x =\<^bsub>A\<^esub> y" "q: y =\<^bsub>A\<^esub> z"
+  shows
+    "x =\<^bsub>A\<^esub> z"
+  apply (equality \<open>p:_\<close>)
+    focus premises vars x p
+      apply (equality \<open>p:_\<close>)
+        apply intro
+    done
+  done
+
+lemma pathcomp_comp [comps]:
+  assumes "a: A" "A: U i"
+  shows "pathcomp A a a a (refl a) (refl a) \<equiv> refl a"
+  unfolding pathcomp_def by reduce
+
+text \<open>Set up \<open>sym\<close> attribute for propositional equalities:\<close>
+
+ML \<open>
+structure Id_Sym_Attr = Sym_Attr (
+  struct
+    val name = "sym"
+    val symmetry_rule = @{thm pathinv[rotated 3]}
+  end
+)
+\<close>
+
+setup \<open>Id_Sym_Attr.setup\<close>
+
 
 section \<open>Notation\<close>
 

@@ -7,11 +7,17 @@ Equality reasoning with identity types.
 structure Equality:
 sig
 
+val dest_Id: term -> term * term * term
+
 val push_hyp_tac: term * term -> Proof.context -> int -> tactic
 val induction_tac: term -> term -> term -> term -> Proof.context -> tactic
 val equality_context_tac: Facts.ref -> Proof.context -> context_tactic
 
 end = struct
+
+fun dest_Id tm = case tm of
+    Const (\<^const_name>\<open>Id\<close>, _) $ A $ x $ y => (A, x, y)
+  | _ => error "dest_Id"
 
 (*Context assumptions that have already been pushed into the type family*)
 structure Inserts = Proof_Data (
@@ -46,7 +52,7 @@ val side_conds_tac = TRY oo typechk_tac
 fun equality_context_tac fact ctxt =
   let
     val eq_th = Proof_Context.get_fact_single ctxt fact
-    val (p, (A, x, y)) = (Lib.dest_typing ##> Lib.dest_Id) (Thm.prop_of eq_th)
+    val (p, (A, x, y)) = (Lib.dest_typing ##> dest_Id) (Thm.prop_of eq_th)
 
     val hyps =
       Facts.props (Proof_Context.facts_of ctxt)
