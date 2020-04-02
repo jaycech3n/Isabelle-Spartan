@@ -195,17 +195,15 @@ Lemma (derive) funcomp_qinv:
     "A: U i" "B: U i" "C: U i"
     "f: A \<rightarrow> B" "g: B \<rightarrow> C"
   shows "qinv f \<rightarrow> qinv g \<rightarrow> qinv (g \<circ> f)"
-  apply intros
-  unfolding qinv_def
-  apply elims
+  apply (intros, unfold qinv_def, elims)
   focus
     premises hyps
-    vars _ _ f_inv _ g_inv _ Hf1 Hf2 Hg1 Hg2
+    vars _ _ finv _ ginv _ HfA HfB HgB HgC
 
     apply intro
-    apply (rule funcompI[where ?f=g_inv and ?g=f_inv])
-    apply reduce
-    (*Whole bunch of rewriting steps and then we're done*)
+    apply (rule funcompI[where ?f=ginv and ?g=finv])
+
+    text \<open>Now a whole bunch of rewrites and we're done.\<close>
 oops
 
 subsection \<open>Bi-invertible maps\<close>
@@ -301,7 +299,8 @@ Lemma (derive) funcomp_biinv:
   shows "biinv f \<rightarrow> biinv g \<rightarrow> biinv (g \<circ> f)"
   apply intros
   focus vars biinv\<^sub>f biinv\<^sub>g
-  (*Follows from funcomp_qinv*)
+
+  text \<open>Follows from \<open>funcomp_qinv\<close>.\<close>
 oops
 
 
@@ -353,6 +352,8 @@ Lemma (derive) equivalence_transitive:
   shows "A \<simeq> B \<rightarrow> B \<simeq> C \<rightarrow> A \<simeq> C"
   apply intros
   unfolding equivalence_def
+
+  text \<open>Use \<open>funcomp_biinv\<close>.\<close>
 oops
 
 text \<open>
@@ -378,36 +379,32 @@ Lemma (derive) id_imp_equiv:
   shows "<trans (id (U i)) p, ?isequiv>: A \<simeq> B"
   unfolding equivalence_def
   apply intros defer
+
+  \<comment> \<open>Switch off auto-typechecking, which messes with universe levels\<close>
+  supply [[auto_typechk=false]]
+
     \<guillemotright> apply (equality \<open>p:_\<close>)
       \<^item> premises vars A B
-        \<comment> \<open>Switch off auto-typechecking, which messes with universe levels\<close>
-        supply [[auto_typechk=false]]
-
-        apply (subst id_comp[symmetric, of A])
-        apply (subst id_comp[symmetric, of B])
+        apply (rewrite at A in "A \<rightarrow> B" id_comp[symmetric])
+        apply (rewrite at B in "_ \<rightarrow> B" id_comp[symmetric])
         apply (rule transport, rule U_in_U)
-        apply (rule lift_universe_codomain, rule U_in_U, typechk)
-        apply (rule U_in_U)
+        apply (rule lift_universe_codomain, rule U_in_U)
+        apply (typechk, rule U_in_U)
         done
       \<^item> premises vars A
-        apply (sub transport_comp)
-          \<^enum> by typechk
+        apply (subst transport_comp)
           \<^enum> by (rule U_in_U)
-          \<^enum> by (rule lift_universe)
-          \<^enum> apply reduce
-              apply (rule qinv_imp_biinv)
-                apply (rule id_qinv)
-            done
+          \<^enum> by reduce (rule lift_universe)
+          \<^enum> by reduce (rule id_biinv)
         done
       done
 
     \<guillemotright> \<comment> \<open>Similar proof as in the first subgoal above\<close>
-      supply [[auto_typechk=false]]
-      apply (subst (2) id_comp[symmetric, of A])
-      apply (subst (2) id_comp[symmetric, of B])
+      apply (rewrite at A in "A \<rightarrow> B" id_comp[symmetric])
+      apply (rewrite at B in "_ \<rightarrow> B" id_comp[symmetric])
       apply (rule transport, rule U_in_U)
-      apply (rule lift_universe_codomain, rule U_in_U, typechk)
-      apply (rule U_in_U)
+      apply (rule lift_universe_codomain, rule U_in_U)
+      apply (typechk, rule U_in_U)
       done
   done
 
