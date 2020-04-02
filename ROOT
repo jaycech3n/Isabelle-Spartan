@@ -6,3 +6,10 @@ session Spartan in "theories" = Pure +
     Spartan
     Identity
     Equivalence
+
+    (*Extra theories*)
+    Basic_Types
+    Nat
+
+    (*Examples*)
+    "../examples/Methods"

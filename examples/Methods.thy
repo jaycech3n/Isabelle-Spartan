@@ -1,4 +1,4 @@
-theory Method_Examples
+theory Methods
 imports "../theories/Equivalence"
 
 begin
