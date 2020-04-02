@@ -362,7 +362,7 @@ text \<open>
   equivalence.
 \<close>
 
-Lemma id_imp_equiv':
+Lemma
   assumes
     "A: U i" "B: U i" "p: A =\<^bsub>U i\<^esub> B"
   shows "A \<simeq> B"
